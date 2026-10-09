@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: openai-codex-agent
+Version: 0.1.0
+Summary: A small OAuth-authenticated Codex agent CLI
+Requires-Python: >=3.11
+Requires-Dist: httpx<1,>=0.27
+Provides-Extra: test
+Requires-Dist: pytest>=8; extra == "test"
+Requires-Dist: respx>=0.21; extra == "test"

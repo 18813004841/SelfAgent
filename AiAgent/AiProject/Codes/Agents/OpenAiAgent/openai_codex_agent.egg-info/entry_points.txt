@@ -1,0 +1,2 @@
+[console_scripts]
+codex-agent = codex_agent.cli:main

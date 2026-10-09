@@ -1,0 +1,11 @@
+name: self_agent_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - "httpx>=0.27,<1"
+      - "pytest>=8"
+      - "respx>=0.21"
