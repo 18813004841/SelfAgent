@@ -1,0 +1,98 @@
+2026-10-10 17:28:10,312 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=test-model, messages=1, tools=1
+2026-10-10 17:28:10,312 | INFO     | aiagent | openai_gateway.py:84 | 网关模型调用完成
+2026-10-10 17:28:10,313 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=None, messages=3, tools=0
+2026-10-10 17:28:10,314 | INFO     | aiagent | openai_gateway.py:84 | 网关模型调用完成
+2026-10-10 17:55:43,640 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 17:55:43,641 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 17:55:46,173 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-10 17:55:46,174 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=str
+2026-10-10 17:55:46,175 | INFO     | aiagent | openai_gateway.py:84 | 网关模型调用完成
+2026-10-10 17:57:24,363 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=test-model, messages=1, tools=1
+2026-10-10 17:57:24,363 | INFO     | aiagent | openai_gateway.py:80 | 网关收到的消息内容: [{"role": "user", "content": "北京天气"}]
+2026-10-10 17:57:24,363 | INFO     | aiagent | openai_gateway.py:85 | 网关模型调用完成
+2026-10-10 17:57:24,364 | INFO     | aiagent | openai_gateway.py:100 | 网关返还给用户的内容: {"role": "assistant", "content": null, "tool_calls": [{"id": "c1", "type": "function", "function": {"name": "weather", "arguments": "{\"city\":\"北京\"}"}}]}
+2026-10-10 17:57:24,364 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=None, messages=3, tools=0
+2026-10-10 17:57:24,364 | INFO     | aiagent | openai_gateway.py:80 | 网关收到的消息内容: [{"role": "user", "content": "北京天气"}, {"role": "assistant", "content": null, "tool_calls": [{"id": "c1", "type": "function", "function": {"name": "weather", "arguments": "{\"city\":\"北京\"}"}}]}, {"role": "tool", "tool_call_id": "c1", "content": "晴天"}]
+2026-10-10 17:57:24,365 | INFO     | aiagent | openai_gateway.py:85 | 网关模型调用完成
+2026-10-10 17:57:24,365 | INFO     | aiagent | openai_gateway.py:100 | 网关返还给用户的内容: {"role": "assistant", "content": "晴天"}
+2026-10-10 18:01:50,261 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:01:50,261 | INFO     | aiagent | openai_gateway.py:80 | 网关收到的消息内容: [{"content": "你好我叫张三", "role": "user"}, {"content": "你好张三，我是一个AI助手，很高兴见到你！", "role": "assistant"}, {"content": "我的名字是什么？", "role": "user"}]
+2026-10-10 18:01:50,262 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:01:50,262 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好我叫张三"}, {"role": "assistant", "content": "你好张三，我是一个AI助手，很高兴见到你！"}, {"role": "user", "content": "我的名字是什么？"}], "stream": true, "store": false}
+2026-10-10 18:01:52,136 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-10 18:01:52,138 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=str
+2026-10-10 18:01:52,140 | INFO     | aiagent | codex.py:77 | 模型返回内容: ""
+2026-10-10 18:01:52,141 | INFO     | aiagent | openai_gateway.py:85 | 网关模型调用完成
+2026-10-10 18:01:52,142 | INFO     | aiagent | openai_gateway.py:100 | 网关返还给用户的内容: {"role": "assistant", "content": null}
+2026-10-10 18:04:13,498 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:04:13,499 | INFO     | aiagent | openai_gateway.py:80 | 网关收到的消息内容: [{"content": "你好我叫张三", "role": "user"}, {"content": "你好张三，我是一个AI助手，很高兴见到你！", "role": "assistant"}, {"content": "我的名字是什么？", "role": "user"}]
+2026-10-10 18:04:13,499 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:04:13,500 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好我叫张三"}, {"role": "assistant", "content": "你好张三，我是一个AI助手，很高兴见到你！"}, {"role": "user", "content": "我的名字是什么？"}], "stream": true, "store": false}
+2026-10-10 18:04:24,946 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-10 18:04:24,948 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=str
+2026-10-10 18:04:24,949 | INFO     | aiagent | codex.py:77 | 模型返回内容: "你的名字是张三。你的名字是张三。"
+2026-10-10 18:04:24,950 | INFO     | aiagent | openai_gateway.py:85 | 网关模型调用完成
+2026-10-10 18:04:24,951 | INFO     | aiagent | openai_gateway.py:100 | 网关返还给用户的内容: {"role": "assistant", "content": "你的名字是张三。你的名字是张三。"}
+2026-10-10 18:04:44,708 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:04:44,709 | INFO     | aiagent | openai_gateway.py:80 | 网关收到的消息内容: [{"content": "你好我叫张三", "role": "user"}, {"content": "你好张三，我是一个AI助手，很高兴见到你！", "role": "assistant"}, {"content": "我的名字是什么？", "role": "user"}]
+2026-10-10 18:04:44,709 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:04:44,709 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好我叫张三"}, {"role": "assistant", "content": "你好张三，我是一个AI助手，很高兴见到你！"}, {"role": "user", "content": "我的名字是什么？"}], "stream": true, "store": false}
+2026-10-10 18:05:19,996 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-10 18:05:19,998 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=str
+2026-10-10 18:05:19,999 | INFO     | aiagent | codex.py:77 | 模型返回内容: "你的名字是张三。你的名字是张三。"
+2026-10-10 18:05:20,001 | INFO     | aiagent | openai_gateway.py:85 | 网关模型调用完成
+2026-10-10 18:05:20,002 | INFO     | aiagent | openai_gateway.py:100 | 网关返还给用户的内容: {"role": "assistant", "content": "你的名字是张三。你的名字是张三。"}
+2026-10-10 18:19:08,155 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:19:08,156 | INFO     | aiagent | openai_gateway.py:80 | 网关收到的消息内容: [{"content": "你好我叫张三", "role": "user"}, {"content": "你好张三，我是一个AI助手，很高兴见到你！", "role": "assistant"}, {"content": "我的名字是什么？", "role": "user"}]
+2026-10-10 18:19:08,156 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:19:08,157 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好我叫张三"}, {"role": "assistant", "content": "你好张三，我是一个AI助手，很高兴见到你！"}, {"role": "user", "content": "我的名字是什么？"}], "stream": true, "store": false}
+2026-10-10 18:19:19,329 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-10 18:19:19,330 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=str
+2026-10-10 18:19:19,330 | INFO     | aiagent | codex.py:77 | 模型返回内容: "你的名字是张三。"
+2026-10-10 18:19:19,331 | INFO     | aiagent | openai_gateway.py:85 | 网关模型调用完成
+2026-10-10 18:19:19,331 | INFO     | aiagent | openai_gateway.py:100 | 网关返还给用户的内容: {"role": "assistant", "content": "你的名字是张三。"}
+2026-10-10 18:19:53,206 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:19:53,206 | INFO     | aiagent | openai_gateway.py:80 | 网关收到的消息内容: [{"content": "你好我叫张三", "role": "user"}, {"content": "你好张三，我是一个AI助手，很高兴见到你！", "role": "assistant"}, {"content": "我的名字是什么？", "role": "user"}]
+2026-10-10 18:19:53,206 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:19:53,207 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好我叫张三"}, {"role": "assistant", "content": "你好张三，我是一个AI助手，很高兴见到你！"}, {"role": "user", "content": "我的名字是什么？"}], "stream": true, "store": false}
+2026-10-10 18:19:55,495 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-10 18:19:55,497 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=str
+2026-10-10 18:19:55,498 | INFO     | aiagent | codex.py:77 | 模型返回内容: ""
+2026-10-10 18:19:55,499 | INFO     | aiagent | openai_gateway.py:85 | 网关模型调用完成
+2026-10-10 18:19:55,499 | INFO     | aiagent | openai_gateway.py:100 | 网关返还给用户的内容: {"role": "assistant", "content": null}
+2026-10-10 18:32:55,697 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:32:55,697 | INFO     | aiagent | openai_gateway.py:80 | 网关收到的消息内容: [{"content": "你好我叫张三", "role": "user"}, {"content": "你好张三，我是一个AI助手，很高兴见到你！", "role": "assistant"}, {"content": "我的名字是什么？", "role": "user"}]
+2026-10-10 18:32:55,698 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:32:55,698 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好我叫张三"}, {"role": "assistant", "content": "你好张三，我是一个AI助手，很高兴见到你！"}, {"role": "user", "content": "我的名字是什么？"}], "stream": true, "store": false}
+2026-10-10 18:33:11,423 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-10 18:33:11,424 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=str
+2026-10-10 18:33:11,425 | INFO     | aiagent | codex.py:77 | 模型返回内容: "你的名字是张三。"
+2026-10-10 18:33:11,426 | INFO     | aiagent | openai_gateway.py:85 | 网关模型调用完成
+2026-10-10 18:33:11,426 | INFO     | aiagent | openai_gateway.py:100 | 网关返还给用户的内容: {"role": "assistant", "content": "你的名字是张三。"}
+2026-10-10 18:33:23,725 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:33:23,725 | INFO     | aiagent | openai_gateway.py:80 | 网关收到的消息内容: [{"content": "你好我叫张三", "role": "user"}, {"content": "你好张三，我是一个AI助手，很高兴见到你！", "role": "assistant"}, {"content": "我的名字是什么？", "role": "user"}]
+2026-10-10 18:33:23,726 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:33:23,726 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好我叫张三"}, {"role": "assistant", "content": "你好张三，我是一个AI助手，很高兴见到你！"}, {"role": "user", "content": "我的名字是什么？"}], "stream": true, "store": false}
+2026-10-10 18:33:38,447 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-10 18:33:38,448 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=str
+2026-10-10 18:33:38,448 | INFO     | aiagent | codex.py:77 | 模型返回内容: "你的名字是张三。"
+2026-10-10 18:33:38,449 | INFO     | aiagent | openai_gateway.py:85 | 网关模型调用完成
+2026-10-10 18:33:38,449 | INFO     | aiagent | openai_gateway.py:100 | 网关返还给用户的内容: {"role": "assistant", "content": "你的名字是张三。"}
+2026-10-10 18:33:47,515 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:33:47,516 | INFO     | aiagent | openai_gateway.py:80 | 网关收到的消息内容: [{"content": "你好我叫张三", "role": "user"}, {"content": "你好张三，我是一个AI助手，很高兴见到你！", "role": "assistant"}, {"content": "我的名字是什么？", "role": "user"}]
+2026-10-10 18:33:47,516 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:33:47,517 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好我叫张三"}, {"role": "assistant", "content": "你好张三，我是一个AI助手，很高兴见到你！"}, {"role": "user", "content": "我的名字是什么？"}], "stream": true, "store": false}
+2026-10-10 18:33:59,922 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-10 18:33:59,923 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=str
+2026-10-10 18:33:59,924 | INFO     | aiagent | codex.py:77 | 模型返回内容: "你的名字是张三。"
+2026-10-10 18:33:59,924 | INFO     | aiagent | openai_gateway.py:85 | 网关模型调用完成
+2026-10-10 18:33:59,924 | INFO     | aiagent | openai_gateway.py:100 | 网关返还给用户的内容: {"role": "assistant", "content": "你的名字是张三。"}
+2026-10-10 18:41:00,268 | INFO     | aiagent | openai_gateway.py:76 | 收到网关聊天请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:41:00,268 | INFO     | aiagent | openai_gateway.py:80 | 网关收到的消息内容: [{"content": "你好我叫张三", "role": "user"}, {"content": "你好张三，我是一个AI助手，很高兴见到你！", "role": "assistant"}, {"content": "我的名字是什么？", "role": "user"}]
+2026-10-10 18:41:00,269 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=3, tools=0
+2026-10-10 18:41:00,270 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好我叫张三"}, {"role": "assistant", "content": "你好张三，我是一个AI助手，很高兴见到你！"}, {"role": "user", "content": "我的名字是什么？"}], "stream": true, "store": false}
+2026-10-10 18:41:15,448 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-10 18:41:15,448 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=str
+2026-10-10 18:41:15,449 | INFO     | aiagent | codex.py:77 | 模型返回内容: "你的名字是张三。"
+2026-10-10 18:41:15,449 | INFO     | aiagent | openai_gateway.py:85 | 网关模型调用完成
+2026-10-10 18:41:15,449 | INFO     | aiagent | openai_gateway.py:100 | 网关返还给用户的内容: {"role": "assistant", "content": "你的名字是张三。"}

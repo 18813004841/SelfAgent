@@ -16,6 +16,7 @@ from typing import Any
 try:
     from .codex import CodexClient, CodexError
     from .config import Settings
+    from .log import get_logger
 except ImportError:  # support: python path/to/openai_gateway.py
     import sys
     from pathlib import Path
@@ -23,6 +24,9 @@ except ImportError:  # support: python path/to/openai_gateway.py
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from codex_agent.codex import CodexClient, CodexError
     from codex_agent.config import Settings
+    from codex_agent.log import get_logger
+
+logger = get_logger()
 
 
 def _to_responses_input(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -69,13 +73,16 @@ def _to_responses_tools(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def chat_completion(request: dict[str, Any], client: CodexClient) -> dict[str, Any]:
     """Translate a Chat Completions request/response without executing tools."""
+    logger.info("收到网关聊天请求: model=%s, messages=%d, tools=%d", request.get("model"), len(request.get("messages") or []), len(request.get("tools") or []))
     messages = request.get("messages")
     if not isinstance(messages, list):
         raise ValueError("messages must be a list")
+    logger.info("网关收到的消息内容: %s", json.dumps(messages, ensure_ascii=False))
     tools = _to_responses_tools(request.get("tools") or [])
     result = client.respond(
         _to_responses_input(messages), model=request.get("model"), tools=tools or None,
     )
+    logger.info("网关模型调用完成")
     text = result if isinstance(result, str) else ""
     calls: list[dict[str, Any]] = []
     if isinstance(result, dict):
@@ -90,6 +97,7 @@ def chat_completion(request: dict[str, Any], client: CodexClient) -> dict[str, A
     message: dict[str, Any] = {"role": "assistant", "content": text or None}
     if calls:
         message["tool_calls"] = calls
+    logger.info("网关返还给用户的内容: %s", json.dumps(message, ensure_ascii=False))
     return {
         "id": f"chatcmpl-{uuid.uuid4().hex}", "object": "chat.completion",
         "created": int(time.time()), "model": request.get("model") or client.settings.model,
@@ -124,6 +132,7 @@ class _Handler(BaseHTTPRequestHandler):
             request = json.loads(self.rfile.read(size))
             result = chat_completion(request, self.client)
         except (ValueError, KeyError, TypeError, CodexError) as exc:
+            logger.exception("网关请求处理失败")
             self._json(400, {"error": {"message": str(exc), "type": "invalid_request_error"}})
             return
         if not request.get("stream"):

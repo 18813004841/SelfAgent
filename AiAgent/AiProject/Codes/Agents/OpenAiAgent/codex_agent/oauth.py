@@ -11,6 +11,10 @@ from typing import Any
 import httpx
 
 from .config import Settings
+from .log import get_logger
+
+
+logger = get_logger()
 
 
 class OAuthError(RuntimeError):
@@ -53,14 +57,17 @@ class TokenStore:
 
     def load(self) -> TokenSet | None:
         if not self.path.exists():
+            logger.info("OAuth 凭证文件不存在: %s", self.path)
             return None
         try:
             data = json.loads(self.path.read_text(encoding="utf-8"))
             return TokenSet.from_payload(data)
         except (OSError, ValueError, TypeError, KeyError) as exc:
+            logger.exception("读取 OAuth 凭证失败: %s", self.path)
             raise OAuthError(f"无法读取令牌文件 {self.path}: {exc}") from exc
 
     def save(self, tokens: TokenSet) -> None:
+        logger.info("保存 OAuth 凭证: %s", self.path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         temp = self.path.with_suffix(self.path.suffix + ".tmp")
         temp.write_text(json.dumps(asdict(tokens), ensure_ascii=False, indent=2), encoding="utf-8")
@@ -69,6 +76,7 @@ class TokenStore:
             self.path.chmod(stat.S_IRUSR | stat.S_IWUSR)
 
     def delete(self) -> None:
+        logger.info("删除 OAuth 凭证: %s", self.path)
         self.path.unlink(missing_ok=True)
 
 
@@ -78,6 +86,7 @@ class OAuthClient:
         self.http = http or httpx.Client(timeout=settings.timeout_seconds)
 
     def device_login(self, store: TokenStore) -> TokenSet:
+        logger.info("开始 OAuth 设备登录")
         # OpenAI's current Codex device flow first creates a device_auth_id.
         response = self.http.post(
             self.settings.oauth_device_url,
@@ -124,6 +133,7 @@ class OAuthClient:
                 if not tokens.access_token:
                     raise OAuthError("令牌响应没有 access_token")
                 store.save(tokens)
+                logger.info("OAuth 设备登录成功")
                 return tokens
             if token_response.status_code in {403, 404}:
                 continue
@@ -131,6 +141,7 @@ class OAuthClient:
         raise OAuthError("设备码已过期，请重新执行 login")
 
     def refresh(self, tokens: TokenSet, store: TokenStore) -> TokenSet:
+        logger.info("开始刷新 OAuth 凭证")
         if not tokens.refresh_token:
             raise OAuthError("没有 refresh_token，请重新登录")
         response = self.http.post(
@@ -147,9 +158,11 @@ class OAuthClient:
         if not refreshed.access_token:
             raise OAuthError("刷新响应没有 access_token")
         store.save(refreshed)
+        logger.info("OAuth 凭证刷新成功")
         return refreshed
 
     @staticmethod
     def _raise(response: httpx.Response, action: str) -> None:
         if response.status_code >= 400:
+            logger.error("%s失败: status=%s, body=%s", action, response.status_code, response.text[:500])
             raise OAuthError(f"{action}失败 ({response.status_code}): {response.text}")
