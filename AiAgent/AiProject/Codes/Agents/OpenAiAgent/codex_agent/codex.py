@@ -28,14 +28,22 @@ class CodexClient:
             tokens = self.oauth.refresh(tokens, self.store)
         return tokens
 
-    def respond(self, messages: list[dict[str, Any]], model: str | None = None) -> str:
+    def respond(
+        self,
+        messages: list[dict[str, Any]],
+        model: str | None = None,
+        tools: list[dict[str, Any]] | None = None,
+    ) -> str | dict[str, Any]:
         tokens = self.ensure_tokens()
         payload = {
             "model": model or self.settings.model,
             "input": messages,
+            # The Codex endpoint requires streaming even when tools are used.
             "stream": True,
             "store": False,
         }
+        if tools:
+            payload["tools"] = tools
         response = self.http.post(
             f"{self.settings.codex_base_url}/responses",
             headers=self._headers(tokens),
@@ -50,7 +58,62 @@ class CodexClient:
             )
         if response.status_code >= 400:
             raise CodexError(f"Codex 请求失败 ({response.status_code}): {response.text}")
+        if tools:
+            return self._decode_structured_response(response)
         return self._decode_response(response)
+
+    @staticmethod
+    def _decode_structured_response(response: httpx.Response) -> dict[str, Any]:
+        """Collect streamed Responses API events for tool calling."""
+        body = response.text
+        output: list[dict[str, Any]] = []
+        calls: dict[str, dict[str, Any]] = {}
+        text: list[str] = []
+        for line in body.splitlines():
+            if not line.startswith("data:"):
+                continue
+            raw = line[5:].strip()
+            if not raw or raw == "[DONE]":
+                continue
+            try:
+                event = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+            event_type = event.get("type", "")
+            if event_type == "response.output_text.delta":
+                if isinstance(event.get("delta"), str):
+                    text.append(event["delta"])
+            elif event_type == "response.function_call_arguments.delta":
+                call_id = event.get("item_id") or event.get("call_id") or "call_0"
+                call = calls.setdefault(call_id, {
+                    "type": "function_call", "call_id": call_id,
+                    "name": event.get("name", ""), "arguments": "",
+                })
+                call["arguments"] += event.get("delta", "")
+            elif event_type == "response.function_call_arguments.done":
+                call_id = event.get("item_id") or event.get("call_id") or "call_0"
+                call = calls.setdefault(call_id, {
+                    "type": "function_call", "call_id": call_id,
+                    "name": event.get("name", ""), "arguments": "",
+                })
+                if isinstance(event.get("arguments"), str):
+                    call["arguments"] = event["arguments"]
+            elif event_type == "response.output_item.added":
+                item = event.get("item")
+                if isinstance(item, dict) and item.get("type") == "function_call":
+                    call_id = item.get("call_id") or item.get("id") or "call_0"
+                    calls[call_id] = dict(item)
+            elif event_type == "response.output_item.done":
+                item = event.get("item")
+                if isinstance(item, dict) and item.get("type") == "function_call":
+                    call_id = item.get("call_id") or item.get("id") or "call_0"
+                    calls[call_id] = dict(item)
+            elif isinstance(event.get("output"), list):
+                output.extend(event["output"])
+        output.extend(calls.values())
+        if text:
+            output.append({"type": "message", "content": [{"type": "output_text", "text": "".join(text)}]})
+        return {"output": output}
 
     def _headers(self, tokens: TokenSet) -> dict[str, str]:
         headers = {

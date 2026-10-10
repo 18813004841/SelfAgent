@@ -4,6 +4,8 @@ Version: 0.1.0
 Summary: A small OAuth-authenticated Codex agent CLI
 Requires-Python: >=3.11
 Requires-Dist: httpx<1,>=0.27
+Provides-Extra: langchain
+Requires-Dist: langchain<2,>=1; extra == "langchain"
 Provides-Extra: test
 Requires-Dist: pytest>=8; extra == "test"
 Requires-Dist: respx>=0.21; extra == "test"
