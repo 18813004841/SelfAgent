@@ -13,6 +13,7 @@ codex-agent = "codex_agent.cli:main"
 [project.optional-dependencies]
 langchain = [
   "langchain>=1,<2",
+  "langchain-openai>=1,<2",
 ]
 test = [
   "pytest>=8",

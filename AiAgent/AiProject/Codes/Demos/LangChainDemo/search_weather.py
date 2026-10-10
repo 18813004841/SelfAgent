@@ -3,12 +3,9 @@ from langchain.tools import tool
 from pathlib import Path
 import sys
 
-# This file is normally started directly with ``python search_weather.py``.
-# Add the local OpenAiAgent project to sys.path so its package import works
-# without requiring the whole AiAgent tree to be installed as one package.
 OPENAI_AGENT_ROOT = Path(__file__).resolve().parents[2] / "Agents" / "OpenAiAgent"
 sys.path.insert(0, str(OPENAI_AGENT_ROOT))
-from codex_agent.langchain_model import CodexChatModel
+from codex_agent.local_model import ChatLocalLLMAgent
 #加载环境变量 
 from dotenv import load_dotenv
 
@@ -19,14 +16,14 @@ from dotenv import load_dotenv
 
 """
 
-load_dotenv()
+load_dotenv(Path(__file__).with_name(".env.langchain.demo"))
 
 @tool
 def get_weather(city: str) -> str:
     """获取指定城市的天气信息"""
     return f"{city}的天气是晴天，温度25°C"
 
-model = CodexChatModel()
+model = ChatLocalLLMAgent()
 agent = create_agent(model=model, tools=[get_weather])
 
 #3. 使用 Agent：create_agent 返回 LangGraph，使用 invoke() 调用

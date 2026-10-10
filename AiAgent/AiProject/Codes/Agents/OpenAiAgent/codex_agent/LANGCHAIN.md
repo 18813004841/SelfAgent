@@ -6,6 +6,18 @@
 pip install -e ".[langchain]"
 ```
 
+本地网关对应的 LangChain 模型名是 `ChatLocalLLMAgent`（别名
+`LOCALLLMAGENT`），配置变量为 `LOCALLLMAGENT_API_KEY`、
+`LOCALLLMAGENT_API_URL` 和可选的 `LOCALLLMAGENT_MODEL`：
+
+```python
+from codex_agent.local_model import ChatLocalLLMAgent
+
+model = ChatLocalLLMAgent()
+```
+
+`LOCALLLMAGENT_API_KEY` 只用于通过本地网关校验，真实 OAuth token 仍由网关读取。
+
 沿用现有登录信息（先执行 `codex-agent login`），不需要另一套 API Key。
 
 ```python

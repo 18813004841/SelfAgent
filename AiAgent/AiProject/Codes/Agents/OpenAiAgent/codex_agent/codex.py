@@ -66,9 +66,21 @@ class CodexClient:
     def _decode_structured_response(response: httpx.Response) -> dict[str, Any]:
         """Collect streamed Responses API events for tool calling."""
         body = response.text
-        output: list[dict[str, Any]] = []
+        is_stream = (
+            "text/event-stream" in response.headers.get("content-type", "")
+            or body.lstrip().startswith(("data:", "event:"))
+        )
+        if not is_stream:
+            try:
+                data = response.json()
+            except ValueError as exc:
+                raise CodexError("无法解析模型 JSON 响应") from exc
+            if isinstance(data, dict) and isinstance(data.get("output"), list):
+                return data
+            raise CodexError("模型响应缺少 output")
         calls: dict[str, dict[str, Any]] = {}
         text: list[str] = []
+        completed_output: list[dict[str, Any]] | None = None
         for line in body.splitlines():
             if not line.startswith("data:"):
                 continue
@@ -84,33 +96,31 @@ class CodexClient:
                 if isinstance(event.get("delta"), str):
                     text.append(event["delta"])
             elif event_type == "response.function_call_arguments.delta":
-                call_id = event.get("item_id") or event.get("call_id") or "call_0"
-                call = calls.setdefault(call_id, {
-                    "type": "function_call", "call_id": call_id,
-                    "name": event.get("name", ""), "arguments": "",
-                })
+                key = event.get("item_id") or str(event.get("output_index", 0))
+                call = calls.setdefault(key, {"type": "function_call", "arguments": ""})
                 call["arguments"] += event.get("delta", "")
             elif event_type == "response.function_call_arguments.done":
-                call_id = event.get("item_id") or event.get("call_id") or "call_0"
-                call = calls.setdefault(call_id, {
-                    "type": "function_call", "call_id": call_id,
-                    "name": event.get("name", ""), "arguments": "",
-                })
+                key = event.get("item_id") or str(event.get("output_index", 0))
+                call = calls.setdefault(key, {"type": "function_call", "arguments": ""})
                 if isinstance(event.get("arguments"), str):
                     call["arguments"] = event["arguments"]
             elif event_type == "response.output_item.added":
                 item = event.get("item")
                 if isinstance(item, dict) and item.get("type") == "function_call":
-                    call_id = item.get("call_id") or item.get("id") or "call_0"
-                    calls[call_id] = dict(item)
+                    key = item.get("id") or str(event.get("output_index", 0))
+                    calls[key] = {**calls.get(key, {}), **item}
             elif event_type == "response.output_item.done":
                 item = event.get("item")
                 if isinstance(item, dict) and item.get("type") == "function_call":
-                    call_id = item.get("call_id") or item.get("id") or "call_0"
-                    calls[call_id] = dict(item)
-            elif isinstance(event.get("output"), list):
-                output.extend(event["output"])
-        output.extend(calls.values())
+                    key = item.get("id") or str(event.get("output_index", 0))
+                    calls[key] = {**calls.get(key, {}), **item}
+            elif event_type == "response.completed":
+                completed = event.get("response") or {}
+                if isinstance(completed.get("output"), list):
+                    completed_output = completed["output"]
+        if completed_output is not None:
+            return {"output": completed_output}
+        output = list(calls.values())
         if text:
             output.append({"type": "message", "content": [{"type": "output_text", "text": "".join(text)}]})
         return {"output": output}
