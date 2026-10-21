@@ -1,0 +1,5 @@
+LangGraph笔记
+
+1.环境依赖 
+python 3.12
+python库 pip install langchain dotenv langchain-deepseek
