@@ -11,7 +11,14 @@ import os
 import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
+
+from dotenv import load_dotenv
+
+# Keep gateway configuration next to the Codex agent package. Explicitly pass
+# the path so importing this module does not depend on the process cwd.
+load_dotenv(Path(__file__).with_name(".env"), override=False)
 
 try:
     from .codex import CodexClient, CodexError
@@ -27,6 +34,23 @@ except ImportError:  # support: python path/to/openai_gateway.py
     from codex_agent.log import get_logger
 
 logger = get_logger()
+
+
+def create_chat_model():
+    """Create the LangChain model pointing at this local gateway.
+
+    The gateway itself speaks OpenAI Chat Completions. ``openai-gateway`` is
+    only the model label; the upstream Codex model is selected by
+    ``LOCALLLMAGENT_MODEL`` (or ``CODEX_MODEL``) in this package's ``.env``.
+    """
+    from langchain.chat_models import init_chat_model
+
+    return init_chat_model(
+        os.getenv("LOCALLLMAGENT_MODEL", os.getenv("CODEX_MODEL", "gpt-5.6-sol")),
+        model_provider="openai",
+        api_key=os.getenv("LOCALLLMAGENT_API_KEY", "local-only"),
+        base_url=os.getenv("LOCALLLMAGENT_API_URL", "http://127.0.0.1:8765/v1"),
+    )
 
 
 def _to_responses_input(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:

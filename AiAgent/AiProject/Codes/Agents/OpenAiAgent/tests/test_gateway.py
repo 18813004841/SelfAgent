@@ -5,7 +5,9 @@ import httpx
 
 from codex_agent.codex import CodexClient
 from codex_agent.openai_gateway import chat_completion
+from codex_agent.openai_gateway import create_chat_model
 
+model = create_chat_model()
 
 def test_gateway_tool_roundtrip():
     client = Mock()

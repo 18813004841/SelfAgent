@@ -50,3 +50,7 @@ print(f"向量前5维：{len(vector[:5])}")
 texts = ["我要躺平", "我爱工作", "拒绝加班"]
 vectors = dashscope_embeddings.embed_documents(texts)
 print(f"\n批量向量化：{len(vectors)} 条，维度：{len(vectors[0])}")
+
+for v in vectors:
+    similarity = cosine_similarity(vector, v)
+    print("Cosine Similarity:", similarity)

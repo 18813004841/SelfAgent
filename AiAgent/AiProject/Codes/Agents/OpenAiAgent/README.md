@@ -53,6 +53,7 @@ python -m pip install -e ".[langchain]"
 启动本地网关：
 
 ```bash
+cd ...\OpenAiAgent
 python -m codex_agent.openai_gateway
 ```
 

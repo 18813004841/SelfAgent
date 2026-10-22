@@ -1,0 +1,1 @@
+环境安装 pip install fastapi uvicorn streamlit langgraph langchain langchain-openai python-dotenv langchain-mcp-adapters
