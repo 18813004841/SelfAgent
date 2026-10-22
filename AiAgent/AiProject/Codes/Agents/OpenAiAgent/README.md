@@ -6,7 +6,7 @@
 
 ## 安装
 
-本工程统一使用 Conda 环境 `self_agent_env`，不要使用项目目录中的 `.venv`。
+本工程统一使用 Conda 环境 `selfagent_clean`，不要使用项目目录中的 `.venv`。
 
 如果环境尚未创建：
 
@@ -17,7 +17,7 @@ conda env create -f environment.yml
 激活并安装本地工程：
 
 ```bash
-conda activate self_agent_env
+conda activate selfagent_clean
 python -m pip install -e ".[test]"
 ```
 
@@ -46,7 +46,7 @@ C:\Users\<当前用户>\.self_agent\.codex-agent\auth.json
 安装 LangChain 集成：
 
 ```bash
-conda activate self_agent_env
+conda activate selfagent_clean
 python -m pip install -e ".[langchain]"
 ```
 
@@ -142,6 +142,6 @@ codex-agent chat "解释 OAuth 和 API Key 的区别"
 ## 测试
 
 ```bash
-conda activate self_agent_env
+conda activate selfagent_clean
 python -m pytest
 ```
