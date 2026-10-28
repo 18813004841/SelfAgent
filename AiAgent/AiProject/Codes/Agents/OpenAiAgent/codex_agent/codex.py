@@ -39,14 +39,17 @@ class CodexClient:
         messages: list[dict[str, Any]],
         model: str | None = None,
         tools: list[dict[str, Any]] | None = None,
+        stream: bool = False,
     ) -> str | dict[str, Any]:
+        # Prefer the caller's requested transport mode. Some Codex deployments
+        # require SSE even for ordinary text responses; that case is handled
+        # by the compatibility retry below.
         logger.info("准备发送模型请求: model=%s, messages=%d, tools=%d", model or self.settings.model, len(messages), len(tools or []))
         tokens = self.ensure_tokens()
         payload = {
             "model": model or self.settings.model,
             "input": messages,
-            # The Codex endpoint requires streaming even when tools are used.
-            "stream": True,
+            "stream": stream,
             "store": False,
         }
         if tools:
@@ -58,6 +61,19 @@ class CodexClient:
             json=payload,
         )
         logger.info("收到模型 HTTP 响应: status=%s", response.status_code)
+        if (
+            response.status_code == 400
+            and not stream
+            and "Stream must be set to true" in response.text
+        ):
+            logger.warning("上游要求流式请求，自动切换 stream=true 重试")
+            payload["stream"] = True
+            response = self.http.post(
+                f"{self.settings.codex_base_url}/responses",
+                headers=self._headers(tokens),
+                json=payload,
+            )
+            logger.info("流式兼容重试响应: status=%s", response.status_code)
         if response.status_code == 401 and tokens.refresh_token:
             logger.warning("模型请求返回 401，刷新凭证后重试")
             tokens = self.oauth.refresh(tokens, self.store)
@@ -251,11 +267,11 @@ class Conversation:
         if system:
             self.messages.append({"role": "system", "content": system})
 
-    def ask(self, text: str) -> str:
+    def ask(self, text: str, stream: bool = False) -> str:
         logger.info("收到用户消息: %s", text)
         self.messages.append({"role": "user", "content": text})
         try:
-            answer = self.client.respond(self.messages)
+            answer = self.client.respond(self.messages, stream=stream)
         except Exception:
             logger.exception("处理用户消息失败")
             self.messages.pop()

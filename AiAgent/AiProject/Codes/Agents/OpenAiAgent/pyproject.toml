@@ -7,6 +7,9 @@ dependencies = [
   "httpx>=0.27,<1",
 ]
 
+[tool.setuptools.packages.find]
+include = ["codex_agent*"]
+
 [project.scripts]
 codex-agent = "codex_agent.cli:main"
 
