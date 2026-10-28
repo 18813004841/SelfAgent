@@ -4,6 +4,7 @@ codex_agent/__init__.py
 codex_agent/cli.py
 codex_agent/codex.py
 codex_agent/config.py
+codex_agent/langchain_model.py
 codex_agent/oauth.py
 openai_codex_agent.egg-info/PKG-INFO
 openai_codex_agent.egg-info/SOURCES.txt

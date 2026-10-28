@@ -7,9 +7,9 @@ import codex_agent.cli
 
 
 def main():
-    conversation = codex_agent.cli.create_codex_client("gpt-5.6-sol")
+    conversation = codex_agent.cli.create_codex_client("gpt-5.6-terra")
     try:
-        answer = conversation.ask("你好")
+        answer = conversation.ask("你好", stream=True)
     except Exception as exc:
             print(f"错误: {exc}")
             return 1

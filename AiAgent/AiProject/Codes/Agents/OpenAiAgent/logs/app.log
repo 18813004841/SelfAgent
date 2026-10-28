@@ -1,0 +1,100 @@
+2026-10-23 11:49:39,847 | INFO     | aiagent | openai_gateway.py:100 | 收到网关聊天请求: model=gpt-5.1-codex-mini, messages=3, tools=3
+2026-10-23 11:49:39,848 | INFO     | aiagent | openai_gateway.py:104 | 网关收到的消息内容: [{"content": "你是一个智能客服助手。请根据用户意图选择合适的工具：\n- 如果用户询问产品政策、使用方法等，使用 search_knowledge_base\n- 如果用户查询订单，使用 get_order 或 list_orders（来自MCP服务）\n- 如果用户要求退货或换货，先查询订单状态再给出建议\n- 如果问题复杂无法处理，直接告知用户并建议转人工\n\n请用友好、专业的语气回答。", "role": "system"}, {"content": "查一下订单ORD001", "role": "user"}, {"content": "查一下订单ORD001", "role": "user"}]
+2026-10-23 11:49:39,848 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.1-codex-mini, messages=3, tools=3
+2026-10-23 11:49:39,849 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.1-codex-mini", "input": [{"role": "system", "content": "你是一个智能客服助手。请根据用户意图选择合适的工具：\n- 如果用户询问产品政策、使用方法等，使用 search_knowledge_base\n- 如果用户查询订单，使用 get_order 或 list_orders（来自MCP服务）\n- 如果用户要求退货或换货，先查询订单状态再给出建议\n- 如果问题复杂无法处理，直接告知用户并建议转人工\n\n请用友好、专业的语气回答。"}, {"role": "user", "content": "查一下订单ORD001"}, {"role": "user", "content": "查一下订单ORD001"}], "stream": true, "store": false, "tools": [{"type": "function", "name": "search_knowledge_base", "description": "搜索产品知识库，回答用户咨询问题", "parameters": {"properties": {"query": {"type": "string"}}, "required": ["query"], "type": "object"}}, {"type": "function", "name": "get_order", "description": "查询订单详情", "parameters": {"properties": {"order_id": {"type": "string"}}, "required": ["order_id"], "type": "object"}}, {"type": "function", "name": "list_orders", "description": "列出用户所有订单（模拟）", "parameters": {"properties": {"user_id": {"type": "string"}}, "required": ["user_id"], "type": "object"}}]}
+2026-10-23 11:49:40,536 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=400
+2026-10-23 11:49:40,537 | ERROR    | aiagent | codex.py:70 | 模型请求失败: status=400, body={"detail":"The 'gpt-5.1-codex-mini' model is not supported when using Codex with a ChatGPT account."}
+2026-10-23 11:49:40,537 | ERROR    | aiagent | openai_gateway.py:159 | 网关请求处理失败
+Traceback (most recent call last):
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 157, in do_POST
+    result = chat_completion(request, self.client)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 106, in chat_completion
+    result = client.respond(
+             ^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 71, in respond
+    raise CodexError(f"Codex 请求失败 ({response.status_code}): {response.text}")
+codex_agent.codex.CodexError: Codex 请求失败 (400): {"detail":"The 'gpt-5.1-codex-mini' model is not supported when using Codex with a ChatGPT account."}
+2026-10-23 11:50:04,285 | INFO     | aiagent | openai_gateway.py:100 | 收到网关聊天请求: model=gpt-5.6-sol, messages=2, tools=3
+2026-10-23 11:50:04,285 | INFO     | aiagent | openai_gateway.py:104 | 网关收到的消息内容: [{"content": "你是一个智能客服助手。请根据用户意图选择合适的工具：\n- 如果用户询问产品政策、使用方法等，使用 search_knowledge_base\n- 如果用户查询订单，使用 get_order 或 list_orders（来自MCP服务）\n- 如果用户要求退货或换货，先查询订单状态再给出建议\n- 如果问题复杂无法处理，直接告知用户并建议转人工\n\n请用友好、专业的语气回答。", "role": "system"}, {"content": "查一下订单ORD001", "role": "user"}]
+2026-10-23 11:50:04,285 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=2, tools=3
+2026-10-23 11:50:04,286 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "system", "content": "你是一个智能客服助手。请根据用户意图选择合适的工具：\n- 如果用户询问产品政策、使用方法等，使用 search_knowledge_base\n- 如果用户查询订单，使用 get_order 或 list_orders（来自MCP服务）\n- 如果用户要求退货或换货，先查询订单状态再给出建议\n- 如果问题复杂无法处理，直接告知用户并建议转人工\n\n请用友好、专业的语气回答。"}, {"role": "user", "content": "查一下订单ORD001"}], "stream": true, "store": false, "tools": [{"type": "function", "name": "search_knowledge_base", "description": "搜索产品知识库，回答用户咨询问题", "parameters": {"properties": {"query": {"type": "string"}}, "required": ["query"], "type": "object"}}, {"type": "function", "name": "get_order", "description": "查询订单详情", "parameters": {"properties": {"order_id": {"type": "string"}}, "required": ["order_id"], "type": "object"}}, {"type": "function", "name": "list_orders", "description": "列出用户所有订单（模拟）", "parameters": {"properties": {"user_id": {"type": "string"}}, "required": ["user_id"], "type": "object"}}]}
+2026-10-23 11:50:18,705 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-23 11:50:18,708 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=dict
+2026-10-23 11:50:18,709 | INFO     | aiagent | codex.py:77 | 模型返回内容: {"output": [{"type": "function_call", "id": "fc_0a1eaf244b1c0df4016adad97a9054819190a2e1d9ecce4200", "call_id": "call_91c4bf3029f84121a6ad3d0d220a79d1", "name": "get_order", "arguments": "{\"order_id\":\"ORD001\"}", "status": "completed"}]}
+2026-10-23 11:50:18,710 | INFO     | aiagent | openai_gateway.py:109 | 网关模型调用完成
+2026-10-23 11:50:18,711 | INFO     | aiagent | openai_gateway.py:124 | 网关返还给用户的内容: {"role": "assistant", "content": null, "tool_calls": [{"id": "call_91c4bf3029f84121a6ad3d0d220a79d1", "type": "function", "function": {"name": "get_order", "arguments": "{\"order_id\":\"ORD001\"}"}}]}
+2026-10-23 11:50:19,387 | INFO     | aiagent | openai_gateway.py:100 | 收到网关聊天请求: model=gpt-5.6-sol, messages=4, tools=3
+2026-10-23 11:50:19,387 | INFO     | aiagent | openai_gateway.py:104 | 网关收到的消息内容: [{"content": "你是一个智能客服助手。请根据用户意图选择合适的工具：\n- 如果用户询问产品政策、使用方法等，使用 search_knowledge_base\n- 如果用户查询订单，使用 get_order 或 list_orders（来自MCP服务）\n- 如果用户要求退货或换货，先查询订单状态再给出建议\n- 如果问题复杂无法处理，直接告知用户并建议转人工\n\n请用友好、专业的语气回答。", "role": "system"}, {"content": "查一下订单ORD001", "role": "user"}, {"content": null, "role": "assistant", "tool_calls": [{"type": "function", "id": "call_91c4bf3029f84121a6ad3d0d220a79d1", "function": {"name": "get_order", "arguments": "{\"order_id\": \"ORD001\"}"}}]}, {"content": "{\n  \"status\": \"已发货\",\n  \"tracking\": \"SF1234567890\",\n  \"product\": \"无线耳机\"\n}", "role": "tool", "tool_call_id": "call_91c4bf3029f84121a6ad3d0d220a79d1"}]
+2026-10-23 11:50:19,387 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=4, tools=3
+2026-10-23 11:50:19,388 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "system", "content": "你是一个智能客服助手。请根据用户意图选择合适的工具：\n- 如果用户询问产品政策、使用方法等，使用 search_knowledge_base\n- 如果用户查询订单，使用 get_order 或 list_orders（来自MCP服务）\n- 如果用户要求退货或换货，先查询订单状态再给出建议\n- 如果问题复杂无法处理，直接告知用户并建议转人工\n\n请用友好、专业的语气回答。"}, {"role": "user", "content": "查一下订单ORD001"}, {"type": "function_call", "call_id": "call_91c4bf3029f84121a6ad3d0d220a79d1", "name": "get_order", "arguments": "{\"order_id\": \"ORD001\"}"}, {"type": "function_call_output", "call_id": "call_91c4bf3029f84121a6ad3d0d220a79d1", "output": "{\n  \"status\": \"已发货\",\n  \"tracking\": \"SF1234567890\",\n  \"product\": \"无线耳机\"\n}"}], "stream": true, "store": false, "tools": [{"type": "function", "name": "search_knowledge_base", "description": "搜索产品知识库，回答用户咨询问题", "parameters": {"properties": {"query": {"type": "string"}}, "required": ["query"], "type": "object"}}, {"type": "function", "name": "get_order", "description": "查询订单详情", "parameters": {"properties": {"order_id": {"type": "string"}}, "required": ["order_id"], "type": "object"}}, {"type": "function", "name": "list_orders", "description": "列出用户所有订单（模拟）", "parameters": {"properties": {"user_id": {"type": "string"}}, "required": ["user_id"], "type": "object"}}]}
+2026-10-23 11:50:26,469 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-23 11:50:26,471 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=dict
+2026-10-23 11:50:26,471 | INFO     | aiagent | codex.py:77 | 模型返回内容: {"output": [{"type": "message", "id": "msg_0a2c7e48d6cac1da016adad9819d9c81918b2ec54a74f7eca3", "role": "assistant", "status": "completed", "content": [{"type": "output_text", "text": "订单 **ORD001** 当前状态：**已发货**  \n商品：无线耳机  \n物流单号：**SF1234567890**", "annotations": [], "logprobs": []}], "phase": "final_answer"}]}
+2026-10-23 11:50:26,472 | INFO     | aiagent | openai_gateway.py:109 | 网关模型调用完成
+2026-10-23 11:50:26,472 | INFO     | aiagent | openai_gateway.py:124 | 网关返还给用户的内容: {"role": "assistant", "content": "订单 **ORD001** 当前状态：**已发货**  \n商品：无线耳机  \n物流单号：**SF1234567890**"}
+2026-10-28 15:37:07,905 | INFO     | aiagent | codex.py:255 | 收到用户消息: 你好
+2026-10-28 15:37:07,906 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=2, tools=0
+2026-10-28 15:37:07,918 | INFO     | aiagent | codex.py:54 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "system", "content": "你是一个简洁、可靠的 Codex Agent。先理解用户目标，再给出可执行的回答。"}, {"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-10-28 15:37:18,794 | INFO     | aiagent | codex.py:60 | 收到模型 HTTP 响应: status=200
+2026-10-28 15:37:18,795 | INFO     | aiagent | codex.py:76 | 模型响应解析完成: result_type=str
+2026-10-28 15:37:18,795 | INFO     | aiagent | codex.py:77 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-10-28 15:37:18,796 | INFO     | aiagent | codex.py:264 | 准备返还模型内容给用户
+2026-10-28 15:37:18,796 | INFO     | aiagent | codex.py:265 | 返还给用户的内容: "你好！有什么我可以帮你的吗？"
+2026-10-28 16:02:44,502 | INFO     | aiagent | codex.py:257 | 收到用户消息: 你好
+2026-10-28 16:02:44,502 | INFO     | aiagent | codex.py:43 | 准备发送模型请求: model=gpt-5.6-sol, messages=2, tools=0
+2026-10-28 16:02:44,502 | INFO     | aiagent | codex.py:56 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "system", "content": "你是一个简洁、可靠的 Codex Agent。先理解用户目标，再给出可执行的回答。"}, {"role": "user", "content": "你好"}], "stream": false, "store": false}
+2026-10-28 16:02:45,218 | INFO     | aiagent | codex.py:62 | 收到模型 HTTP 响应: status=400
+2026-10-28 16:02:45,243 | ERROR    | aiagent | codex.py:72 | 模型请求失败: status=400, body={"detail":"Stream must be set to true"}
+2026-10-28 16:02:45,244 | ERROR    | aiagent | codex.py:262 | 处理用户消息失败
+Traceback (most recent call last):
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 260, in ask
+    answer = self.client.respond(self.messages)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 73, in respond
+    raise CodexError(f"Codex 请求失败 ({response.status_code}): {response.text}")
+codex_agent.codex.CodexError: Codex 请求失败 (400): {"detail":"Stream must be set to true"}
+2026-10-28 16:19:57,403 | INFO     | aiagent | codex.py:260 | 收到用户消息: 你好
+2026-10-28 16:19:57,404 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-sol, messages=2, tools=0
+2026-10-28 16:19:57,405 | INFO     | aiagent | codex.py:59 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "system", "content": "你是一个简洁、可靠的 Codex Agent。先理解用户目标，再给出可执行的回答。"}, {"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-10-28 16:20:16,570 | INFO     | aiagent | codex.py:65 | 收到模型 HTTP 响应: status=200
+2026-10-28 16:20:16,571 | INFO     | aiagent | codex.py:81 | 模型响应解析完成: result_type=str
+2026-10-28 16:20:16,572 | INFO     | aiagent | codex.py:82 | 模型返回内容: "你好！有什么需要我帮忙的吗？"
+2026-10-28 16:20:16,572 | INFO     | aiagent | codex.py:269 | 准备返还模型内容给用户
+2026-10-28 16:20:16,572 | INFO     | aiagent | codex.py:270 | 返还给用户的内容: "你好！有什么需要我帮忙的吗？"
+2026-10-28 16:28:19,645 | INFO     | aiagent | codex.py:271 | 收到用户消息: 你好
+2026-10-28 16:28:19,645 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-sol, messages=2, tools=0
+2026-10-28 16:28:19,646 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "system", "content": "你是一个简洁、可靠的 Codex Agent。先理解用户目标，再给出可执行的回答。"}, {"role": "user", "content": "你好"}], "stream": false, "store": false}
+2026-10-28 16:28:20,225 | INFO     | aiagent | codex.py:63 | 收到模型 HTTP 响应: status=400
+2026-10-28 16:28:20,226 | WARNING  | aiagent | codex.py:69 | 上游要求流式请求，自动切换 stream=true 重试
+2026-10-28 16:28:42,852 | INFO     | aiagent | codex.py:76 | 流式兼容重试响应: status=200
+2026-10-28 16:28:42,853 | INFO     | aiagent | codex.py:92 | 模型响应解析完成: result_type=str
+2026-10-28 16:28:42,853 | INFO     | aiagent | codex.py:93 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-10-28 16:28:42,854 | INFO     | aiagent | codex.py:280 | 准备返还模型内容给用户
+2026-10-28 16:28:42,854 | INFO     | aiagent | codex.py:281 | 返还给用户的内容: "你好！有什么我可以帮你的吗？"
+2026-10-28 16:36:45,672 | INFO     | aiagent | codex.py:271 | 收到用户消息: 你好
+2026-10-28 16:36:45,673 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-sol, messages=2, tools=0
+2026-10-28 16:36:45,674 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "system", "content": "你是一个简洁、可靠的 Codex Agent。先理解用户目标，再给出可执行的回答。"}, {"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-10-28 16:36:59,191 | INFO     | aiagent | codex.py:63 | 收到模型 HTTP 响应: status=200
+2026-10-28 16:36:59,192 | INFO     | aiagent | codex.py:92 | 模型响应解析完成: result_type=str
+2026-10-28 16:36:59,192 | INFO     | aiagent | codex.py:93 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-10-28 16:36:59,194 | INFO     | aiagent | codex.py:280 | 准备返还模型内容给用户
+2026-10-28 16:36:59,194 | INFO     | aiagent | codex.py:281 | 返还给用户的内容: "你好！有什么我可以帮你的吗？"
+2026-10-28 19:30:17,641 | INFO     | aiagent | codex.py:271 | 收到用户消息: 你好
+2026-10-28 19:30:17,642 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-terra, messages=2, tools=0
+2026-10-28 19:30:17,644 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-5.6-terra", "input": [{"role": "system", "content": "你是一个简洁、可靠的 Codex Agent。先理解用户目标，再给出可执行的回答。"}, {"role": "user", "content": "你好"}], "stream": false, "store": false}
+2026-10-28 19:30:18,688 | INFO     | aiagent | codex.py:63 | 收到模型 HTTP 响应: status=400
+2026-10-28 19:30:18,688 | WARNING  | aiagent | codex.py:69 | 上游要求流式请求，自动切换 stream=true 重试
+2026-10-28 19:30:34,555 | INFO     | aiagent | codex.py:76 | 流式兼容重试响应: status=200
+2026-10-28 19:30:34,568 | INFO     | aiagent | codex.py:92 | 模型响应解析完成: result_type=str
+2026-10-28 19:30:34,569 | INFO     | aiagent | codex.py:93 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-10-28 19:30:34,569 | INFO     | aiagent | codex.py:280 | 准备返还模型内容给用户
+2026-10-28 19:30:34,570 | INFO     | aiagent | codex.py:281 | 返还给用户的内容: "你好！有什么我可以帮你的吗？"
+2026-10-28 19:31:11,067 | INFO     | aiagent | codex.py:271 | 收到用户消息: 你好
+2026-10-28 19:31:11,067 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-terra, messages=2, tools=0
+2026-10-28 19:31:11,068 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-5.6-terra", "input": [{"role": "system", "content": "你是一个简洁、可靠的 Codex Agent。先理解用户目标，再给出可执行的回答。"}, {"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-10-28 19:31:15,303 | INFO     | aiagent | codex.py:63 | 收到模型 HTTP 响应: status=200
+2026-10-28 19:31:15,303 | INFO     | aiagent | codex.py:92 | 模型响应解析完成: result_type=str
+2026-10-28 19:31:15,304 | INFO     | aiagent | codex.py:93 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-10-28 19:31:15,304 | INFO     | aiagent | codex.py:280 | 准备返还模型内容给用户
+2026-10-28 19:31:15,304 | INFO     | aiagent | codex.py:281 | 返还给用户的内容: "你好！有什么我可以帮你的吗？"

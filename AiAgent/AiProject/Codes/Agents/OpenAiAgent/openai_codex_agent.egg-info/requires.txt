@@ -1,5 +1,8 @@
 httpx<1,>=0.27
 
+[langchain]
+langchain<2,>=1
+
 [test]
 pytest>=8
 respx>=0.21
