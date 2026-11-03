@@ -1,0 +1,110 @@
+{
+  "workers": {
+    "win-pack-BJPCC-0010480": {
+      "machine_id": "win-pack-BJPCC-0010480",
+      "hostname": "BJPCC-0010480",
+      "os": "Windows-10-10.0.19044-SP0",
+      "capabilities": [
+        "adb",
+        "shell",
+        "unity"
+      ],
+      "status": "online",
+      "registered_at": 1793715126447,
+      "last_seen_at": 1793717161000,
+      "meta": {
+        "allowed_commands": [
+          "adb",
+          "cat",
+          "codesign",
+          "df",
+          "du",
+          "echo",
+          "find",
+          "git",
+          "grep",
+          "hostname",
+          "ls",
+          "plutil",
+          "pwd",
+          "python",
+          "python3",
+          "security",
+          "tail",
+          "unity",
+          "whoami",
+          "xcodebuild"
+        ],
+        "local_ips": [
+          "10.0.76.228"
+        ],
+        "ts": 1793717160,
+        "server": "http://127.0.0.1:18765"
+      }
+    }
+  },
+  "tasks": {},
+  "machines": {
+    "10.0.76.228": {
+      "machine_id": "10.0.76.228",
+      "worker_id": "win-pack-BJPCC-0010480",
+      "hostname": "BJPCC-0010480",
+      "os": "Windows-10-10.0.19044-SP0",
+      "capabilities": [
+        "adb",
+        "shell",
+        "unity"
+      ],
+      "status": "online",
+      "login_state": "online",
+      "first_seen_at": 1793715126447,
+      "last_seen_at": 1793717161000,
+      "last_connected_at": 1793717161000,
+      "known_ips": [
+        "10.0.76.228"
+      ],
+      "current_ips": [
+        "10.0.76.228"
+      ],
+      "last_server": "http://127.0.0.1:18765",
+      "meta": {
+        "allowed_commands": [
+          "adb",
+          "cat",
+          "codesign",
+          "df",
+          "du",
+          "echo",
+          "find",
+          "git",
+          "grep",
+          "hostname",
+          "ls",
+          "plutil",
+          "pwd",
+          "python",
+          "python3",
+          "security",
+          "tail",
+          "unity",
+          "whoami",
+          "xcodebuild"
+        ],
+        "local_ips": [
+          "10.0.76.228"
+        ],
+        "ts": 1793717160,
+        "server": "http://127.0.0.1:18765"
+      }
+    }
+  },
+  "connections": {
+    "127.0.0.1": {
+      "ip": "127.0.0.1",
+      "first_seen_at": 1793715126442,
+      "last_seen_at": 1793717167016,
+      "last_path": "/api/workers/win-pack-BJPCC-0010480/tasks/next",
+      "user_agent": "Python-urllib/3.14"
+    }
+  }
+}

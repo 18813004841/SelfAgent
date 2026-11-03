@@ -10,12 +10,33 @@ import socket
 import time
 import traceback
 import urllib.parse
+import urllib.request
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from core.storage import connect, decode_schedule, get_settings, save_settings, default_settings, PID_PATH
+from process_manager import ProcessManager
+from process_manager.operation_log import get_operation_logger
 import subprocess, sys
+import mimetypes
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from launchers.central_server import CentralServerLauncher
+from launchers.scheduler import SchedulerLauncher
+from launchers.worker_client import WorkerClientLauncher
 
 PORT = int(os.environ.get("MACHINE_DASHBOARD_PORT", "18888"))
+MACHINE_CONTROL_ROOT = Path(__file__).resolve().parents[3] / "Tools" / "machine-control"
+CENTER_PID_PATH = Path(__file__).resolve().parent.parent / "data" / "central-server.pid"
+CENTER_PORT = int(os.environ.get("MACHINE_CONTROL_PORT", "18765"))
+PROCESS_MANAGER = ProcessManager()
+PROCESS_MANAGER.register(CentralServerLauncher(MACHINE_CONTROL_ROOT, CENTER_PORT, CENTER_PID_PATH))
+PROCESS_MANAGER.register(SchedulerLauncher(Path(__file__).resolve().parent / "scheduler.py", PID_PATH))
+PROCESS_MANAGER.register(WorkerClientLauncher(
+    MACHINE_CONTROL_ROOT,
+    lambda: get_settings().get("storage_dir", default_settings()["storage_dir"]),
+    os.environ.get("MACHINE_CONTROL_SERVER_URL", f"http://127.0.0.1:{CENTER_PORT}"),
+    os.environ.get("MACHINE_CONTROL_TOKEN", "dev-token"),
+))
+OPERATION_LOG = get_operation_logger()
 
 def process_exists(pid):
     if not pid: return False
@@ -84,8 +105,21 @@ def local_machine():
             "hostname": metrics["hostname"], "os": metrics["os"],
             "status": "local", "login_state": "local", "current_ips": metrics["ips"]}
 
+def center_server_running(pid=None):
+    if pid is not None and not process_exists(pid):
+        return False
+    try:
+        with socket.create_connection(("127.0.0.1", CENTER_PORT), timeout=0.35):
+            return True
+    except OSError:
+        return False
 
-HTML = (Path(__file__).resolve().parent.parent / "web" / "index.html").read_text(encoding="utf-8")
+
+WEB_ROOT = Path(__file__).resolve().parent.parent / "web"
+
+def index_html():
+    return (WEB_ROOT / "index.html").read_text(encoding="utf-8")
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         print(f"[{self.log_date_time_string()}] {self.client_address[0]} {fmt % args}", flush=True)
@@ -107,7 +141,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             path = urllib.parse.urlparse(self.path).path
             if path == "/" or path == "/index.html":
-                data = HTML.encode("utf-8")
+                data = index_html().encode("utf-8")
                 self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
             if path.startswith("/pages/") or path.startswith("/assets/"):
                 file_path = (Path(__file__).resolve().parent.parent / "web" / path.lstrip("/")).resolve()
@@ -133,17 +167,30 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/settings/storage/reset":
                 save_settings(default_settings()); self.send_json(200, {"ok": True, "settings": get_settings()}); return
             if path == "/api/scheduler/start":
-                kwargs = {}
-                if os.name == "nt":
-                    kwargs["creationflags"] = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
-                subprocess.Popen([sys.executable, str(Path(__file__).resolve().parent / "scheduler.py")], cwd=str(Path(__file__).resolve().parent.parent), env={**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parent)}, **kwargs)
+                OPERATION_LOG.info("api.scheduler.start")
+                handle = PROCESS_MANAGER.start("scheduler")
+                self.send_json(200, {"ok": True, "pid": handle.pid}); return
+            if path == "/api/central-server/start":
+                OPERATION_LOG.info("api.central_server.start")
+                MACHINE_CONTROL_ROOT.mkdir(parents=True, exist_ok=True)
+                if PROCESS_MANAGER.status("central-server").value == "running":
+                    self.send_json(200, {"ok": True, "already_running": True}); return
+                handle = PROCESS_MANAGER.start("central-server")
+                self.send_json(200, {"ok": True, "pid": handle.pid}); return
+            if path == "/api/central-server/stop":
+                OPERATION_LOG.info("api.central_server.stop")
+                PROCESS_MANAGER.stop("central-server")
+                self.send_json(200, {"ok": True}); return
+            if path == "/api/central-client/start":
+                handle = PROCESS_MANAGER.start("central-client")
+                self.send_json(200, {"ok": True, "pid": handle.pid}); return
+            if path == "/api/central-client/stop":
+                PROCESS_MANAGER.stop("central-client")
                 self.send_json(200, {"ok": True}); return
             if path == "/api/scheduler/stop":
-                pid=int(PID_PATH.read_text(encoding="utf-8"))
-                if pid == os.getpid(): raise RuntimeError("refusing to stop web server process")
-                if os.name == "nt": subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True)
-                else: os.kill(pid, 15)
-                PID_PATH.unlink(missing_ok=True); self.send_json(200, {"ok": True}); return
+                OPERATION_LOG.info("api.scheduler.stop")
+                PROCESS_MANAGER.stop("scheduler")
+                self.send_json(200, {"ok": True}); return
             db = connect()
             if path == "/api/tools":
                 db.execute("INSERT OR REPLACE INTO tools(tool_id,name,type,entry,workdir,enabled) VALUES(?,?,?,?,?,?)", (body["tool_id"], body.get("name", body["tool_id"]), body.get("type", "local_process"), body["entry"], body.get("workdir"), int(body.get("enabled", True))))
@@ -163,7 +210,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             path = urllib.parse.urlparse(self.path).path
             if path in ("/", "/index.html"):
-                data = HTML.encode("utf-8")
+                data = index_html().encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(data)))
@@ -181,6 +228,8 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/health":
                 self.send_json(200, {"ok": True, "service": "machine-dashboard-server", "mode": "local"})
                 return
+            if path == "/api/processes":
+                self.send_json(200, {"processes": PROCESS_MANAGER.snapshot()}); return
             if path == "/api/settings/storage":
                 self.send_json(200, {"ok": True, "settings": get_settings(), "default": default_settings()["storage_dir"]}); return
             if path == "/api/tools":
@@ -194,6 +243,51 @@ class Handler(BaseHTTPRequestHandler):
                 running = process_exists(pid)
                 if not running: PID_PATH.unlink(missing_ok=True)
                 self.send_json(200, {"ok": True, "service": "scheduler", "mode": "separate-process", "running": running, "pid": pid}); return
+            if path == "/api/central-server/status":
+                pid = None
+                try: pid = int(CENTER_PID_PATH.read_text(encoding="utf-8"))
+                except (OSError, ValueError): pass
+                running = center_server_running(pid)
+                if not running: CENTER_PID_PATH.unlink(missing_ok=True)
+                self.send_json(200, {"ok": True, "service": "central-server", "running": running, "pid": pid, "port": CENTER_PORT}); return
+            if path == "/api/central-client/status":
+                item = PROCESS_MANAGER.snapshot().get("central-client", {})
+                storage_dir = Path(get_settings().get("storage_dir", default_settings()["storage_dir"]))
+                client_dir = storage_dir / "central-client"
+                self.send_json(200, {"ok": True, "service": "central-client", "running": item.get("status") == "running", "pid": item.get("pid"), "storage_dir": str(storage_dir), "client_dir": str(client_dir), "client_dir_exists": client_dir.is_dir(), "client_entry_exists": (client_dir / "control_worker" / "client.py").is_file()}); return
+            if path == "/api/settings/storage/open":
+                storage_dir = Path(get_settings().get("storage_dir", default_settings()["storage_dir"]))
+                storage_dir.mkdir(parents=True, exist_ok=True)
+                if os.name == "nt": os.startfile(str(storage_dir))
+                elif platform.system() == "Darwin": subprocess.Popen(["open", str(storage_dir)])
+                else: subprocess.Popen(["xdg-open", str(storage_dir)])
+                self.send_json(200, {"ok": True, "storage_dir": str(storage_dir)}); return
+            if path == "/api/central-client/download":
+                package = Path(__file__).resolve().parents[3] / "Tools" / "machine-control" / "packages" / "central-client.zip"
+                if not package.is_file(): raise FileNotFoundError("central-client.zip has not been built")
+                data = package.read_bytes()
+                self.send_response(200); self.send_header("Content-Type", "application/zip"); self.send_header("Content-Disposition", 'attachment; filename="central-client.zip"'); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
+            if path == "/api/central-server/connections":
+                base = f"http://127.0.0.1:{CENTER_PORT}"
+                def center_get(endpoint):
+                    request = urllib.request.Request(base + endpoint, headers={"Authorization": f"Bearer {os.environ.get('MACHINE_CONTROL_TOKEN', 'dev-token')}"})
+                    with urllib.request.urlopen(request, timeout=0.8) as response:
+                        return json.loads(response.read().decode("utf-8"))
+                try:
+                    workers = center_get("/api/workers").get("workers", [])
+                    ips = []
+                    for worker in workers:
+                        last_seen = worker.get("last_seen_at", 0) or 0
+                        online = worker.get("status") == "online" and (time.time() * 1000 - last_seen) < 45000
+                        if not online:
+                            continue
+                        for ip in worker.get("meta", {}).get("local_ips", []):
+                            if ip and ip not in ips and not ip.startswith("127."):
+                                ips.append(ip)
+                    self.send_json(200, {"ok": True, "ips": ips, "workers": workers})
+                except Exception:
+                    self.send_json(200, {"ok": True, "ips": [], "workers": [], "available": False})
+                return
             if path == "/api/machines":
                 self.send_json(200, {"machines": [local_machine()], "mode": "local"})
                 return

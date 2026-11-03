@@ -1,0 +1,41 @@
+Machine Control Center listening on http://0.0.0.0:18765
+Store: data/control-center.json
+================================================================
+Machine Control Center - worker connection info
+Local URL : http://127.0.0.1:18765
+Worker URL: http://10.0.27.95:18765
+Token     : dev-token
+Use Worker URL as CENTRAL_URL on other machines; do not use 127.0.0.1 remotely.
+================================================================
+[worker connected] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224 capabilities=adb,shell,unity
+[worker connected] machine_id=ios-mac-build-01 hostname=MAC-MINI-KOA-82.local ips=10.7.71.199 capabilities=ios,shell,unity,xcode
+[worker connected] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228 capabilities=adb,shell,unity
+[worker heartbeat online] machine_id=ios-mac-build-01 hostname=MAC-MINI-KOA-82.local ips=10.7.71.199
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker connected] machine_id=ios-mac-build-01 hostname=MAC-MINI-KOA-82.local ips=10.7.71.199 capabilities=ios,shell,unity,xcode
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker connected] machine_id=ios-mac-build-01 hostname=MAC-MINI-KOA-zhongtai.local ips=10.0.27.95 capabilities=ios,shell,unity,xcode
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker heartbeat online] machine_id=win-pack-228 hostname=BJPCC-0010480 ips=10.0.76.228
+[worker heartbeat online] machine_id=win-pack-224 hostname=DESKTOP-I3QUONB ips=10.0.27.224
