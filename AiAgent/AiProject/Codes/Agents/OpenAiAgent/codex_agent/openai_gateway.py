@@ -14,7 +14,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:  # .env loading is optional when variables are set externally
+    def load_dotenv(*args: Any, **kwargs: Any) -> bool:
+        return False
 
 # Keep gateway configuration next to the Codex agent package. Explicitly pass
 # the path so importing this module does not depend on the process cwd.
@@ -103,8 +107,12 @@ def chat_completion(request: dict[str, Any], client: CodexClient) -> dict[str, A
         raise ValueError("messages must be a list")
     logger.info("网关收到的消息内容: %s", json.dumps(messages, ensure_ascii=False))
     tools = _to_responses_tools(request.get("tools") or [])
+    # The upstream Codex Responses endpoint requires SSE for these models.
+    # Buffer the stream inside CodexClient, then return a normal JSON response
+    # to the local dashboard client.
     result = client.respond(
         _to_responses_input(messages), model=request.get("model"), tools=tools or None,
+        stream=True,
     )
     logger.info("网关模型调用完成")
     text = result if isinstance(result, str) else ""
@@ -158,6 +166,12 @@ class _Handler(BaseHTTPRequestHandler):
         except (ValueError, KeyError, TypeError, CodexError) as exc:
             logger.exception("网关请求处理失败")
             self._json(400, {"error": {"message": str(exc), "type": "invalid_request_error"}})
+            return
+        except Exception as exc:
+            # Keep upstream transport failures from abruptly closing the
+            # dashboard's HTTP connection without a response.
+            logger.exception("网关上游请求失败")
+            self._json(502, {"error": {"message": str(exc), "type": "upstream_error"}})
             return
         if not request.get("stream"):
             self._json(200, result)

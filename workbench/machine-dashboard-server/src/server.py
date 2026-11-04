@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from launchers.central_server import CentralServerLauncher
 from launchers.scheduler import SchedulerLauncher
 from launchers.worker_client import WorkerClientLauncher
+from launchers.openai_agent import OpenAIAgentLauncher
 
 PORT = int(os.environ.get("MACHINE_DASHBOARD_PORT", "18888"))
 MACHINE_CONTROL_ROOT = Path(__file__).resolve().parents[3] / "Tools" / "machine-control"
@@ -36,6 +37,7 @@ PROCESS_MANAGER.register(WorkerClientLauncher(
     os.environ.get("MACHINE_CONTROL_SERVER_URL", f"http://127.0.0.1:{CENTER_PORT}"),
     os.environ.get("MACHINE_CONTROL_TOKEN", "dev-token"),
 ))
+PROCESS_MANAGER.register(OpenAIAgentLauncher(Path(__file__).resolve().parents[3] / "AiAgent" / "AiProject" / "Codes" / "Agents" / "OpenAiAgent", int(os.environ.get("CODEX_GATEWAY_PORT", "8765"))))
 OPERATION_LOG = get_operation_logger()
 
 def process_exists(pid):
@@ -47,6 +49,23 @@ def process_exists(pid):
         os.kill(pid, 0); return True
     except Exception:
         return False
+
+def clear_port(port: int) -> list[int]:
+    """Terminate Windows processes currently listening on a local port."""
+    killed = []
+    if os.name != "nt":
+        return killed
+    output = subprocess.run(["netstat", "-ano", "-p", "tcp"], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW).stdout
+    for line in output.splitlines():
+        fields = line.split()
+        if len(fields) >= 5 and fields[0].upper() == "TCP" and fields[1].endswith(f":{port}") and fields[3].upper() == "LISTENING":
+            try:
+                pid = int(fields[4])
+                subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                killed.append(pid)
+            except ValueError:
+                continue
+    return killed
 
 
 def local_metrics():
@@ -181,6 +200,9 @@ class Handler(BaseHTTPRequestHandler):
                 OPERATION_LOG.info("api.central_server.stop")
                 PROCESS_MANAGER.stop("central-server")
                 self.send_json(200, {"ok": True}); return
+            if path == "/api/central-server/cleanup":
+                killed = PROCESS_MANAGER.cleanup("central-server")
+                self.send_json(200, {"ok": True, "port": CENTER_PORT, "killed": killed}); return
             if path == "/api/central-client/start":
                 handle = PROCESS_MANAGER.start("central-client")
                 self.send_json(200, {"ok": True, "pid": handle.pid}); return
@@ -191,6 +213,23 @@ class Handler(BaseHTTPRequestHandler):
                 OPERATION_LOG.info("api.scheduler.stop")
                 PROCESS_MANAGER.stop("scheduler")
                 self.send_json(200, {"ok": True}); return
+            if path == "/api/openai-agent/start":
+                OPERATION_LOG.info("api.openai_agent.start")
+                handle = PROCESS_MANAGER.start("openai-agent")
+                self.send_json(200, {"ok": True, "pid": handle.pid, "port": handle.port}); return
+            if path == "/api/openai-agent/stop":
+                OPERATION_LOG.info("api.openai_agent.stop")
+                PROCESS_MANAGER.stop("openai-agent")
+                self.send_json(200, {"ok": True}); return
+            if path == "/api/openai-agent/cleanup":
+                killed = PROCESS_MANAGER.cleanup("openai-agent")
+                self.send_json(200, {"ok": True, "port": int(os.environ.get("CODEX_GATEWAY_PORT", "8765")), "killed": killed}); return
+            if path == "/api/openai-agent/chat":
+                message = str(body.get("message", "")).strip()
+                if not message: raise ValueError("message is required")
+                if PROCESS_MANAGER.status("openai-agent").value != "running": PROCESS_MANAGER.start("openai-agent")
+                answer = PROCESS_MANAGER._entry("openai-agent").process.chat(message, str(body.get("model") or "gpt-5.6-terra"))
+                self.send_json(200, {"ok": True, "answer": answer}); return
             db = connect()
             if path == "/api/tools":
                 db.execute("INSERT OR REPLACE INTO tools(tool_id,name,type,entry,workdir,enabled) VALUES(?,?,?,?,?,?)", (body["tool_id"], body.get("name", body["tool_id"]), body.get("type", "local_process"), body["entry"], body.get("workdir"), int(body.get("enabled", True))))
@@ -255,6 +294,10 @@ class Handler(BaseHTTPRequestHandler):
                 storage_dir = Path(get_settings().get("storage_dir", default_settings()["storage_dir"]))
                 client_dir = storage_dir / "central-client"
                 self.send_json(200, {"ok": True, "service": "central-client", "running": item.get("status") == "running", "pid": item.get("pid"), "storage_dir": str(storage_dir), "client_dir": str(client_dir), "client_dir_exists": client_dir.is_dir(), "client_entry_exists": (client_dir / "control_worker" / "client.py").is_file()}); return
+            if path == "/api/openai-agent/status":
+                item = PROCESS_MANAGER.snapshot().get("openai-agent", {})
+                project_dir = Path(__file__).resolve().parents[3] / "AiAgent" / "AiProject" / "Codes" / "Agents" / "OpenAiAgent"
+                self.send_json(200, {"ok": True, "service": "openai-agent", "running": item.get("status") == "running", "pid": item.get("pid"), "port": item.get("port"), "project_dir": str(project_dir), "entry_exists": (project_dir / "codex_agent" / "openai_gateway.py").is_file()}); return
             if path == "/api/settings/storage/open":
                 storage_dir = Path(get_settings().get("storage_dir", default_settings()["storage_dir"]))
                 storage_dir.mkdir(parents=True, exist_ok=True)

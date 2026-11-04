@@ -1,0 +1,502 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\start.py", line 6, in <module>
+    from .openai_gateway import main
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 17, in <module>
+    from dotenv import load_dotenv
+ModuleNotFoundError: No module named 'dotenv'
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\start.py", line 6, in <module>
+    from .openai_gateway import main
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 17, in <module>
+    from dotenv import load_dotenv
+ModuleNotFoundError: No module named 'dotenv'
+Codex gateway listening on http://127.0.0.1:8765/v1
+Codex gateway listening on http://127.0.0.1:18765/v1
+127.0.0.1 - - [04/Nov/2026 19:45:23] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:23] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:26] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:26] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:29] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:29] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:32] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:32] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:35] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:35] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:38] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:38] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:41] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:41] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:44] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:44] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:47] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:47] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:50] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:50] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:53] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:53] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:56] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:56] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:45:59] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:45:59] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:02] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:02] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:05] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:05] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:08] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:08] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:11] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:11] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:14] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:14] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:17] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:17] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:20] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:20] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:23] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:23] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:26] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:26] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:29] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:29] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:32] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:32] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:35] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:35] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:38] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:38] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:41] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:41] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:44] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:44] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:47] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:47] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:50] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:50] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:53] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:53] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:56] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:56] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:46:59] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:46:59] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:02] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:02] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:05] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:05] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:08] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:08] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:11] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:11] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:14] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:14] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:17] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:17] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:20] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:20] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:23] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:23] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:26] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:26] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:29] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:29] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:32] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:32] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:35] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:35] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:38] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:38] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:41] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:41] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:44] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:44] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:47] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:47] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:50] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:50] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:53] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:53] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:56] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:56] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:47:59] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:47:59] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:02] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:02] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:05] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:05] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:08] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:08] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:11] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:11] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:14] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:14] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:17] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:17] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:20] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:20] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:23] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:23] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:26] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:26] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:29] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:29] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:32] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:32] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:35] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:35] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:38] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:38] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:41] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:41] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:44] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:44] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:47] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:47] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:50] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:50] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:53] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:53] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:56] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:56] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:48:59] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:48:59] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 19:49:02] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 19:49:02] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:08] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:08] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:11] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:11] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:14] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:14] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:17] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:17] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:20] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:20] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:21] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:21] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:24] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:24] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:27] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:27] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:30] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:30] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:33] "POST /api/workers/register HTTP/1.1" 404 -
+127.0.0.1 - - [04/Nov/2026 21:32:33] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:33] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:36] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:36] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:38] "POST /api/workers/register HTTP/1.1" 404 -
+127.0.0.1 - - [04/Nov/2026 21:32:39] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:39] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:42] "POST /api/workers/register HTTP/1.1" 404 -
+127.0.0.1 - - [04/Nov/2026 21:32:42] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:42] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:45] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:45] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:48] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:48] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:51] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:51] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:54] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:54] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:32:57] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:32:57] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:00] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:00] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:02] "POST /api/workers/register HTTP/1.1" 404 -
+127.0.0.1 - - [04/Nov/2026 21:33:03] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:03] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:05] "POST /api/workers/register HTTP/1.1" 404 -
+127.0.0.1 - - [04/Nov/2026 21:33:06] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:06] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:09] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:09] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:12] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:12] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:15] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:15] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:18] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:18] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:21] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:21] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:24] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:24] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:27] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:27] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:30] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:30] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:33] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:33] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:36] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:36] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:39] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:39] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:33:42] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:33:42] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:39:46] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:39:46] "GET /api/workers HTTP/1.1" 501 -
+127.0.0.1 - - [04/Nov/2026 21:39:49] code 501, message Unsupported method ('GET')
+127.0.0.1 - - [04/Nov/2026 21:39:49] "GET /api/workers HTTP/1.1" 501 -
+  raise CodexError(f"Codex 请求失败 ({response.status_code}): {response.text}")
+codex_agent.codex.CodexError: Codex 请求失败 (400): {"detail":"The 'gpt-5.6-cyber' model is not supported when using Codex with a ChatGPT account.","error":{"type":"invalid_request_error","code":"model_not_found","message":"The 'gpt-5.6-cyber' model is not supported when using Codex with a ChatGPT account."}}
+127.0.0.1 - - [04/Nov/2026 21:11:54] "POST /v1/chat/completions HTTP/1.1" 400 -
+2026-11-04 21:11:59,441 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-5.3-codex, messages=1, tools=0
+2026-11-04 21:11:59,442 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:11:59,442 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.3-codex, messages=1, tools=0
+2026-11-04 21:11:59,443 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-5.3-codex", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:12:00,130 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=400
+2026-11-04 21:12:00,130 | ERROR    | aiagent | codex.py:97 | 模型请求失败: status=400, body={"detail":"The 'gpt-5.3-codex' model is not supported when using Codex with a ChatGPT account.","error":{"type":"invalid_request_error","code":"model_not_found","message":"The 'gpt-5.3-codex' model is not supported when using Codex with a ChatGPT account."}}
+2026-11-04 21:12:00,130 | ERROR    | aiagent | openai_gateway.py:167 | 网关请求处理失败
+Traceback (most recent call last):
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 165, in do_POST
+    result = chat_completion(request, self.client)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 113, in chat_completion
+    result = client.respond(
+             ^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 98, in respond
+    raise CodexError(f"Codex 请求失败 ({response.status_code}): {response.text}")
+codex_agent.codex.CodexError: Codex 请求失败 (400): {"detail":"The 'gpt-5.3-codex' model is not supported when using Codex with a ChatGPT account.","error":{"type":"invalid_request_error","code":"model_not_found","message":"The 'gpt-5.3-codex' model is not supported when using Codex with a ChatGPT account."}}
+127.0.0.1 - - [04/Nov/2026 21:12:00] "POST /v1/chat/completions HTTP/1.1" 400 -
+2026-11-04 21:12:03,073 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-6.1-sol, messages=1, tools=0
+2026-11-04 21:12:03,073 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:12:03,073 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-6.1-sol, messages=1, tools=0
+2026-11-04 21:12:03,074 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-6.1-sol", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:12:11,890 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:12:11,891 | INFO     | aiagent | codex.py:103 | 模型响应解析完成: result_type=str
+2026-11-04 21:12:11,891 | INFO     | aiagent | codex.py:104 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-11-04 21:12:11,892 | INFO     | aiagent | openai_gateway.py:117 | 网关模型调用完成
+2026-11-04 21:12:11,892 | INFO     | aiagent | openai_gateway.py:132 | 网关返还给用户的内容: {"role": "assistant", "content": "你好！有什么我可以帮你的吗？"}
+127.0.0.1 - - [04/Nov/2026 21:12:11] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-11-04 21:12:22,146 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-6.1-terra, messages=1, tools=0
+2026-11-04 21:12:22,147 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:12:22,147 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-6.1-terra, messages=1, tools=0
+2026-11-04 21:12:22,147 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-6.1-terra", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:12:54,544 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:12:54,544 | ERROR    | aiagent | codex.py:219 | 模型流式响应报告错误: type=error, error=message=An error occurred while processing your request. You can retry your request, or contact us through our help center at help.openai.com if the error persists. Please include the request ID 31cdc521-93f5-43d1-8f32-e23fda33fe27 in your message.
+2026-11-04 21:12:54,544 | ERROR    | aiagent | openai_gateway.py:167 | 网关请求处理失败
+Traceback (most recent call last):
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 165, in do_POST
+    result = chat_completion(request, self.client)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 113, in chat_completion
+    result = client.respond(
+             ^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 102, in respond
+    result = self._decode_response(response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 220, in _decode_response
+    raise CodexError(f"模型响应失败: {stream_error}")
+codex_agent.codex.CodexError: 模型响应失败: message=An error occurred while processing your request. You can retry your request, or contact us through our help center at help.openai.com if the error persists. Please include the request ID 31cdc521-93f5-43d1-8f32-e23fda33fe27 in your message.
+127.0.0.1 - - [04/Nov/2026 21:12:54] "POST /v1/chat/completions HTTP/1.1" 400 -
+2026-11-04 21:13:11,210 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-6.1-terra, messages=1, tools=0
+2026-11-04 21:13:11,210 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:13:11,211 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-6.1-terra, messages=1, tools=0
+2026-11-04 21:13:11,211 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-6.1-terra", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:13:35,094 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:13:35,095 | ERROR    | aiagent | codex.py:219 | 模型流式响应报告错误: type=error, error=message=An error occurred while processing your request. You can retry your request, or contact us through our help center at help.openai.com if the error persists. Please include the request ID d5b21703-1411-4b8a-804e-f117103296d5 in your message.
+2026-11-04 21:13:35,096 | ERROR    | aiagent | openai_gateway.py:167 | 网关请求处理失败
+Traceback (most recent call last):
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 165, in do_POST
+    result = chat_completion(request, self.client)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 113, in chat_completion
+    result = client.respond(
+             ^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 102, in respond
+    result = self._decode_response(response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 220, in _decode_response
+    raise CodexError(f"模型响应失败: {stream_error}")
+codex_agent.codex.CodexError: 模型响应失败: message=An error occurred while processing your request. You can retry your request, or contact us through our help center at help.openai.com if the error persists. Please include the request ID d5b21703-1411-4b8a-804e-f117103296d5 in your message.
+127.0.0.1 - - [04/Nov/2026 21:13:35] "POST /v1/chat/completions HTTP/1.1" 400 -
+2026-11-04 21:13:53,159 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-6-luna, messages=1, tools=0
+2026-11-04 21:13:53,159 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:13:53,160 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-6-luna, messages=1, tools=0
+2026-11-04 21:13:53,160 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-6-luna", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:14:12,877 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:14:12,877 | INFO     | aiagent | codex.py:103 | 模型响应解析完成: result_type=str
+2026-11-04 21:14:12,877 | INFO     | aiagent | codex.py:104 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-11-04 21:14:12,878 | INFO     | aiagent | openai_gateway.py:117 | 网关模型调用完成
+2026-11-04 21:14:12,878 | INFO     | aiagent | openai_gateway.py:132 | 网关返还给用户的内容: {"role": "assistant", "content": "你好！有什么我可以帮你的吗？"}
+127.0.0.1 - - [04/Nov/2026 21:14:12] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-11-04 21:16:06,860 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-5.6-terra, messages=1, tools=0
+2026-11-04 21:16:06,860 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:16:06,860 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-terra, messages=1, tools=0
+2026-11-04 21:16:06,861 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-5.6-terra", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:16:18,224 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:16:18,224 | INFO     | aiagent | codex.py:103 | 模型响应解析完成: result_type=str
+2026-11-04 21:16:18,224 | INFO     | aiagent | codex.py:104 | 模型返回内容: "你好！有什么可以帮你的吗？"
+2026-11-04 21:16:18,225 | INFO     | aiagent | openai_gateway.py:117 | 网关模型调用完成
+2026-11-04 21:16:18,225 | INFO     | aiagent | openai_gateway.py:132 | 网关返还给用户的内容: {"role": "assistant", "content": "你好！有什么可以帮你的吗？"}
+127.0.0.1 - - [04/Nov/2026 21:16:18] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-11-04 21:16:26,164 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-6.1-sol, messages=1, tools=0
+2026-11-04 21:16:26,165 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:16:26,165 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-6.1-sol, messages=1, tools=0
+2026-11-04 21:16:26,165 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-6.1-sol", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:16:36,371 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:16:36,372 | ERROR    | aiagent | codex.py:219 | 模型流式响应报告错误: type=error, error=message=Our servers are currently overloaded. Please try again later.
+2026-11-04 21:16:36,373 | ERROR    | aiagent | openai_gateway.py:167 | 网关请求处理失败
+Traceback (most recent call last):
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 165, in do_POST
+    result = chat_completion(request, self.client)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 113, in chat_completion
+    result = client.respond(
+             ^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 102, in respond
+    result = self._decode_response(response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 220, in _decode_response
+    raise CodexError(f"模型响应失败: {stream_error}")
+codex_agent.codex.CodexError: 模型响应失败: message=Our servers are currently overloaded. Please try again later.
+127.0.0.1 - - [04/Nov/2026 21:16:36] "POST /v1/chat/completions HTTP/1.1" 400 -
+2026-11-04 21:16:39,533 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-6.1-sol, messages=1, tools=0
+2026-11-04 21:16:39,533 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:16:39,534 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-6.1-sol, messages=1, tools=0
+2026-11-04 21:16:39,534 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-6.1-sol", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:17:27,588 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:17:27,589 | ERROR    | aiagent | codex.py:219 | 模型流式响应报告错误: type=error, error=message=An error occurred while processing your request. You can retry your request, or contact us through our help center at help.openai.com if the error persists. Please include the request ID 5377d43a-fe45-4c26-b29d-18007dd870f0 in your message.
+2026-11-04 21:17:27,589 | ERROR    | aiagent | openai_gateway.py:167 | 网关请求处理失败
+Traceback (most recent call last):
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 165, in do_POST
+    result = chat_completion(request, self.client)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 113, in chat_completion
+    result = client.respond(
+             ^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 102, in respond
+    result = self._decode_response(response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 220, in _decode_response
+    raise CodexError(f"模型响应失败: {stream_error}")
+codex_agent.codex.CodexError: 模型响应失败: message=An error occurred while processing your request. You can retry your request, or contact us through our help center at help.openai.com if the error persists. Please include the request ID 5377d43a-fe45-4c26-b29d-18007dd870f0 in your message.
+127.0.0.1 - - [04/Nov/2026 21:17:27] "POST /v1/chat/completions HTTP/1.1" 400 -
+2026-11-04 21:17:31,033 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-6.1-terra, messages=1, tools=0
+2026-11-04 21:17:31,033 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:17:31,034 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-6.1-terra, messages=1, tools=0
+2026-11-04 21:17:31,034 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-6.1-terra", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:17:57,663 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:17:57,664 | ERROR    | aiagent | codex.py:219 | 模型流式响应报告错误: type=error, error=message=An error occurred while processing your request. You can retry your request, or contact us through our help center at help.openai.com if the error persists. Please include the request ID 8faf1ef3-0a2a-49ef-9072-9814da07a916 in your message.
+2026-11-04 21:17:57,665 | ERROR    | aiagent | openai_gateway.py:167 | 网关请求处理失败
+Traceback (most recent call last):
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 165, in do_POST
+    result = chat_completion(request, self.client)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 113, in chat_completion
+    result = client.respond(
+             ^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 102, in respond
+    result = self._decode_response(response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 220, in _decode_response
+    raise CodexError(f"模型响应失败: {stream_error}")
+codex_agent.codex.CodexError: 模型响应失败: message=An error occurred while processing your request. You can retry your request, or contact us through our help center at help.openai.com if the error persists. Please include the request ID 8faf1ef3-0a2a-49ef-9072-9814da07a916 in your message.
+127.0.0.1 - - [04/Nov/2026 21:17:57] "POST /v1/chat/completions HTTP/1.1" 400 -
+2026-11-04 21:18:03,971 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-6-luna, messages=1, tools=0
+2026-11-04 21:18:03,971 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:18:03,972 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-6-luna, messages=1, tools=0
+2026-11-04 21:18:03,972 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-6-luna", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:18:46,815 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:18:46,817 | INFO     | aiagent | codex.py:103 | 模型响应解析完成: result_type=str
+2026-11-04 21:18:46,818 | INFO     | aiagent | codex.py:104 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-11-04 21:18:46,819 | INFO     | aiagent | openai_gateway.py:117 | 网关模型调用完成
+2026-11-04 21:18:46,820 | INFO     | aiagent | openai_gateway.py:132 | 网关返还给用户的内容: {"role": "assistant", "content": "你好！有什么我可以帮你的吗？"}
+127.0.0.1 - - [04/Nov/2026 21:18:46] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-11-04 21:18:57,266 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-6-astra, messages=1, tools=0
+2026-11-04 21:18:57,267 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:18:57,267 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-6-astra, messages=1, tools=0
+2026-11-04 21:18:57,267 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-6-astra", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:19:09,185 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:19:09,185 | INFO     | aiagent | codex.py:103 | 模型响应解析完成: result_type=str
+2026-11-04 21:19:09,186 | INFO     | aiagent | codex.py:104 | 模型返回内容: "你好！有什么我可以帮助你的吗？"
+2026-11-04 21:19:09,186 | INFO     | aiagent | openai_gateway.py:117 | 网关模型调用完成
+2026-11-04 21:19:09,187 | INFO     | aiagent | openai_gateway.py:132 | 网关返还给用户的内容: {"role": "assistant", "content": "你好！有什么我可以帮助你的吗？"}
+127.0.0.1 - - [04/Nov/2026 21:19:09] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-11-04 21:19:43,751 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-5.6-terra, messages=1, tools=0
+2026-11-04 21:19:43,751 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:19:43,751 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-terra, messages=1, tools=0
+2026-11-04 21:19:43,751 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-5.6-terra", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:19:56,332 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:19:56,333 | INFO     | aiagent | codex.py:103 | 模型响应解析完成: result_type=str
+2026-11-04 21:19:56,333 | INFO     | aiagent | codex.py:104 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-11-04 21:19:56,333 | INFO     | aiagent | openai_gateway.py:117 | 网关模型调用完成
+2026-11-04 21:19:56,333 | INFO     | aiagent | openai_gateway.py:132 | 网关返还给用户的内容: {"role": "assistant", "content": "你好！有什么我可以帮你的吗？"}
+127.0.0.1 - - [04/Nov/2026 21:19:56] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-11-04 21:20:04,292 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-5.6-sol, messages=1, tools=0
+2026-11-04 21:20:04,292 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:20:04,292 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-sol, messages=1, tools=0
+2026-11-04 21:20:04,293 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:20:40,594 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:20:40,595 | ERROR    | aiagent | codex.py:219 | 模型流式响应报告错误: type=error, error=message=An error occurred while processing your request. You can retry your request, or contact us through our help center at help.openai.com if the error persists. Please include the request ID 9455a9b0-a4d7-4805-b411-3d55ba1816b6 in your message.
+2026-11-04 21:20:40,596 | ERROR    | aiagent | openai_gateway.py:167 | 网关请求处理失败
+Traceback (most recent call last):
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 165, in do_POST
+    result = chat_completion(request, self.client)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\openai_gateway.py", line 113, in chat_completion
+    result = client.respond(
+             ^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 102, in respond
+    result = self._decode_response(response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SelfAgent\AiAgent\AiProject\Codes\Agents\OpenAiAgent\codex_agent\codex.py", line 220, in _decode_response
+    raise CodexError(f"模型响应失败: {stream_error}")
+codex_agent.codex.CodexError: 模型响应失败: message=An error occurred while processing your request. You can retry your request, or contact us through our help center at help.openai.com if the error persists. Please include the request ID 9455a9b0-a4d7-4805-b411-3d55ba1816b6 in your message.
+127.0.0.1 - - [04/Nov/2026 21:20:40] "POST /v1/chat/completions HTTP/1.1" 400 -
+2026-11-04 21:20:55,897 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-5.6-sol, messages=1, tools=0
+2026-11-04 21:20:55,898 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:20:55,898 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-sol, messages=1, tools=0
+2026-11-04 21:20:55,899 | INFO     | aiagent | codex.py:57 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false}
+2026-11-04 21:21:05,570 | INFO     | aiagent | codex.py:74 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:21:05,571 | INFO     | aiagent | codex.py:103 | 模型响应解析完成: result_type=str
+2026-11-04 21:21:05,571 | INFO     | aiagent | codex.py:104 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-11-04 21:21:05,572 | INFO     | aiagent | openai_gateway.py:117 | 网关模型调用完成
+2026-11-04 21:21:05,572 | INFO     | aiagent | openai_gateway.py:132 | 网关返还给用户的内容: {"role": "assistant", "content": "你好！有什么我可以帮你的吗？"}
+127.0.0.1 - - [04/Nov/2026 21:21:05] "POST /v1/chat/completions HTTP/1.1" 200 -
+Codex gateway listening on http://127.0.0.1:8765/v1
+2026-11-04 21:27:59,416 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-5.6-sol, messages=1, tools=0
+2026-11-04 21:27:59,416 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:27:59,416 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-sol, messages=1, tools=0
+2026-11-04 21:27:59,417 | INFO     | aiagent | codex.py:58 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false, "reasoning": {"effort": "low"}}
+2026-11-04 21:28:09,623 | INFO     | aiagent | codex.py:75 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:28:09,623 | INFO     | aiagent | codex.py:104 | 模型响应解析完成: result_type=str
+2026-11-04 21:28:09,623 | INFO     | aiagent | codex.py:105 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-11-04 21:28:09,624 | INFO     | aiagent | openai_gateway.py:117 | 网关模型调用完成
+2026-11-04 21:28:09,624 | INFO     | aiagent | openai_gateway.py:132 | 网关返还给用户的内容: {"role": "assistant", "content": "你好！有什么我可以帮你的吗？"}
+127.0.0.1 - - [04/Nov/2026 21:28:09] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-11-04 21:28:34,107 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-5.6-sol, messages=1, tools=0
+2026-11-04 21:28:34,107 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "deepseek harness是什么"}]
+2026-11-04 21:28:34,107 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-sol, messages=1, tools=0
+2026-11-04 21:28:34,108 | INFO     | aiagent | codex.py:58 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "deepseek harness是什么"}], "stream": true, "store": false, "reasoning": {"effort": "low"}}
+2026-11-04 21:28:57,606 | INFO     | aiagent | codex.py:75 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:28:57,608 | INFO     | aiagent | codex.py:104 | 模型响应解析完成: result_type=str
+2026-11-04 21:28:57,609 | INFO     | aiagent | codex.py:105 | 模型返回内容: "“**DeepSeek harness**”通常不是 DeepSeek 官方单独的一款产品名称，具体含义要看上下文。常见有以下几种：\n\n1. **评测工具/测试框架**\n   - 指用来测试 DeepSeek 模型能力的代码框架，例如：\n     - `lm-evaluation-harness`\n     - 各类 LLM benchmark harness\n   - 用于统一调用 DeepSeek，并测试数学、代码、知识问答、推理等能力。\n\n2. **模型调用封装层**\n   - 在 AI Agent 或应用中，harness 可以理解为“模型运行控制框架”。\n   - 它负责：\n     - 调用 DeepSeek API\n     - 管理提示词\n     - 处理上下文和工具调用\n     - 记录日志\n     - 重试和评估输出\n\n3. **代码测试/代理运行环境**\n   - 在代码生成任务中，harness 也可能指一套自动化测试脚本：\n     - 把问题交给 DeepSeek\n     - 运行它生成的代码\n     - 检查测试是否通过\n     - 统计正确率或成本\n\n简单说，**harness = 用来“驱动、测试和评估”DeepSeek 模型的一套框架或脚手架**，类似汽车上的“测试/控制系统”，不是模型本身。\n\n如果你是在某篇文章、GitHub 项目或命令行中看到 “DeepSeek harness”，把相关链接或上下文发来，我可以帮你判断它具体指哪个项目。"
+2026-11-04 21:28:57,620 | INFO     | aiagent | openai_gateway.py:117 | 网关模型调用完成
+2026-11-04 21:28:57,621 | INFO     | aiagent | openai_gateway.py:132 | 网关返还给用户的内容: {"role": "assistant", "content": "“**DeepSeek harness**”通常不是 DeepSeek 官方单独的一款产品名称，具体含义要看上下文。常见有以下几种：\n\n1. **评测工具/测试框架**\n   - 指用来测试 DeepSeek 模型能力的代码框架，例如：\n     - `lm-evaluation-harness`\n     - 各类 LLM benchmark harness\n   - 用于统一调用 DeepSeek，并测试数学、代码、知识问答、推理等能力。\n\n2. **模型调用封装层**\n   - 在 AI Agent 或应用中，harness 可以理解为“模型运行控制框架”。\n   - 它负责：\n     - 调用 DeepSeek API\n     - 管理提示词\n     - 处理上下文和工具调用\n     - 记录日志\n     - 重试和评估输出\n\n3. **代码测试/代理运行环境**\n   - 在代码生成任务中，harness 也可能指一套自动化测试脚本：\n     - 把问题交给 DeepSeek\n     - 运行它生成的代码\n     - 检查测试是否通过\n     - 统计正确率或成本\n\n简单说，**harness = 用来“驱动、测试和评估”DeepSeek 模型的一套框架或脚手架**，类似汽车上的“测试/控制系统”，不是模型本身。\n\n如果你是在某篇文章、GitHub 项目或命令行中看到 “DeepSeek harness”，把相关链接或上下文发来，我可以帮你判断它具体指哪个项目。"}
+127.0.0.1 - - [04/Nov/2026 21:28:57] "POST /v1/chat/completions HTTP/1.1" 200 -
+Codex gateway listening on http://127.0.0.1:8765/v1
+Codex gateway listening on http://127.0.0.1:8765/v1
+Codex gateway listening on http://127.0.0.1:8765/v1
+2026-11-04 21:53:07,897 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-5.6-terra, messages=1, tools=0
+2026-11-04 21:53:07,898 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:53:07,898 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-terra, messages=1, tools=0
+2026-11-04 21:53:07,899 | INFO     | aiagent | codex.py:58 | 实际发送给模型的请求: {"model": "gpt-5.6-terra", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false, "reasoning": {"effort": "low"}}
+2026-11-04 21:53:23,110 | INFO     | aiagent | codex.py:75 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:53:23,111 | INFO     | aiagent | codex.py:104 | 模型响应解析完成: result_type=str
+2026-11-04 21:53:23,111 | INFO     | aiagent | codex.py:105 | 模型返回内容: "你好！有什么可以帮你的吗？"
+2026-11-04 21:53:23,112 | INFO     | aiagent | openai_gateway.py:117 | 网关模型调用完成
+2026-11-04 21:53:23,112 | INFO     | aiagent | openai_gateway.py:132 | 网关返还给用户的内容: {"role": "assistant", "content": "你好！有什么可以帮你的吗？"}
+127.0.0.1 - - [04/Nov/2026 21:53:23] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-11-04 21:53:24,503 | INFO     | aiagent | openai_gateway.py:104 | 收到网关聊天请求: model=gpt-5.6-sol, messages=1, tools=0
+2026-11-04 21:53:24,504 | INFO     | aiagent | openai_gateway.py:108 | 网关收到的消息内容: [{"role": "user", "content": "你好"}]
+2026-11-04 21:53:24,504 | INFO     | aiagent | codex.py:47 | 准备发送模型请求: model=gpt-5.6-sol, messages=1, tools=0
+2026-11-04 21:53:24,504 | INFO     | aiagent | codex.py:58 | 实际发送给模型的请求: {"model": "gpt-5.6-sol", "input": [{"role": "user", "content": "你好"}], "stream": true, "store": false, "reasoning": {"effort": "low"}}
+2026-11-04 21:53:33,213 | INFO     | aiagent | codex.py:75 | 收到模型 HTTP 响应: status=200
+2026-11-04 21:53:33,214 | INFO     | aiagent | codex.py:104 | 模型响应解析完成: result_type=str
+2026-11-04 21:53:33,214 | INFO     | aiagent | codex.py:105 | 模型返回内容: "你好！有什么我可以帮你的吗？"
+2026-11-04 21:53:33,215 | INFO     | aiagent | openai_gateway.py:117 | 网关模型调用完成
+2026-11-04 21:53:33,215 | INFO     | aiagent | openai_gateway.py:132 | 网关返还给用户的内容: {"role": "assistant", "content": "你好！有什么我可以帮你的吗？"}
+127.0.0.1 - - [04/Nov/2026 21:53:33] "POST /v1/chat/completions HTTP/1.1" 200 -

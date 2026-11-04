@@ -49,6 +49,17 @@ class ProcessManager:
         entry.status = ProcessStatus.STOPPED
         entry.handle = None
 
+    def cleanup(self, name: str) -> list[int]:
+        entry = self._entry(name)
+        port = entry.handle.port if entry.handle else getattr(entry.process, "port", None)
+        cleanup_handle = entry.handle or (ProcessHandle(None, port) if port else None)
+        self._logger.info("process.cleanup.begin name=%s port=%s", name, port)
+        killed = entry.process.cleanup(cleanup_handle)
+        entry.status = ProcessStatus.STOPPED
+        entry.handle = None
+        self._logger.info("process.cleanup.end name=%s killed=%s", name, killed)
+        return killed
+
     def status(self, name: str) -> ProcessStatus:
         entry = self._entry(name)
         if entry.handle and entry.process.is_running(entry.handle):

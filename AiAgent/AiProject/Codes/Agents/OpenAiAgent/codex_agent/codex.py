@@ -51,15 +51,27 @@ class CodexClient:
             "input": messages,
             "stream": stream,
             "store": False,
+            "reasoning": {"effort": "low"},
         }
         if tools:
             payload["tools"] = tools
         logger.info("实际发送给模型的请求: %s", _log_value(payload))
-        response = self.http.post(
-            f"{self.settings.codex_base_url}/responses",
-            headers=self._headers(tokens),
-            json=payload,
-        )
+        try:
+            response = self.http.post(
+                f"{self.settings.codex_base_url}/responses",
+                headers=self._headers(tokens),
+                json=payload,
+            )
+        except httpx.RequestError as exc:
+            # Some Codex deployments close non-streaming connections without
+            # an HTTP response. Retry once using the required SSE transport.
+            logger.warning("模型连接异常，切换 stream=true 重试: %s", exc)
+            payload["stream"] = True
+            response = self.http.post(
+                f"{self.settings.codex_base_url}/responses",
+                headers=self._headers(tokens),
+                json=payload,
+            )
         logger.info("收到模型 HTTP 响应: status=%s", response.status_code)
         if (
             response.status_code == 400
