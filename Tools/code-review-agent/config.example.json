@@ -1,0 +1,6 @@
+{
+  "project": {"name": "my-unity", "path": "E:/Projects/MyUnity", "branch": "main", "remote": "origin"},
+  "model_service": {"api_url": "http://127.0.0.1:8765/v1", "model": "gpt-5.6-sol", "timeout_seconds": 120, "max_input_tokens": 12000, "max_output_tokens": 2000},
+  "checks": {"compile_command": null, "runtime_roots": ["Assets/Scripts/Runtime", "Assets/Scripts"], "editor_markers": ["UnityEditor", "/Editor/", "\\Editor\\"]},
+  "storage": {"state_file": ".code-review/state.json", "report_dir": ".code-review/reports"}
+}

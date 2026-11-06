@@ -360,3 +360,12 @@ urllib.error.HTTPError: HTTP Error 400: Bad Request
 2026-11-04 21:53:24,499 [openai_agent] INFO request model=gpt-5.6-sol url=http://127.0.0.1:8765/v1 messages=1 content_length=2
 2026-11-04 21:53:33,216 [openai_agent] INFO response status=200 headers={'Server': 'BaseHTTP/0.6 Python/3.11.15', 'Date': 'Wed, 04 Nov 2026 13:53:33 GMT', 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': '270'}
 2026-11-04 21:53:33,216 [openai_agent] INFO response parsed content_length=14
+2026-11-05 10:22:04,822 [openai_agent] INFO request model=gpt-5.6-terra url=http://127.0.0.1:8765/v1 messages=1 content_length=10
+2026-11-05 10:22:32,965 [openai_agent] INFO response status=200 headers={'Server': 'BaseHTTP/0.6 Python/3.11.15', 'Date': 'Thu, 05 Nov 2026 02:22:32 GMT', 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': '922'}
+2026-11-05 10:22:32,966 [openai_agent] INFO response parsed content_length=297
+2026-11-06 10:15:13,688 [openai_agent] INFO request model=gpt-5.6-terra url=http://127.0.0.1:8765/v1 messages=1 content_length=2
+2026-11-06 10:15:21,971 [openai_agent] INFO response status=200 headers={'Server': 'BaseHTTP/0.6 Python/3.11.15', 'Date': 'Fri, 06 Nov 2026 02:15:21 GMT', 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': '269'}
+2026-11-06 10:15:21,972 [openai_agent] INFO response parsed content_length=13
+2026-11-06 15:42:37,240 [openai_agent] INFO request model=gpt-5.6-sol url=http://127.0.0.1:8765/v1 messages=1 content_length=2
+2026-11-06 15:42:48,194 [openai_agent] INFO response status=200 headers={'Server': 'BaseHTTP/0.6 Python/3.11.15', 'Date': 'Fri, 06 Nov 2026 07:42:48 GMT', 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': '270'}
+2026-11-06 15:42:48,194 [openai_agent] INFO response parsed content_length=14

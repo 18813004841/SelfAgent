@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Standalone local machine dashboard server."""
+"""独立运行的本地工作台 HTTP 服务。
+
+服务提供单页工作台界面，并暴露进程管理、工具、定时任务、设置和报告等
+本地 JSON 接口。长时间任务交给受管进程或调度器执行，请求处理器负责校验
+输入、更新持久化数据并尽快返回。
+"""
 from __future__ import annotations
 
 import json
@@ -23,8 +28,11 @@ from launchers.central_server import CentralServerLauncher
 from launchers.scheduler import SchedulerLauncher
 from launchers.worker_client import WorkerClientLauncher
 from launchers.openai_agent import OpenAIAgentLauncher
+from schedulers.code_review_scheduler import start_task, stop_task, task_payload, update_task_config
 
+# 工作台 HTTP 端口。所有服务端口均可通过环境变量配置，避免本地服务冲突。
 PORT = int(os.environ.get("MACHINE_DASHBOARD_PORT", "18888"))
+HOST = os.environ.get("MACHINE_DASHBOARD_HOST", "127.0.0.1").strip().strip('"') or "0.0.0.0"
 MACHINE_CONTROL_ROOT = Path(__file__).resolve().parents[3] / "Tools" / "machine-control"
 CENTER_PID_PATH = Path(__file__).resolve().parent.parent / "data" / "central-server.pid"
 CENTER_PORT = int(os.environ.get("MACHINE_CONTROL_PORT", "18765"))
@@ -51,7 +59,7 @@ def process_exists(pid):
         return False
 
 def clear_port(port: int) -> list[int]:
-    """Terminate Windows processes currently listening on a local port."""
+    """结束当前监听指定本地端口的 Windows 进程。"""
     killed = []
     if os.name != "nt":
         return killed
@@ -140,6 +148,7 @@ def index_html():
     return (WEB_ROOT / "index.html").read_text(encoding="utf-8")
 
 class Handler(BaseHTTPRequestHandler):
+    """处理工作台页面和本地 JSON 接口的 HTTP 请求。"""
     def log_message(self, fmt, *args):
         print(f"[{self.log_date_time_string()}] {self.client_address[0]} {fmt % args}", flush=True)
 
@@ -157,6 +166,7 @@ class Handler(BaseHTTPRequestHandler):
         return json.loads(self.rfile.read(length) or b"{}")
 
     def do_POST(self):
+        """分发会修改数据的接口，并返回 JSON 结果。"""
         try:
             path = urllib.parse.urlparse(self.path).path
             if path == "/" or path == "/index.html":
@@ -231,13 +241,50 @@ class Handler(BaseHTTPRequestHandler):
                 answer = PROCESS_MANAGER._entry("openai-agent").process.chat(message, str(body.get("model") or "gpt-5.6-terra"))
                 self.send_json(200, {"ok": True, "answer": answer}); return
             db = connect()
+            if path == "/api/scheduler-tasks/code-review/run":
+                self.send_json(200, {"ok": True, "task": start_task(str(body.get("project_path", "")), str(body.get("branch", "")), body.get("skill_paths", ["skills"]))}); return
+            if path == "/api/scheduler-tasks/code-review/stop":
+                self.send_json(200, {"ok": True, "task": stop_task()}); return
+            if path == "/api/scheduler-tasks/code-review/config":
+                self.send_json(200, {"ok": True, "task": update_task_config(str(body.get("project_path", "")), str(body.get("branch", "")), body.get("skill_paths", ["skills"]))}); return
+            if path == "/api/scheduler-tasks/code-review/choose":
+                import tkinter as tk
+                from tkinter import filedialog
+                current = str(body.get("current_path") or task_payload().get("project_path") or (Path.home() / "Desktop"))
+                root = tk.Tk(); root.withdraw(); root.attributes("-topmost", True)
+                selected = filedialog.askdirectory(title="选择工程目录", initialdir=current if Path(current).is_dir() else str(Path.home()))
+                root.destroy()
+                self.send_json(200, {"ok": True, "project_path": str(Path(selected).resolve()) if selected else ""}); return
+            if path == "/api/scheduler-tasks/code-review/open":
+                target = Path(str(body.get("project_path", "")).strip()).expanduser()
+                if not target.is_dir(): raise ValueError("工程目录不存在")
+                os.startfile(target)
+                self.send_json(200, {"ok": True}); return
+            if path == "/api/code-review/setup":
+                project_path = str(body.get("project_path", "")).strip()
+                if not project_path: raise ValueError("project_path is required")
+                tool_id = str(body.get("tool_id", "code-review-agent"))
+                entry = str(Path(__file__).resolve().parents[3] / "Tools" / "code-review-agent" / "run_task.py")
+                db.execute("INSERT OR REPLACE INTO tools(tool_id,name,type,entry,workdir,enabled) VALUES(?,?,?,?,?,1)", (tool_id, "Unity 代码检查 Agent", "local_process", entry, str(Path(entry).parent)))
+                schedule_id = str(body.get("schedule_id", "code-review-daily"))
+                args = {"project_path": project_path, "branch": body.get("branch", "main"), "skill_paths": body.get("skill_paths", ["skills"]), "config_path": body.get("config_path")}
+                db.execute("INSERT OR REPLACE INTO schedules(id,name,tool_id,schedule_type,schedule_expr,args_json,timeout,retry,enabled,next_run,task_type,dispatcher,progress_total) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", (schedule_id, body.get("name", "Unity 代码每日检查"), tool_id, "daily", body.get("time", "04:00"), json.dumps(args, ensure_ascii=False), int(body.get("timeout", 900)), 0, 1, time.time(), "scheduled", "scheduler", 5))
+                db.commit(); self.send_json(201, {"ok": True, "tool_id": tool_id, "schedule_id": schedule_id, "schedule_type": "daily", "schedule_expr": body.get("time", "04:00")}); return
             if path == "/api/tools":
                 db.execute("INSERT OR REPLACE INTO tools(tool_id,name,type,entry,workdir,enabled) VALUES(?,?,?,?,?,?)", (body["tool_id"], body.get("name", body["tool_id"]), body.get("type", "local_process"), body["entry"], body.get("workdir"), int(body.get("enabled", True))))
                 db.commit(); self.send_json(201, {"ok": True, "tool_id": body["tool_id"]}); return
+            if path == "/api/scheduler-tasks":
+                self.send_json(200, {"ok": True, "tasks": [task_payload()]}); return
+            if path == "/api/scheduler-tasks/code-review":
+                self.send_json(200, {"ok": True, "task": task_payload()}); return
             if path == "/api/schedules":
                 sid = body.get("id") or str(int(time.time() * 1000))
-                db.execute("INSERT INTO schedules(id,name,tool_id,schedule_type,schedule_expr,args_json,timeout,retry,enabled,next_run) VALUES(?,?,?,?,?,?,?,?,?,?)", (sid, body["name"], body["tool_id"], body.get("schedule_type", "interval"), body.get("schedule_expr", "60"), json.dumps(body.get("args", {}), ensure_ascii=False), int(body.get("timeout", 300)), int(body.get("retry", 0)), int(body.get("enabled", True)), time.time()))
+                db.execute("INSERT INTO schedules(id,name,tool_id,schedule_type,schedule_expr,args_json,timeout,retry,enabled,next_run,task_type,dispatcher,progress_total) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", (sid, body["name"], body["tool_id"], body.get("schedule_type", "interval"), body.get("schedule_expr", "60"), json.dumps(body.get("args", {}), ensure_ascii=False), int(body.get("timeout", 300)), int(body.get("retry", 0)), int(body.get("enabled", True)), time.time(), body.get("task_type", "scheduled"), body.get("dispatcher", "scheduler"), int(body.get("progress_total", 1))))
                 db.commit(); self.send_json(201, {"ok": True, "id": sid}); return
+            if path.startswith("/api/schedules/") and path.endswith("/cancel"):
+                sid = urllib.parse.unquote(path[len("/api/schedules/"):-len("/cancel")])
+                OPERATION_LOG.info("[feature=scheduler] api.schedule.cancel id=%s", sid)
+                db.execute("UPDATE schedules SET cancel_requested=1,last_status='cancelling' WHERE id=?", (sid,)); db.commit(); self.send_json(200, {"ok": True, "id": sid}); return
             if path.startswith("/api/schedules/") and path.endswith(("/enable", "/disable")):
                 sid = path.split("/")[-2]; enabled = 1 if path.endswith("/enable") else 0
                 db.execute("UPDATE schedules SET enabled=? WHERE id=?", (enabled, sid)); db.commit(); self.send_json(200, {"ok": True, "enabled": bool(enabled)}); return
@@ -246,6 +293,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(400, {"ok": False, "error": repr(exc)})
 
     def do_GET(self):
+        """返回静态页面或只读接口数据。"""
         try:
             path = urllib.parse.urlparse(self.path).path
             if path in ("/", "/index.html"):
@@ -264,6 +312,10 @@ class Handler(BaseHTTPRequestHandler):
                 data = file_path.read_bytes()
                 content_type = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "application/javascript; charset=utf-8"}.get(file_path.suffix, "application/octet-stream")
                 self.send_response(200); self.send_header("Content-Type", content_type); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
+            if path == "/api/scheduler-tasks":
+                self.send_json(200, {"ok": True, "tasks": [task_payload()]}); return
+            if path == "/api/scheduler-tasks/code-review":
+                self.send_json(200, {"ok": True, "task": task_payload()}); return
             if path == "/api/health":
                 self.send_json(200, {"ok": True, "service": "machine-dashboard-server", "mode": "local"})
                 return
@@ -275,6 +327,11 @@ class Handler(BaseHTTPRequestHandler):
                 db = connect(); self.send_json(200, {"tools": [dict(x) for x in db.execute("SELECT * FROM tools ORDER BY name") ]}); return
             if path == "/api/schedules":
                 db = connect(); self.send_json(200, {"schedules": [decode_schedule(x) for x in db.execute("SELECT * FROM schedules ORDER BY name") ]}); return
+            if path.startswith("/api/schedules/"):
+                sid = urllib.parse.unquote(path[len("/api/schedules/"):])
+                db = connect(); row = db.execute("SELECT s.*, t.name tool_name, t.type tool_type FROM schedules s LEFT JOIN tools t ON t.tool_id=s.tool_id WHERE s.id=?", (sid,)).fetchone()
+                if not row: self.send_json(404, {"ok": False, "error": "schedule not found"}); return
+                item = decode_schedule(row); item["runs"] = [dict(x) for x in db.execute("SELECT * FROM runs WHERE schedule_id=? ORDER BY id DESC LIMIT 30", (sid,))]; self.send_json(200, {"schedule": item}); return
             if path == "/api/scheduler/status":
                 running=PID_PATH.exists(); pid=None
                 try: pid=int(PID_PATH.read_text(encoding="utf-8"))
@@ -344,16 +401,15 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    print(f"Machine dashboard server listening on http://127.0.0.1:{PORT}", flush=True)
-    print("Mode: local-only", flush=True)
-    ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
+    OPERATION_LOG.info("[feature=machine-dashboard] server.started url=http://%s:%s mode=local-only", HOST, PORT)
+    ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("Machine dashboard server stopped.", flush=True)
+        OPERATION_LOG.info("[feature=machine-dashboard] server.stopped")
 
 
 

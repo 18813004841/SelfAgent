@@ -11,7 +11,7 @@
       ],
       "status": "online",
       "registered_at": 1793715126447,
-      "last_seen_at": 1793800737159,
+      "last_seen_at": 1793858889345,
       "meta": {
         "allowed_commands": [
           "adb",
@@ -38,7 +38,7 @@
         "local_ips": [
           "10.0.76.228"
         ],
-        "ts": 1793800737,
+        "ts": 1793858889,
         "server": "http://127.0.0.1:18765"
       }
     }
@@ -58,8 +58,8 @@
       "status": "online",
       "login_state": "online",
       "first_seen_at": 1793715126447,
-      "last_seen_at": 1793800737159,
-      "last_connected_at": 1793800737159,
+      "last_seen_at": 1793858889345,
+      "last_connected_at": 1793858889345,
       "known_ips": [
         "10.0.76.228"
       ],
@@ -93,7 +93,7 @@
         "local_ips": [
           "10.0.76.228"
         ],
-        "ts": 1793800737,
+        "ts": 1793858889,
         "server": "http://127.0.0.1:18765"
       }
     }
@@ -102,7 +102,7 @@
     "127.0.0.1": {
       "ip": "127.0.0.1",
       "first_seen_at": 1793715126442,
-      "last_seen_at": 1793800749196,
+      "last_seen_at": 1793858891352,
       "last_path": "/api/workers/win-pack-BJPCC-0010480/tasks/next",
       "user_agent": "Python-urllib/3.14"
     }

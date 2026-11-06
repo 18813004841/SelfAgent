@@ -1,0 +1,84 @@
+2026-11-06 15:09:50,347 [feature=code-review] INFO review.begin project=my-unity branch=master
+2026-11-06 15:09:50,348 [feature=code-review] INFO step.begin name=同步 Git 分支 details={}
+2026-11-06 15:09:50,349 [feature=code-review] INFO git.command args=['git', 'checkout', 'master']
+2026-11-06 15:09:52,717 [feature=code-review] INFO git.completed output_length=48
+2026-11-06 15:09:52,717 [feature=code-review] INFO git.command args=['git', 'remote']
+2026-11-06 15:09:52,755 [feature=code-review] INFO git.completed output_length=7
+2026-11-06 15:09:52,755 [feature=code-review] INFO git.command args=['git', 'fetch', 'origin', 'master']
+2026-11-06 15:09:56,351 [feature=code-review] INFO git.completed output_length=0
+2026-11-06 15:09:56,351 [feature=code-review] INFO git.command args=['git', 'pull', '--ff-only', 'origin', 'master']
+2026-11-06 15:09:59,379 [feature=code-review] INFO git.completed output_length=20
+2026-11-06 15:09:59,379 [feature=code-review] INFO git.command args=['git', 'rev-parse', 'HEAD']
+2026-11-06 15:09:59,419 [feature=code-review] INFO git.completed output_length=41
+2026-11-06 15:09:59,419 [feature=code-review] INFO step.end name=同步 Git 分支 details={'operations': ['git checkout master', 'git fetch origin master', 'git pull --ff-only origin master', 'git rev-parse HEAD'], 'current_sha': '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18', 'result': '成功'}
+2026-11-06 15:09:59,421 [feature=code-review] INFO git.command args=['git', 'rev-list', '-1', '--before=2026-11-05T04:00:00', 'HEAD']
+2026-11-06 15:09:59,499 [feature=code-review] INFO git.completed output_length=41
+2026-11-06 15:09:59,499 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', 'e9bcbc4f26995833a938f50faa3d87ac96479927']
+2026-11-06 15:09:59,558 [feature=code-review] INFO git.completed output_length=16
+2026-11-06 15:09:59,558 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', 'e9bcbc4f26995833a938f50faa3d87ac96479927']
+2026-11-06 15:09:59,623 [feature=code-review] INFO git.completed output_length=11
+2026-11-06 15:09:59,623 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', 'e9bcbc4f26995833a938f50faa3d87ac96479927']
+2026-11-06 15:09:59,680 [feature=code-review] INFO git.completed output_length=26
+2026-11-06 15:09:59,680 [feature=code-review] INFO step.begin name=读取上次检查 SHA details={'sha': 'e9bcbc4f26995833a938f50faa3d87ac96479927', 'subject': '[美术] 塔防角色材质丢失修复', 'author': 'yanshen010', 'date': '2026-11-04T21:47:00+08:00'}
+2026-11-06 15:09:59,681 [feature=code-review] INFO step.end name=读取上次检查 SHA details={'sha': 'e9bcbc4f26995833a938f50faa3d87ac96479927', 'subject': '[美术] 塔防角色材质丢失修复', 'author': 'yanshen010', 'date': '2026-11-04T21:47:00+08:00', 'result': '成功'}
+2026-11-06 15:09:59,682 [feature=code-review] INFO step.begin name=读取 Diff 内容 details={}
+2026-11-06 15:09:59,683 [feature=code-review] INFO git.command args=['git', '-c', 'core.quotepath=false', 'diff', '--name-only', 'e9bcbc4f26995833a938f50faa3d87ac96479927', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18', '--']
+2026-11-06 15:09:59,785 [feature=code-review] INFO git.completed output_length=3831
+2026-11-06 15:09:59,785 [feature=code-review] INFO git.command args=['git', '-c', 'core.quotepath=false', 'diff', '--no-ext-diff', '--no-textconv', '--no-color', '--unified=20', 'e9bcbc4f26995833a938f50faa3d87ac96479927', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18', '--']
+2026-11-06 15:10:00,003 [feature=code-review] INFO git.completed output_length=237396
+2026-11-06 15:10:00,023 [feature=code-review] INFO step.end name=读取 Diff 内容 details={'files': 53, 'diff_chars': 237395, 'diff_path': 'E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\changes.diff', 'result': '成功'}
+2026-11-06 15:10:00,025 [feature=code-review] INFO step.begin name=检查变更文件 details={'files': 53}
+2026-11-06 15:10:00,065 [feature=code-review] INFO step.end name=检查变更文件 details={'errors': ["Game/Assets/Editor Default Resources/XTutorial_Editor.xlsx: 编码错误 'utf-8' codec can't decode byte 0xea in position 16: invalid continuation byte", "Game/Assets/__RawArtData/_Resources/Texture/IAP/HUD/iap_package_chip_dragon_stone_16.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/IAP/HUD/iap_package_dragon_stone_exp_10.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/IAP/iap_package_chip_dragon_stone_16.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/IAP/iap_package_dragon_stone_exp_10.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_chip_dragon_stone_16.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_dragon_stone_exp_10.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_dragon_stone_material_choose_chest_9_solar.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/FlatBuffers_Gen_CS_Temp/dll/FBGen.dll: 编码错误 'utf-8' codec can't decode byte 0x90 in position 2: invalid start byte", "Game/FlatBuffers_Gen_CS_Temp/dll/FBGen.pdb: 编码错误 'utf-8' codec can't decode byte 0x84 in position 36: invalid start byte"], 'files': 53, 'result': '成功'}
+2026-11-06 15:10:00,066 [feature=code-review] INFO step.begin name=检查 Runtime 代码中的 Editor 引用 details={}
+2026-11-06 15:10:00,116 [feature=code-review] INFO step.end name=检查 Runtime 代码中的 Editor 引用 details={'findings': 0, 'result': '成功'}
+2026-11-06 15:10:00,117 [feature=code-review] INFO step.begin name=读取代码检查 Skill details={}
+2026-11-06 15:10:00,122 [feature=code-review] INFO step.end name=读取代码检查 Skill details={'skills': 1, 'paths': ['Game\\.agents\\skills\\unity-code-review\\SKILL.md'], 'missing': [], 'result': '成功'}
+2026-11-06 15:10:00,123 [feature=code-review] INFO step.begin name=执行编译检查 details={}
+2026-11-06 15:10:00,124 [feature=code-review] INFO step.end name=执行编译检查 details={'result': '未配置编译命令'}
+2026-11-06 15:10:00,124 [feature=code-review] INFO step.begin name=切分代码内容 details={}
+2026-11-06 15:10:00,129 [feature=code-review] INFO step.end name=切分代码内容 details={'chunks': 54, 'context_files': 21, 'result': '成功'}
+2026-11-06 15:10:00,131 [feature=code-review] INFO step.begin name=发送代码切片和 Skill 给模型 details={'chunks': 54}
+2026-11-06 15:10:55,555 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=1/6 error=模型返回的问题 message 为空
+2026-11-06 15:11:28,960 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=2/6 error=模型返回的问题 message 为空
+2026-11-06 15:12:10,248 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=3/6 error=模型返回的问题 message 为空
+2026-11-06 15:12:40,952 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=4/6 error=模型返回的问题 message 为空
+2026-11-06 15:13:16,150 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=5/6 error=模型返回的问题 message 为空
+2026-11-06 15:14:08,074 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=6/6 error=模型返回的问题 message 为空
+2026-11-06 15:15:04,063 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=1/6 error=模型返回的问题 message 为空
+2026-11-06 15:15:30,858 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=2/6 error=HTTP Error 400: Bad Request
+2026-11-06 15:16:32,211 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=3/6 error=模型返回的问题 message 为空
+2026-11-06 15:17:22,233 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=4/6 error=模型返回的问题 message 为空
+2026-11-06 15:18:14,261 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=5/6 error=模型返回的问题 message 为空
+2026-11-06 15:19:05,975 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=6/6 error=模型返回的问题 message 为空
+2026-11-06 15:20:41,848 [feature=code-review] WARNING model.chunk_failed chunk=6 attempt=1/6 error=HTTP Error 400: Bad Request
+2026-11-06 15:21:03,145 [feature=code-review] WARNING model.chunk_failed chunk=6 attempt=2/6 error=HTTP Error 400: Bad Request
+2026-11-06 15:22:32,273 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=1/6 error=模型返回的问题 message 为空
+2026-11-06 15:23:27,277 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=2/6 error=模型返回的问题 message 为空
+2026-11-06 15:23:43,830 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=3/6 error=HTTP Error 400: Bad Request
+2026-11-06 15:24:31,961 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=4/6 error=模型返回的问题 message 为空
+2026-11-06 15:25:11,310 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=5/6 error=模型返回的问题 message 为空
+2026-11-06 15:25:59,276 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=6/6 error=模型返回的问题 message 为空
+2026-11-06 15:26:52,533 [feature=code-review] WARNING model.chunk_failed chunk=8 attempt=1/6 error=模型返回的问题 message 为空
+2026-11-06 15:28:30,743 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=1/6 error=模型返回的问题 message 为空
+2026-11-06 15:28:33,527 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=2/6 error=HTTP Error 400: Bad Request
+2026-11-06 15:28:35,553 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=3/6 error=HTTP Error 400: Bad Request
+2026-11-06 15:29:45,352 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=4/6 error=模型返回的问题 message 为空
+2026-11-06 15:30:44,313 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=5/6 error=模型返回的问题 message 为空
+2026-11-06 15:31:53,004 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=6/6 error=模型返回的问题 message 为空
+2026-11-06 15:31:54,917 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=1/6 error=HTTP Error 400: Bad Request
+2026-11-06 15:33:04,799 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=2/6 error=模型返回的问题 message 为空
+2026-11-06 15:34:03,153 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=3/6 error=模型返回的问题 message 为空
+2026-11-06 15:35:09,837 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=4/6 error=模型返回的问题 message 为空
+2026-11-06 15:36:21,992 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=5/6 error=模型返回的问题 message 为空
+2026-11-06 15:37:29,899 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=6/6 error=模型返回的问题 message 为空
+2026-11-06 15:38:40,580 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=1/6 error=模型返回的问题 message 为空
+2026-11-06 15:39:29,052 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=2/6 error=模型返回的问题 message 为空
+2026-11-06 15:40:25,973 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=3/6 error=模型返回的问题 message 为空
+2026-11-06 15:41:25,151 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=4/6 error=Expecting ',' delimiter: line 15 column 17 (char 704)
+2026-11-06 15:42:10,898 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=5/6 error=模型返回的问题 message 为空
+2026-11-06 15:43:12,629 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=6/6 error=模型返回的问题 message 为空
+2026-11-06 15:43:56,546 [feature=code-review] WARNING model.chunk_failed chunk=12 attempt=1/6 error=模型返回的问题 message 为空
+2026-11-06 15:43:58,550 [feature=code-review] WARNING model.chunk_failed chunk=12 attempt=2/6 error=HTTP Error 400: Bad Request
+2026-11-06 15:44:42,301 [feature=code-review] WARNING model.chunk_failed chunk=12 attempt=3/6 error=模型返回的问题 message 为空
+2026-11-06 15:45:39,714 [feature=code-review] WARNING model.chunk_failed chunk=12 attempt=4/6 error=模型返回的问题 message 为空
+2026-11-06 15:46:32,727 [feature=code-review] WARNING model.chunk_failed chunk=12 attempt=5/6 error=模型返回的问题 message 为空

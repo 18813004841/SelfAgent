@@ -1,2 +1,5 @@
-<h1>定时任务</h1><div class="card"><h3>调度器服务</h3><p>当前状态：<b id="scheduler-status">检查中...</b></p><button class="primary" id="scheduler-start">启动调度器</button> <button id="scheduler-stop">关闭调度器</button><p id="scheduler-msg" class="muted"></p></div><div class="card"><h3>已注册任务</h3><table><thead><tr><th>名称</th><th>工具</th><th>状态</th><th>最近执行</th></tr></thead><tbody id="schedule-list"><tr><td colspan="4">加载中...</td></tr></tbody></table></div>
+<h1>定时任务</h1><div class="card"><h3>调度器服务</h3><p>当前状态：<b id="scheduler-status">检查中...</b></p><button class="primary" id="scheduler-start">启动调度器</button> <button id="scheduler-stop">关闭调度器</button><p id="scheduler-msg" class="muted"></p></div><section class="schedule-board"><div class="section-heading"><h3>任务列表</h3><span class="muted">点击任务卡片查看详情</span></div><div id="schedule-list" class="schedule-grid"><button type="button" class="schedule-card" id="code-review-task"><h4>代码检查</h4><div class="schedule-meta"><span>任务定时：<strong id="code-review-time">每天 04:00</strong></span><span>工程地址：<strong id="code-review-project">未配置</strong></span><span>Git 分支：<strong id="code-review-branch">未配置</strong></span></div><span class="schedule-status" id="code-review-result">上次构建结果：尚未构建</span></button><div id="other-schedules"></div></div></section><div id="schedule-detail"></div>
+
+
+
 

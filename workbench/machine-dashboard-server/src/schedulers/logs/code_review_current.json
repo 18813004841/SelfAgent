@@ -1,0 +1,867 @@
+{
+  "task_id": "code-review-daily",
+  "events": [
+    {
+      "time": "2026-11-06T15:09:50",
+      "kind": "execute",
+      "message": "开始执行代码检查",
+      "data": {
+        "project_path": "D:\\koa-client-code",
+        "branch": "master",
+        "skill_paths": [
+          "D:\\koa-client-code\\Game\\.agents\\skills\\unity-code-review"
+        ]
+      }
+    },
+    {
+      "time": "2026-11-06T15:09:50",
+      "kind": "progress",
+      "message": "已读取工程配置",
+      "data": {
+        "current": 1,
+        "total": 4,
+        "project_path": "D:\\koa-client-code",
+        "branch": "master",
+        "skill_paths": [
+          "D:\\koa-client-code\\Game\\.agents\\skills\\unity-code-review"
+        ]
+      }
+    },
+    {
+      "time": "2026-11-06T15:09:50",
+      "kind": "progress",
+      "message": "已接收调度参数",
+      "data": {
+        "current": 2,
+        "total": 4,
+        "project_path": "D:\\koa-client-code",
+        "branch": "master"
+      }
+    },
+    {
+      "time": "2026-11-06T15:09:50",
+      "kind": "progress",
+      "message": "开始检查工程",
+      "data": {
+        "current": 3,
+        "total": 4,
+        "project_path": "D:\\koa-client-code",
+        "branch": "master"
+      }
+    },
+    {
+      "time": "2026-11-06T15:09:50",
+      "kind": "progress",
+      "message": "同步 Git 分支",
+      "data": {
+        "current": 1,
+        "total": 10
+      }
+    },
+    {
+      "time": "2026-11-06T15:09:59",
+      "kind": "progress",
+      "message": "同步 Git 分支执行完毕",
+      "data": {
+        "current": 1,
+        "total": 10,
+        "operations": [
+          "git checkout master",
+          "git fetch origin master",
+          "git pull --ff-only origin master",
+          "git rev-parse HEAD"
+        ],
+        "current_sha": "38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18",
+        "result": "成功"
+      }
+    },
+    {
+      "time": "2026-11-06T15:09:59",
+      "kind": "progress",
+      "message": "读取上次检查 SHA",
+      "data": {
+        "current": 2,
+        "total": 10,
+        "sha": "e9bcbc4f26995833a938f50faa3d87ac96479927",
+        "subject": "[美术] 塔防角色材质丢失修复",
+        "author": "yanshen010",
+        "date": "2026-11-04T21:47:00+08:00"
+      }
+    },
+    {
+      "time": "2026-11-06T15:09:59",
+      "kind": "progress",
+      "message": "读取上次检查 SHA执行完毕",
+      "data": {
+        "current": 2,
+        "total": 10,
+        "sha": "e9bcbc4f26995833a938f50faa3d87ac96479927",
+        "subject": "[美术] 塔防角色材质丢失修复",
+        "author": "yanshen010",
+        "date": "2026-11-04T21:47:00+08:00",
+        "result": "成功"
+      }
+    },
+    {
+      "time": "2026-11-06T15:09:59",
+      "kind": "progress",
+      "message": "读取 Diff 内容",
+      "data": {
+        "current": 3,
+        "total": 10
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "读取 Diff 内容执行完毕",
+      "data": {
+        "current": 3,
+        "total": 10,
+        "files": 53,
+        "diff_chars": 237395,
+        "diff_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\changes.diff",
+        "result": "成功"
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "检查变更文件",
+      "data": {
+        "current": 4,
+        "total": 10,
+        "files": 53
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "检查变更文件执行完毕",
+      "data": {
+        "current": 4,
+        "total": 10,
+        "errors": [
+          "Game/Assets/Editor Default Resources/XTutorial_Editor.xlsx: 编码错误 'utf-8' codec can't decode byte 0xea in position 16: invalid continuation byte",
+          "Game/Assets/__RawArtData/_Resources/Texture/IAP/HUD/iap_package_chip_dragon_stone_16.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte",
+          "Game/Assets/__RawArtData/_Resources/Texture/IAP/HUD/iap_package_dragon_stone_exp_10.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte",
+          "Game/Assets/__RawArtData/_Resources/Texture/IAP/iap_package_chip_dragon_stone_16.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte",
+          "Game/Assets/__RawArtData/_Resources/Texture/IAP/iap_package_dragon_stone_exp_10.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte",
+          "Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_chip_dragon_stone_16.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte",
+          "Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_dragon_stone_exp_10.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte",
+          "Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_dragon_stone_material_choose_chest_9_solar.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte",
+          "Game/FlatBuffers_Gen_CS_Temp/dll/FBGen.dll: 编码错误 'utf-8' codec can't decode byte 0x90 in position 2: invalid start byte",
+          "Game/FlatBuffers_Gen_CS_Temp/dll/FBGen.pdb: 编码错误 'utf-8' codec can't decode byte 0x84 in position 36: invalid start byte"
+        ],
+        "files": 53,
+        "result": "成功"
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "检查 Runtime 代码中的 Editor 引用",
+      "data": {
+        "current": 5,
+        "total": 10
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "检查 Runtime 代码中的 Editor 引用执行完毕",
+      "data": {
+        "current": 5,
+        "total": 10,
+        "findings": 0,
+        "result": "成功"
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "读取代码检查 Skill",
+      "data": {
+        "current": 6,
+        "total": 10
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "读取代码检查 Skill执行完毕",
+      "data": {
+        "current": 6,
+        "total": 10,
+        "skills": 1,
+        "paths": [
+          "Game\\.agents\\skills\\unity-code-review\\SKILL.md"
+        ],
+        "missing": [],
+        "result": "成功"
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "执行编译检查",
+      "data": {
+        "current": 7,
+        "total": 10
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "执行编译检查执行完毕",
+      "data": {
+        "current": 7,
+        "total": 10,
+        "result": "未配置编译命令"
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "切分代码内容",
+      "data": {
+        "current": 8,
+        "total": 10
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "切分代码内容执行完毕",
+      "data": {
+        "current": 8,
+        "total": 10,
+        "chunks": 54,
+        "context_files": 21,
+        "result": "成功"
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "发送代码切片和 Skill 给模型",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunks": 54
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:00",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 1,
+        "chunks": 54,
+        "diff_chars": 319,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-001.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:25",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 2,
+        "chunks": 54,
+        "diff_chars": 894,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-002.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:10:55",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 2,
+        "attempt": 2,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:11:28",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 2,
+        "attempt": 3,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:12:10",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 2,
+        "attempt": 4,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:12:40",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 2,
+        "attempt": 5,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:13:16",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 2,
+        "attempt": 6,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:14:08",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 3,
+        "chunks": 54,
+        "diff_chars": 2429,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-003.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:15:04",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 3,
+        "attempt": 2,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:15:30",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 3,
+        "attempt": 3,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:16:32",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 3,
+        "attempt": 4,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:17:22",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 3,
+        "attempt": 5,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:18:14",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 3,
+        "attempt": 6,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:19:06",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 4,
+        "chunks": 54,
+        "diff_chars": 9913,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-004.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:19:49",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 5,
+        "chunks": 54,
+        "diff_chars": 9646,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-005.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:20:19",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 6,
+        "chunks": 54,
+        "diff_chars": 11920,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-006.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:20:41",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 6,
+        "attempt": 2,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:21:03",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 6,
+        "attempt": 3,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:21:45",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 7,
+        "chunks": 54,
+        "diff_chars": 6364,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-007.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:22:32",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 7,
+        "attempt": 2,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:23:27",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 7,
+        "attempt": 3,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:23:43",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 7,
+        "attempt": 4,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:24:31",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 7,
+        "attempt": 5,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:25:11",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 7,
+        "attempt": 6,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:25:59",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 8,
+        "chunks": 54,
+        "diff_chars": 11180,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-008.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:26:52",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 8,
+        "attempt": 2,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:27:19",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 9,
+        "chunks": 54,
+        "diff_chars": 5964,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-009.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:28:30",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 9,
+        "attempt": 2,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:28:33",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 9,
+        "attempt": 3,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:28:35",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 9,
+        "attempt": 4,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:29:45",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 9,
+        "attempt": 5,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:30:44",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 9,
+        "attempt": 6,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:31:53",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 10,
+        "chunks": 54,
+        "diff_chars": 9712,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-010.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:31:54",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 10,
+        "attempt": 2,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:33:04",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 10,
+        "attempt": 3,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:34:03",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 10,
+        "attempt": 4,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:35:09",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 10,
+        "attempt": 5,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:36:21",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 10,
+        "attempt": 6,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:37:29",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 11,
+        "chunks": 54,
+        "diff_chars": 2692,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-011.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:38:40",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 11,
+        "attempt": 2,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:39:29",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 11,
+        "attempt": 3,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:40:25",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 11,
+        "attempt": 4,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:41:25",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 11,
+        "attempt": 5,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:42:10",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 11,
+        "attempt": 6,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:43:12",
+      "kind": "progress",
+      "message": "发送模型检查代码切片",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 12,
+        "chunks": 54,
+        "diff_chars": 2264,
+        "prompt_path": "E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\model-input-012.md"
+      }
+    },
+    {
+      "time": "2026-11-06T15:43:56",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 12,
+        "attempt": 2,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:43:58",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 12,
+        "attempt": 3,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:44:42",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 12,
+        "attempt": 4,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:45:39",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 12,
+        "attempt": 5,
+        "max_attempts": 6
+      }
+    },
+    {
+      "time": "2026-11-06T15:46:32",
+      "kind": "progress",
+      "message": "模型请求重试",
+      "data": {
+        "current": 9,
+        "total": 10,
+        "chunk": 12,
+        "attempt": 6,
+        "max_attempts": 6
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "code_review": {
+    "project_path": "D:\\koa-client-code",
+    "branch": "master",
+    "skill_paths": [
+      "D:\\koa-client-code\\Game\\.agents\\skills\\unity-code-review"
+    ]
+  }
+}
