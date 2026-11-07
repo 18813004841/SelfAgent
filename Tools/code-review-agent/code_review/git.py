@@ -50,6 +50,23 @@ class GitRepository:
     def commit_summary(self, sha: str) -> dict[str, str]:
         return {"sha": sha, "subject": self.run("show", "-s", "--format=%s", sha), "author": self.run("show", "-s", "--format=%an", sha), "date": self.run("show", "-s", "--format=%aI", sha)}
 
+    def blame_line(self, sha: str, file_path: str, line: int) -> dict[str, str] | None:
+        """Return the commit and author that last changed a source line."""
+        if not file_path or not isinstance(line, int) or line < 1:
+            return None
+        try:
+            relative = Path(file_path)
+            if relative.is_absolute():
+                relative = relative.resolve().relative_to(self.root)
+            output = self.run("blame", "--porcelain", f"-L{line},{line}", sha, "--", relative.as_posix())
+        except (GitError, ValueError, OSError):
+            return None
+        header = output.splitlines()[0].split() if output else []
+        if not header:
+            return None
+        author = next((item[7:] for item in output.splitlines()[1:] if item.startswith("author ")), None)
+        return {"sha": header[0], "author": author or "未知"}
+
     def current_sha(self) -> str: return self.run("rev-parse", "HEAD")
 
     def initial_sha(self, before: datetime | None = None, days: int = 7, hour: int = 4) -> str:

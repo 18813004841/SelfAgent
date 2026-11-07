@@ -12,7 +12,7 @@ from .checks import run_compile, unity_runtime_findings
 from .config import ReviewConfig
 from .git import GitRepository
 from .model_service import LocalModelClient, ModelServiceError
-from .models import CheckResult, Finding
+from .models import CheckResult, Finding, format_elapsed_time
 from .rules import load_matching
 
 logger = logging.getLogger("code-review.pipeline")
@@ -29,6 +29,13 @@ if not logger.handlers:
     logger.propagate = False
 
 
+MODEL_OUTPUT_CONTRACT = (
+    "只输出一个 JSON 对象，不要输出 Markdown、解释或代码块。"
+    "结构必须是 {\"findings\":[{\"severity\":\"critical|high|medium|low\",\"message\":\"具体问题，不能为空\",\"file\":\"仓库相对路径或 null\",\"line\":1,\"rule\":\"对应 Skill 条款或 null\",\"suggestion\":\"修改建议或 null\",\"confidence\":0.0}],\"open_questions\":[\"字符串\"],\"test_gaps\":[\"字符串\"]}。"
+    "没有问题时 findings 使用空数组。每条问题必须使用 message 字段，不能改用 title、description 或其他字段名。"
+)
+
+
 class ReviewPipeline:
     def __init__(self, config: ReviewConfig, progress: Callable[..., None] | None = None, log: Callable[..., None] | None = None, cancel: Callable[[], bool] | None = None) -> None:
         self.config = config
@@ -37,7 +44,7 @@ class ReviewPipeline:
         self.progress_callback = progress or (lambda **_: None)
         self.log_callback = log or (lambda **_: None)
         self.cancel_callback = cancel or (lambda: False)
-        self.step_total = 10
+        self.step_total = 11
         self.step = 0
 
     def _ensure_running(self) -> None:
@@ -68,9 +75,25 @@ class ReviewPipeline:
             raise RuntimeError("Git 检测到变更文件，但未读取到具体 Diff，已停止模型检查")
         return files, diff
 
+    @staticmethod
+    def filter_review_files(files: list[str], diff: str) -> tuple[list[str], list[str], str]:
+        """Keep only C# changes for text validation and model review."""
+        cs_files = [path for path in files if path.lower().endswith(".cs")]
+        skipped = [path for path in files if not path.lower().endswith(".cs")]
+        parts: list[str] = []
+        for part in re.split(r"(?=^diff --git )", diff, flags=re.MULTILINE):
+            if not part.strip():
+                continue
+            match = re.search(r"^diff --git a/(.+?) b/(.+)$", part, re.MULTILINE)
+            if match and match.group(2).lower().endswith(".cs"):
+                parts.append(part)
+        return cs_files, skipped, "".join(parts)
+
     def validate_changed_files(self, files: list[str]) -> list[str]:
         errors = []
         for rel in files:
+            if not rel.lower().endswith(".cs"):
+                continue
             path = self.root / rel
             if path.is_file():
                 try: path.read_text(encoding="utf-8", errors="strict")
@@ -84,9 +107,11 @@ class ReviewPipeline:
                 continue
             match = re.search(r"^diff --git a/(.+?) b/(.+)$", file_part, re.MULTILINE)
             file_name = match.group(2) if match else ""
+            if file_name and not file_name.lower().endswith(".cs"):
+                continue
             chunk_files = [file_name] if file_name else files
             chunks.extend({"files": chunk_files, "diff": file_part[i:i + chunk_size]} for i in range(0, len(file_part), chunk_size))
-        return chunks or [{"files": files, "diff": diff}]
+        return chunks
 
     @staticmethod
     def parse_model_json(content: str) -> dict[str, Any]:
@@ -100,32 +125,71 @@ class ReviewPipeline:
         parsed = json.loads(text)
         if not isinstance(parsed, dict):
             raise json.JSONDecodeError("model response is not an object", text, 0)
+        findings = parsed.get("findings", [])
+        if not isinstance(findings, list) or any(not isinstance(item, dict) for item in findings):
+            raise ValueError("模型返回的 findings 必须是对象数组")
+        if any(not str(item.get("message") or "").strip() for item in findings):
+            raise ValueError("模型返回的问题 message 为空")
+        for key in ("open_questions", "test_gaps"):
+            if key in parsed and not isinstance(parsed[key], list):
+                raise ValueError(f"模型返回的 {key} 必须是数组")
         return parsed
 
     @staticmethod
-    def format_review_prompt(chunk: dict[str, Any], rules: list[dict[str, Any]], file_context: str = "") -> str:
+    def format_review_prompt(chunk: dict[str, Any], rules: list[dict[str, Any]], file_context: str = "", allow_extra_rules: bool = False) -> str:
         # Use a fence longer than any fence in the source so code stays intact.
         def fenced(text: str, language: str = "") -> str:
             fence = "`" * max(3, max((len(m.group()) + 1 for m in re.finditer(r"`+", text)), default=3))
             return f"{fence}{language}\n{text}\n{fence}"
 
-        sections = ["# 代码变更检查", "请依据以下 Skill 审查变更，返回 JSON：findings、open_questions、test_gaps。先看 Diff，再依据完整文件判断生命周期、性能、架构和项目规范。",
+        instruction = "请依据以下 Skill 审查变更。" if not allow_extra_rules else "请依据以下 Skill 审查变更，也可以报告 Skill 未覆盖但有代码依据的问题。"
+        if not allow_extra_rules:
+            instruction += "每条 finding 的 rule 必须引用 Skill 原文中的条款，不能为 null，也不能输出 Skill 以外的分析。"
+        sections = ["# 代码变更检查", instruction, MODEL_OUTPUT_CONTRACT,
                     "## 变更文件", "\n".join(f"- {path}" for path in chunk["files"]),
+                    "## 检查快照", f"快照 SHA：{chunk.get('metadata', {}).get('commit_sha') or '未知'}\n此 SHA 仅表示检查版本，不表示问题归属。请使用当前快照中的文件路径和行号定位问题，归属由 Git blame 解析。",
                     "## 代码差异", "保留 Git diff 行号区间；+ 为新增，- 为删除，空格为上下文。", fenced(chunk["diff"], "diff"),
                     "## 完整变更文件", file_context or "无 C# 变更文件", "## 检查 Skill"]
         for rule in rules:
             sections.extend([f"### {rule.get('path', 'Skill')}", fenced(rule.get("content", ""), "markdown")])
         return "\n\n".join(sections)
 
-    def build_file_context(self, files: list[str], limit: int = 80000) -> tuple[str, int]:
+    @staticmethod
+    def finding_matches_skill(item: dict[str, Any], rules: list[dict[str, Any]]) -> bool:
+        rule = str(item.get("rule") or "").strip()
+        if len(rule) < 4:
+            return False
+        return any(rule in str(source.get("content") or "") for source in rules)
+
+    def build_file_context(self, files: list[str], diff: str = "", limit: int = 24000) -> tuple[str, int]:
+        """Build bounded context around the hunks in this chunk.
+
+        Each request contains one diff chunk, so sending the whole file for every
+        chunk needlessly repeats up to 80k characters. Keep the file header and
+        the changed regions with a small amount of surrounding code instead.
+        """
         sections=[]; count=0
         for rel in files:
             if not rel.lower().endswith(".cs"): continue
             path=self.root/rel
             if not path.is_file(): continue
-            text=path.read_text(encoding="utf-8", errors="replace")
-            if len(text)>limit: text=text[:limit]+"\n# ... 文件过大，已截断"
-            sections.append(f"### {rel}\n```csharp\n{text}\n```"); count+=1
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+            ranges = [(0, min(80, len(lines)))]
+            if diff:
+                for match in re.finditer(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", diff, re.MULTILINE):
+                    start = max(0, int(match.group(1)) - 1 - 30)
+                    length = int(match.group(2) or 1)
+                    ranges.append((start, min(len(lines), start + length + 60)))
+            merged=[]
+            for start, end in sorted(ranges):
+                if merged and start <= merged[-1][1]: merged[-1] = (merged[-1][0], max(end, merged[-1][1]))
+                else: merged.append((start, end))
+            selected=[]
+            for start, end in merged:
+                selected.extend(f"{i + 1:>5}: {lines[i]}" for i in range(start, end))
+            text = "\n".join(selected)
+            if len(text)>limit: text=text[:limit]+"\n# ... 上下文过大，已截断"
+            sections.append(f"### {rel}（变更附近上下文）\n```csharp\n{text}\n```"); count+=1
         return "\n\n".join(sections), count
     def run(self) -> CheckResult:
         # Reset the existing stream at task start, including repeated runs in one process.
@@ -163,32 +227,38 @@ class ReviewPipeline:
         self._done("同步 Git 分支", operations=operations, current_sha=current)
         old = self.load_previous_sha(state_path)
         if not old:
-            # 首次执行从“昨天的定时执行时间”开始，避免把更早历史重复送检。
-            try:
-                hour, minute = (int(x) for x in str(self.config.raw.get("schedule", {}).get("time", "04:00")).split(":", 1))
-            except (TypeError, ValueError):
-                hour, minute = 4, 0
-            yesterday = datetime.now() - timedelta(days=1)
-            yesterday = yesterday.replace(hour=hour, minute=minute, second=0, microsecond=0)
-            old = self.repo.initial_sha(before=yesterday)
+            # 首次执行从昨天凌晨 00:00 前的最后一次提交开始。
+            yesterday_midnight = (datetime.now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+            old = self.repo.initial_sha(before=yesterday_midnight)
         old_info = self.repo.commit_summary(old) if old else {"sha": None}
         self._step("读取上次检查 SHA", **old_info)
         self._done("读取上次检查 SHA", **old_info)
         if old == current:
             logger.info("review.skipped sha=%s reason=no-new-commit", current)
-            return CheckResult("skipped", old, current, execution_id=execution_id, executed_at=executed_at)
+            result = CheckResult("skipped", old, current, execution_id=execution_id, executed_at=executed_at, elapsed_seconds=round(time.perf_counter() - started, 3), project_path=str(self.root), branch=branch)
+            result.warnings.append("没有新的提交，本次无需重复检查")
+            report = storage_root / "reports" / execution_id / "result.json"
+            report.parent.mkdir(parents=True, exist_ok=True)
+            result.report_path = str(report)
+            report.write_text(json.dumps(result.as_display_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+            return result
         self._step("读取 Diff 内容")
         files, diff = self.collect_diff(old, current)
         diff_path = storage_root / "reports" / execution_id / "changes.diff"
         diff_path.parent.mkdir(parents=True, exist_ok=True)
         diff_path.write_text(diff, encoding="utf-8")
         self._done("读取 Diff 内容", files=len(files), diff_chars=len(diff), diff_path=str(diff_path))
+        self._step("过滤非 C# 文件", files=len(files))
+        files, skipped_files, diff = self.filter_review_files(files, diff)
+        self._done("过滤非 C# 文件", kept=len(files), skipped=len(skipped_files), skipped_files=skipped_files)
         self._step("检查变更文件", files=len(files))
         validation_errors = self.validate_changed_files(files)
         self._done("检查变更文件", errors=validation_errors, files=len(files))
-        result = CheckResult("failed", old, current, files, execution_id=execution_id, executed_at=executed_at)
+        result = CheckResult("failed", old, current, files, execution_id=execution_id, executed_at=executed_at, project_path=str(self.root), branch=branch)
         result.warnings.extend(validation_errors)
         self._step("检查 Runtime 代码中的 Editor 引用")
+        # This built-in boundary check is always enabled; the toggle only scopes
+        # model findings outside the configured Skill rules.
         result.findings.extend(Finding(**x) for x in unity_runtime_findings(self.root, files, self.config.checks.get("editor_markers", ["UnityEditor", "/Editor/", "\\Editor\\"])))
         self._done("检查 Runtime 代码中的 Editor 引用", findings=len(result.findings))
         self._step("读取代码检查 Skill")
@@ -206,16 +276,19 @@ class ReviewPipeline:
         self._done("切分代码内容", chunks=len(chunks), context_files=context_files)
         self._step("发送代码切片和 Skill 给模型", chunks=len(chunks))
         try:
-            client = LocalModelClient(self.config.model_service.get("api_url", "http://127.0.0.1:8765/v1"), self.config.model_service.get("model", "gpt-5.6-sol"), self.config.model_service.get("timeout_seconds", 120), self.config.model_service.get("max_output_tokens", 2000))
+            client = LocalModelClient(self.config.model_service.get("api_url", "http://10.0.27.224:8317/v1"), self.config.model_service.get("model", "gpt-5.6-sol"), self.config.model_service.get("timeout_seconds", 120), self.config.model_service.get("max_output_tokens", 2000), self.config.model_service.get("api_key"))
             findings = []
+            allow_extra_rules = bool(self.config.checks.get("allow_extra_rules"))
             if not rules:
                 chunks = []
             for index, chunk in enumerate(chunks, 1):
-                file_context, _ = self.build_file_context(chunk["files"]); prompt = self.format_review_prompt(chunk, rules, file_context)
+                chunk["metadata"] = {"commit_sha": current}
+                file_context, _ = self.build_file_context(chunk["files"], chunk["diff"]); prompt = self.format_review_prompt(chunk, rules, file_context, allow_extra_rules)
                 prompt_path = diff_path.parent / f"model-input-{index:03d}.md"
                 prompt_path.write_text(prompt, encoding="utf-8")
                 self.progress_callback(current=self.step, total=self.step_total, message="发送模型检查代码切片", chunk=index, chunks=len(chunks), diff_chars=len(chunk["diff"]), prompt_path=str(prompt_path))
-                messages = [{"role": "system", "content": "你是 Unity C# 代码审查器，严格按照 Skill 检查完整变更文件。只输出 JSON，包含 findings、open_questions、test_gaps。"}, {"role": "user", "content": prompt}]
+                scope = "可以补充 Skill 以外的代码问题。" if allow_extra_rules else "只报告 Skill 原文覆盖的问题。"
+                messages = [{"role": "system", "content": "你是 Unity C# 代码审查器。" + scope + MODEL_OUTPUT_CONTRACT}, {"role": "user", "content": prompt}]
                 parsed = None
                 last_error = None
                 for attempt in range(1, 7):
@@ -223,9 +296,6 @@ class ReviewPipeline:
                     try:
                         content = client.complete(messages)
                         parsed = self.parse_model_json(content)
-                        items = parsed.get("findings") or []
-                        if any(isinstance(item, dict) and not str(item.get("message") or "").strip() for item in items):
-                            raise ValueError("模型返回的问题 message 为空")
                         if attempt > 1:
                             self.log_callback(kind="pipeline", message="模型切片重试成功", chunk=index, attempt=attempt)
                         break
@@ -236,8 +306,11 @@ class ReviewPipeline:
                         if attempt < 6:
                             self.progress_callback(current=self.step, total=self.step_total, message="模型请求重试", chunk=index, attempt=attempt + 1, max_attempts=6)
                 if parsed is None:
-                    raise ModelServiceError(f"切片 {index} 重试 5 次后仍失败: {last_error}")
-                findings.extend(parsed.get("findings", [])); result.tool_results.append({"name":"model-review","chunk":index,"open_questions":parsed.get("open_questions",[]),"test_gaps":parsed.get("test_gaps",[])})
+                    raise ModelServiceError(f"切片 {index} 重试 6 次后仍失败: {last_error}")
+                chunk_findings = parsed.get("findings", [])
+                if not allow_extra_rules:
+                    chunk_findings = [item for item in chunk_findings if self.finding_matches_skill(item, rules)]
+                findings.extend(chunk_findings); result.tool_results.append({"name":"model-review","chunk":index,"open_questions":parsed.get("open_questions",[]),"test_gaps":parsed.get("test_gaps",[])})
             self._done("发送代码切片和 Skill 给模型", chunks=len(chunks), findings=len(findings))
             if rules:
                 result.agent_status = "passed"
@@ -246,26 +319,41 @@ class ReviewPipeline:
             result.agent_status = "unavailable"
             result.warnings.append(f"模型服务不可用或返回格式无效: {exc}")
             result.status = "error"
+        for finding in result.findings:
+            attribution = self.repo.blame_line(current, finding.file, finding.line)
+            finding.author = attribution["author"] if attribution else None
+            finding.commit_sha = attribution["sha"] if attribution else None
+            if not attribution:
+                result.warnings.append(f"无法确定问题行归属：{finding.file}:{finding.line}，修改人和提交 SHA 标记为未知")
         if compile_result and compile_result["status"] == "failed": result.status = "failed"
+        threshold = str(self.config.checks.get("failure_threshold", "high")).lower()
+        levels = {"low": 1, "medium": 2, "high": 3, "critical": 4}
         if result.agent_status == "passed" and result.status != "error":
-            result.status = "failed" if any(f.severity in {"critical", "high"} for f in result.findings) else "passed"
+            result.status = "failed" if any(levels.get(f.severity, 2) >= levels.get(threshold, 3) for f in result.findings) else "passed"
         self._step("汇总并保存检查结果")
         state_path.parent.mkdir(parents=True, exist_ok=True)
         if result.status == "passed": state_path.write_text(json.dumps({"last_successful_sha": current, "checked_at": datetime.now().isoformat()}, indent=2), encoding="utf-8")
         report_dir = storage_root / "reports"; report_dir.mkdir(parents=True, exist_ok=True)
-        report = report_dir / f"{current}.json"; report.write_text(json.dumps(result.as_dict(), ensure_ascii=False, indent=2), encoding="utf-8"); result.report_path = str(report)
-        current_info = self.repo.commit_summary(current)
         elapsed = round(time.perf_counter() - started, 3)
+        result.elapsed_seconds = elapsed
+        report = report_dir / f"{current}.json"
+        result.report_path = str(report)
+        report.write_text(json.dumps(result.as_display_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+        current_info = self.repo.commit_summary(current)
         logger.info("review.summary sha=%s author=%s subject=%s status=%s findings=%d elapsed_seconds=%s", current_info.get("sha"), current_info.get("author"), current_info.get("subject"), result.status, len(result.findings), elapsed)
-        self.log_callback(kind="result", message="检查结果", sha=current_info.get("sha"), author=current_info.get("author"), subject=current_info.get("subject"), status=result.status, findings=len(result.findings), elapsed_seconds=elapsed)
-        for index, finding in enumerate(result.findings, 1):
-            if finding.source == "agent":
-                cause = "Skill规范"
-                rule = finding.rule or "模型未标注具体条款"
-            else:
-                cause = "流程固定规则"
-                rule = finding.rule or finding.source
-            logger.info("review.issue index=%s file=%s line=%s severity=%s cause=%s rule=%s message=%s", index, finding.file, finding.line, finding.severity, cause, rule, finding.message)
-            self.log_callback(kind="result", message="检查问题", index=index, sha=current_info.get("sha"), author=current_info.get("author"), file=finding.file, line=finding.line, severity=finding.severity, cause=cause, rule=rule, detail=finding.message, suggestion=finding.suggestion)
+        summary = {
+            "检查结果": f"失败数量：{len(result.findings)}" if result.findings else "检查通过",
+            "上次检查节点": old,
+            "当前检查节点": current,
+            "更新文件": files,
+            "问题内容": [{"严重程度": f.severity, "问题描述": f.message, "文件": f.file, "行数": f.line, "修改人姓名": f.author, "提交SHA": f.commit_sha, "规则": f.rule, "建议": f.suggestion, "可信度": f.confidence} for f in result.findings],
+            "警告": result.warnings,
+            "导出报告": result.report_path,
+            "执行时间": executed_at,
+            "总耗时": format_elapsed_time(elapsed),
+            "工程路径": str(self.root),
+            "分支": branch,
+        }
+        self.log_callback(kind="result", message="检查结果", **summary)
         logger.info("review.end status=%s current_sha=%s findings=%d agent_status=%s", result.status, current, len(result.findings), result.agent_status)
         return result

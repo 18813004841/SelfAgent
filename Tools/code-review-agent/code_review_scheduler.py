@@ -39,6 +39,8 @@ def execute(args: Mapping[str, Any], context: Any) -> dict[str, Any]:
         config.raw["project"]["branch"] = branch
         if "skill_paths" in args:
             config.raw.setdefault("checks", {})["skill_paths"] = args["skill_paths"]
+        config.raw.setdefault("checks", {})["allow_extra_rules"] = bool(args.get("allow_extra_rules"))
+        config.raw.setdefault("checks", {})["failure_threshold"] = str(args.get("failure_threshold", "high"))
         def cancelled() -> bool:
             check = args.get("cancel")
             return bool(check()) if callable(check) else False
@@ -59,9 +61,7 @@ def execute(args: Mapping[str, Any], context: Any) -> dict[str, Any]:
         result = {"status": "failed", "error": f"找不到文件或命令: {missing}", "project_path": str(project), "branch": branch}
         context.complete("failed", result)
         return result
-    result = review.as_dict()
-    result["project_path"] = str(project)
-    result["branch"] = branch
+    result = review.as_display_dict()
     status = "succeeded" if review.status in {"passed", "skipped"} else "failed"
     context.progress(4, 4, "检查执行结束", status=review.status)
     context.complete(status, result)

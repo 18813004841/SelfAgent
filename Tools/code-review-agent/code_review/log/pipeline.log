@@ -1,84 +1,189 @@
-2026-11-06 15:09:50,347 [feature=code-review] INFO review.begin project=my-unity branch=master
-2026-11-06 15:09:50,348 [feature=code-review] INFO step.begin name=同步 Git 分支 details={}
-2026-11-06 15:09:50,349 [feature=code-review] INFO git.command args=['git', 'checkout', 'master']
-2026-11-06 15:09:52,717 [feature=code-review] INFO git.completed output_length=48
-2026-11-06 15:09:52,717 [feature=code-review] INFO git.command args=['git', 'remote']
-2026-11-06 15:09:52,755 [feature=code-review] INFO git.completed output_length=7
-2026-11-06 15:09:52,755 [feature=code-review] INFO git.command args=['git', 'fetch', 'origin', 'master']
-2026-11-06 15:09:56,351 [feature=code-review] INFO git.completed output_length=0
-2026-11-06 15:09:56,351 [feature=code-review] INFO git.command args=['git', 'pull', '--ff-only', 'origin', 'master']
-2026-11-06 15:09:59,379 [feature=code-review] INFO git.completed output_length=20
-2026-11-06 15:09:59,379 [feature=code-review] INFO git.command args=['git', 'rev-parse', 'HEAD']
-2026-11-06 15:09:59,419 [feature=code-review] INFO git.completed output_length=41
-2026-11-06 15:09:59,419 [feature=code-review] INFO step.end name=同步 Git 分支 details={'operations': ['git checkout master', 'git fetch origin master', 'git pull --ff-only origin master', 'git rev-parse HEAD'], 'current_sha': '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18', 'result': '成功'}
-2026-11-06 15:09:59,421 [feature=code-review] INFO git.command args=['git', 'rev-list', '-1', '--before=2026-11-05T04:00:00', 'HEAD']
-2026-11-06 15:09:59,499 [feature=code-review] INFO git.completed output_length=41
-2026-11-06 15:09:59,499 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', 'e9bcbc4f26995833a938f50faa3d87ac96479927']
-2026-11-06 15:09:59,558 [feature=code-review] INFO git.completed output_length=16
-2026-11-06 15:09:59,558 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', 'e9bcbc4f26995833a938f50faa3d87ac96479927']
-2026-11-06 15:09:59,623 [feature=code-review] INFO git.completed output_length=11
-2026-11-06 15:09:59,623 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', 'e9bcbc4f26995833a938f50faa3d87ac96479927']
-2026-11-06 15:09:59,680 [feature=code-review] INFO git.completed output_length=26
-2026-11-06 15:09:59,680 [feature=code-review] INFO step.begin name=读取上次检查 SHA details={'sha': 'e9bcbc4f26995833a938f50faa3d87ac96479927', 'subject': '[美术] 塔防角色材质丢失修复', 'author': 'yanshen010', 'date': '2026-11-04T21:47:00+08:00'}
-2026-11-06 15:09:59,681 [feature=code-review] INFO step.end name=读取上次检查 SHA details={'sha': 'e9bcbc4f26995833a938f50faa3d87ac96479927', 'subject': '[美术] 塔防角色材质丢失修复', 'author': 'yanshen010', 'date': '2026-11-04T21:47:00+08:00', 'result': '成功'}
-2026-11-06 15:09:59,682 [feature=code-review] INFO step.begin name=读取 Diff 内容 details={}
-2026-11-06 15:09:59,683 [feature=code-review] INFO git.command args=['git', '-c', 'core.quotepath=false', 'diff', '--name-only', 'e9bcbc4f26995833a938f50faa3d87ac96479927', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18', '--']
-2026-11-06 15:09:59,785 [feature=code-review] INFO git.completed output_length=3831
-2026-11-06 15:09:59,785 [feature=code-review] INFO git.command args=['git', '-c', 'core.quotepath=false', 'diff', '--no-ext-diff', '--no-textconv', '--no-color', '--unified=20', 'e9bcbc4f26995833a938f50faa3d87ac96479927', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18', '--']
-2026-11-06 15:10:00,003 [feature=code-review] INFO git.completed output_length=237396
-2026-11-06 15:10:00,023 [feature=code-review] INFO step.end name=读取 Diff 内容 details={'files': 53, 'diff_chars': 237395, 'diff_path': 'E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0016\\changes.diff', 'result': '成功'}
-2026-11-06 15:10:00,025 [feature=code-review] INFO step.begin name=检查变更文件 details={'files': 53}
-2026-11-06 15:10:00,065 [feature=code-review] INFO step.end name=检查变更文件 details={'errors': ["Game/Assets/Editor Default Resources/XTutorial_Editor.xlsx: 编码错误 'utf-8' codec can't decode byte 0xea in position 16: invalid continuation byte", "Game/Assets/__RawArtData/_Resources/Texture/IAP/HUD/iap_package_chip_dragon_stone_16.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/IAP/HUD/iap_package_dragon_stone_exp_10.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/IAP/iap_package_chip_dragon_stone_16.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/IAP/iap_package_dragon_stone_exp_10.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_chip_dragon_stone_16.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_dragon_stone_exp_10.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_dragon_stone_material_choose_chest_9_solar.png: 编码错误 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte", "Game/FlatBuffers_Gen_CS_Temp/dll/FBGen.dll: 编码错误 'utf-8' codec can't decode byte 0x90 in position 2: invalid start byte", "Game/FlatBuffers_Gen_CS_Temp/dll/FBGen.pdb: 编码错误 'utf-8' codec can't decode byte 0x84 in position 36: invalid start byte"], 'files': 53, 'result': '成功'}
-2026-11-06 15:10:00,066 [feature=code-review] INFO step.begin name=检查 Runtime 代码中的 Editor 引用 details={}
-2026-11-06 15:10:00,116 [feature=code-review] INFO step.end name=检查 Runtime 代码中的 Editor 引用 details={'findings': 0, 'result': '成功'}
-2026-11-06 15:10:00,117 [feature=code-review] INFO step.begin name=读取代码检查 Skill details={}
-2026-11-06 15:10:00,122 [feature=code-review] INFO step.end name=读取代码检查 Skill details={'skills': 1, 'paths': ['Game\\.agents\\skills\\unity-code-review\\SKILL.md'], 'missing': [], 'result': '成功'}
-2026-11-06 15:10:00,123 [feature=code-review] INFO step.begin name=执行编译检查 details={}
-2026-11-06 15:10:00,124 [feature=code-review] INFO step.end name=执行编译检查 details={'result': '未配置编译命令'}
-2026-11-06 15:10:00,124 [feature=code-review] INFO step.begin name=切分代码内容 details={}
-2026-11-06 15:10:00,129 [feature=code-review] INFO step.end name=切分代码内容 details={'chunks': 54, 'context_files': 21, 'result': '成功'}
-2026-11-06 15:10:00,131 [feature=code-review] INFO step.begin name=发送代码切片和 Skill 给模型 details={'chunks': 54}
-2026-11-06 15:10:55,555 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=1/6 error=模型返回的问题 message 为空
-2026-11-06 15:11:28,960 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=2/6 error=模型返回的问题 message 为空
-2026-11-06 15:12:10,248 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=3/6 error=模型返回的问题 message 为空
-2026-11-06 15:12:40,952 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=4/6 error=模型返回的问题 message 为空
-2026-11-06 15:13:16,150 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=5/6 error=模型返回的问题 message 为空
-2026-11-06 15:14:08,074 [feature=code-review] WARNING model.chunk_failed chunk=2 attempt=6/6 error=模型返回的问题 message 为空
-2026-11-06 15:15:04,063 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=1/6 error=模型返回的问题 message 为空
-2026-11-06 15:15:30,858 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=2/6 error=HTTP Error 400: Bad Request
-2026-11-06 15:16:32,211 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=3/6 error=模型返回的问题 message 为空
-2026-11-06 15:17:22,233 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=4/6 error=模型返回的问题 message 为空
-2026-11-06 15:18:14,261 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=5/6 error=模型返回的问题 message 为空
-2026-11-06 15:19:05,975 [feature=code-review] WARNING model.chunk_failed chunk=3 attempt=6/6 error=模型返回的问题 message 为空
-2026-11-06 15:20:41,848 [feature=code-review] WARNING model.chunk_failed chunk=6 attempt=1/6 error=HTTP Error 400: Bad Request
-2026-11-06 15:21:03,145 [feature=code-review] WARNING model.chunk_failed chunk=6 attempt=2/6 error=HTTP Error 400: Bad Request
-2026-11-06 15:22:32,273 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=1/6 error=模型返回的问题 message 为空
-2026-11-06 15:23:27,277 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=2/6 error=模型返回的问题 message 为空
-2026-11-06 15:23:43,830 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=3/6 error=HTTP Error 400: Bad Request
-2026-11-06 15:24:31,961 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=4/6 error=模型返回的问题 message 为空
-2026-11-06 15:25:11,310 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=5/6 error=模型返回的问题 message 为空
-2026-11-06 15:25:59,276 [feature=code-review] WARNING model.chunk_failed chunk=7 attempt=6/6 error=模型返回的问题 message 为空
-2026-11-06 15:26:52,533 [feature=code-review] WARNING model.chunk_failed chunk=8 attempt=1/6 error=模型返回的问题 message 为空
-2026-11-06 15:28:30,743 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=1/6 error=模型返回的问题 message 为空
-2026-11-06 15:28:33,527 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=2/6 error=HTTP Error 400: Bad Request
-2026-11-06 15:28:35,553 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=3/6 error=HTTP Error 400: Bad Request
-2026-11-06 15:29:45,352 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=4/6 error=模型返回的问题 message 为空
-2026-11-06 15:30:44,313 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=5/6 error=模型返回的问题 message 为空
-2026-11-06 15:31:53,004 [feature=code-review] WARNING model.chunk_failed chunk=9 attempt=6/6 error=模型返回的问题 message 为空
-2026-11-06 15:31:54,917 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=1/6 error=HTTP Error 400: Bad Request
-2026-11-06 15:33:04,799 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=2/6 error=模型返回的问题 message 为空
-2026-11-06 15:34:03,153 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=3/6 error=模型返回的问题 message 为空
-2026-11-06 15:35:09,837 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=4/6 error=模型返回的问题 message 为空
-2026-11-06 15:36:21,992 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=5/6 error=模型返回的问题 message 为空
-2026-11-06 15:37:29,899 [feature=code-review] WARNING model.chunk_failed chunk=10 attempt=6/6 error=模型返回的问题 message 为空
-2026-11-06 15:38:40,580 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=1/6 error=模型返回的问题 message 为空
-2026-11-06 15:39:29,052 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=2/6 error=模型返回的问题 message 为空
-2026-11-06 15:40:25,973 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=3/6 error=模型返回的问题 message 为空
-2026-11-06 15:41:25,151 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=4/6 error=Expecting ',' delimiter: line 15 column 17 (char 704)
-2026-11-06 15:42:10,898 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=5/6 error=模型返回的问题 message 为空
-2026-11-06 15:43:12,629 [feature=code-review] WARNING model.chunk_failed chunk=11 attempt=6/6 error=模型返回的问题 message 为空
-2026-11-06 15:43:56,546 [feature=code-review] WARNING model.chunk_failed chunk=12 attempt=1/6 error=模型返回的问题 message 为空
-2026-11-06 15:43:58,550 [feature=code-review] WARNING model.chunk_failed chunk=12 attempt=2/6 error=HTTP Error 400: Bad Request
-2026-11-06 15:44:42,301 [feature=code-review] WARNING model.chunk_failed chunk=12 attempt=3/6 error=模型返回的问题 message 为空
-2026-11-06 15:45:39,714 [feature=code-review] WARNING model.chunk_failed chunk=12 attempt=4/6 error=模型返回的问题 message 为空
-2026-11-06 15:46:32,727 [feature=code-review] WARNING model.chunk_failed chunk=12 attempt=5/6 error=模型返回的问题 message 为空
+2026-11-07 09:24:01,900 [feature=code-review] INFO review.begin project=my-unity branch=master
+2026-11-07 09:24:01,905 [feature=code-review] INFO step.begin name=同步 Git 分支 details={}
+2026-11-07 09:24:01,907 [feature=code-review] INFO git.command args=['git', 'checkout', 'master']
+2026-11-07 09:24:03,687 [feature=code-review] INFO git.completed output_length=48
+2026-11-07 09:24:03,689 [feature=code-review] INFO git.command args=['git', 'remote']
+2026-11-07 09:24:03,744 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:24:03,744 [feature=code-review] INFO git.command args=['git', 'fetch', 'origin', 'master']
+2026-11-07 09:24:07,779 [feature=code-review] INFO git.completed output_length=0
+2026-11-07 09:24:07,779 [feature=code-review] INFO git.command args=['git', 'pull', '--ff-only', 'origin', 'master']
+2026-11-07 09:24:10,396 [feature=code-review] INFO git.completed output_length=20
+2026-11-07 09:24:10,396 [feature=code-review] INFO git.command args=['git', 'rev-parse', 'HEAD']
+2026-11-07 09:24:10,433 [feature=code-review] INFO git.completed output_length=41
+2026-11-07 09:24:10,433 [feature=code-review] INFO step.end name=同步 Git 分支 details={'operations': ['git checkout master', 'git fetch origin master', 'git pull --ff-only origin master', 'git rev-parse HEAD'], 'current_sha': '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18', 'result': '成功'}
+2026-11-07 09:24:10,435 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', 'e9bcbc4f26995833a938f50faa3d87ac96479927']
+2026-11-07 09:24:10,488 [feature=code-review] INFO git.completed output_length=16
+2026-11-07 09:24:10,488 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', 'e9bcbc4f26995833a938f50faa3d87ac96479927']
+2026-11-07 09:24:10,542 [feature=code-review] INFO git.completed output_length=11
+2026-11-07 09:24:10,542 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', 'e9bcbc4f26995833a938f50faa3d87ac96479927']
+2026-11-07 09:24:10,599 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:24:10,599 [feature=code-review] INFO step.begin name=读取上次检查 SHA details={'sha': 'e9bcbc4f26995833a938f50faa3d87ac96479927', 'subject': '[美术] 塔防角色材质丢失修复', 'author': 'yanshen010', 'date': '2026-11-04T21:47:00+08:00'}
+2026-11-07 09:24:10,601 [feature=code-review] INFO step.end name=读取上次检查 SHA details={'sha': 'e9bcbc4f26995833a938f50faa3d87ac96479927', 'subject': '[美术] 塔防角色材质丢失修复', 'author': 'yanshen010', 'date': '2026-11-04T21:47:00+08:00', 'result': '成功'}
+2026-11-07 09:24:10,602 [feature=code-review] INFO step.begin name=读取 Diff 内容 details={}
+2026-11-07 09:24:10,602 [feature=code-review] INFO git.command args=['git', '-c', 'core.quotepath=false', 'diff', '--name-only', 'e9bcbc4f26995833a938f50faa3d87ac96479927', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18', '--']
+2026-11-07 09:24:10,700 [feature=code-review] INFO git.completed output_length=3831
+2026-11-07 09:24:10,700 [feature=code-review] INFO git.command args=['git', '-c', 'core.quotepath=false', 'diff', '--no-ext-diff', '--no-textconv', '--no-color', '--unified=20', 'e9bcbc4f26995833a938f50faa3d87ac96479927', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18', '--']
+2026-11-07 09:24:10,899 [feature=code-review] INFO git.completed output_length=237396
+2026-11-07 09:24:10,901 [feature=code-review] INFO step.end name=读取 Diff 内容 details={'files': 53, 'diff_chars': 237395, 'diff_path': 'E:\\SelfAgent\\Tools\\code-review-agent\\data\\koa-client-code-master\\reports\\koa-client-code-master-0025\\changes.diff', 'result': '成功'}
+2026-11-07 09:24:10,902 [feature=code-review] INFO step.begin name=过滤非 C# 文件 details={'files': 53}
+2026-11-07 09:24:10,906 [feature=code-review] INFO step.end name=过滤非 C# 文件 details={'kept': 21, 'skipped': 32, 'skipped_files': ['Game/Assets/Editor Default Resources/XTutorial_Editor.xlsx', 'Game/Assets/FlatBuffers/FlatBuffersConfig.asset', 'Game/Assets/__RawArtData/_Resources/Texture/IAP/HUD/iap_package_chip_dragon_stone_16.png', 'Game/Assets/__RawArtData/_Resources/Texture/IAP/HUD/iap_package_chip_dragon_stone_16.png.meta', 'Game/Assets/__RawArtData/_Resources/Texture/IAP/HUD/iap_package_dragon_stone_exp_10.png', 'Game/Assets/__RawArtData/_Resources/Texture/IAP/HUD/iap_package_dragon_stone_exp_10.png.meta', 'Game/Assets/__RawArtData/_Resources/Texture/IAP/iap_package_chip_dragon_stone_16.png', 'Game/Assets/__RawArtData/_Resources/Texture/IAP/iap_package_chip_dragon_stone_16.png.meta', 'Game/Assets/__RawArtData/_Resources/Texture/IAP/iap_package_dragon_stone_exp_10.png', 'Game/Assets/__RawArtData/_Resources/Texture/IAP/iap_package_dragon_stone_exp_10.png.meta', 'Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_chip_dragon_stone_16.png', 'Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_chip_dragon_stone_16.png.meta', 'Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_dragon_stone_exp_10.png', 'Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_dragon_stone_exp_10.png.meta', 'Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_dragon_stone_material_choose_chest_9_solar.png', 'Game/Assets/__RawArtData/_Resources/Texture/ItemIcons/item_dragon_stone_material_choose_chest_9_solar.png.meta', 'Game/FlatBuffers_Gen_CS_Temp/dll/FBGen.dll', 'Game/FlatBuffers_Gen_CS_Temp/dll/FBGen.pdb', 'Game/build_simple_ui/_Resources/Prefab/UI/Dialogs/EquipGemNewDlg/Task/原子进度/进度-强化页签重置.md', 'Game/build_simple_ui/_Resources/Prefab/UI/Dialogs/EquipGemNewDlg/Task/结果-任务拆分.md', 'Game/build_simple_ui/_Resources/Prefab/UI/Dialogs/EquipGemNewDlg/Task/进度-任务拆分.md', 'Game/build_simple_ui/_Resources/Prefab/UI/Dialogs/EquipGemNewDlg/结果-数据.md', 'Game/build_simple_ui/_Resources/Prefab/UI/Dialogs/EquipGemNewDlg/结果-策划文档.md', 'Game/build_simple_ui/_Resources/Prefab/UI/Dialogs/EquipGemNewDlg/结果-预制体.md', 'Game/build_simple_ui/_Resources/Prefab/UI/Dialogs/EquipGemNewDlg/进度-总体.md', 'Game/build_simple_ui/_Resources/Prefab/UI/Dialogs/EquipGemNewDlg/进度-数据.md', 'Game/build_simple_ui/_Resources/Prefab/UI/Dialogs/EquipGemNewDlg/进度-策划文档.md', 'Game/build_simple_ui/_Resources/Prefab/UI/Dialogs/EquipGemNewDlg/进度-预制体.md', 'Game/openspec/changes/bulk-enhancement/design.md', 'Game/openspec/changes/bulk-enhancement/specs/bulk-enhancement/spec.md', 'Game/openspec/changes/bulk-enhancement/tasks.md', 'Game/openspec/specs/bulk-enhancement/spec.md'], 'result': '成功'}
+2026-11-07 09:24:10,907 [feature=code-review] INFO step.begin name=检查变更文件 details={'files': 21}
+2026-11-07 09:24:10,916 [feature=code-review] INFO step.end name=检查变更文件 details={'errors': [], 'files': 21, 'result': '成功'}
+2026-11-07 09:24:10,917 [feature=code-review] INFO step.begin name=检查 Runtime 代码中的 Editor 引用 details={}
+2026-11-07 09:24:10,962 [feature=code-review] INFO step.end name=检查 Runtime 代码中的 Editor 引用 details={'findings': 0, 'result': '成功'}
+2026-11-07 09:24:10,963 [feature=code-review] INFO step.begin name=读取代码检查 Skill details={}
+2026-11-07 09:24:10,965 [feature=code-review] INFO step.end name=读取代码检查 Skill details={'skills': 1, 'paths': ['Game\\.agents\\skills\\unity-code-review\\SKILL.md'], 'missing': [], 'result': '成功'}
+2026-11-07 09:24:10,966 [feature=code-review] INFO step.begin name=执行编译检查 details={}
+2026-11-07 09:24:10,966 [feature=code-review] INFO step.end name=执行编译检查 details={'result': '未配置编译命令'}
+2026-11-07 09:24:10,967 [feature=code-review] INFO step.begin name=切分代码内容 details={}
+2026-11-07 09:24:10,970 [feature=code-review] INFO step.end name=切分代码内容 details={'chunks': 22, 'context_files': 21, 'result': '成功'}
+2026-11-07 09:24:10,982 [feature=code-review] INFO step.begin name=发送代码切片和 Skill 给模型 details={'chunks': 22}
+2026-11-07 09:24:10,983 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:24:11,044 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:24:11,044 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:24:11,104 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:24:11,105 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:24:11,170 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:24:28,220 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:24:28,300 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:24:28,300 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:24:28,361 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:24:28,361 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:24:28,422 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:25:05,523 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:25:05,606 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:25:05,606 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:25:05,667 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:25:05,667 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:25:05,727 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:25:30,234 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:25:30,307 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:25:30,307 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:25:30,379 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:25:30,380 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:25:30,439 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:25:45,173 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:25:45,248 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:25:45,248 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:25:45,312 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:25:45,312 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:25:45,371 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:27:07,468 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:27:07,531 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:27:07,531 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:27:07,592 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:27:07,592 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:27:07,653 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:27:24,671 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:27:24,731 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:27:24,731 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:27:24,793 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:27:24,793 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:27:24,851 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:28:06,333 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:28:06,398 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:28:06,398 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:28:06,459 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:28:06,460 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:28:06,520 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:28:58,040 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:28:58,111 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:28:58,111 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:28:58,171 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:28:58,171 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:28:58,231 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:29:20,569 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:29:20,634 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:29:20,634 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:29:20,698 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:29:20,698 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:29:20,764 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:29:51,293 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:29:51,361 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:29:51,361 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:29:51,422 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:29:51,422 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:29:51,483 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:30:09,210 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:30:09,282 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:30:09,282 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:30:09,342 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:30:09,342 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:30:09,403 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:32:09,429 [feature=code-review] WARNING model.chunk_failed chunk=12 attempt=1/6 error=timed out
+2026-11-07 09:33:56,013 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:33:56,089 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:33:56,089 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:33:56,156 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:33:56,156 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:33:56,216 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:34:08,324 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:08,388 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:34:08,389 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:08,448 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:34:08,449 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:08,540 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:34:25,286 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:25,350 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:34:25,351 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:25,414 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:34:25,415 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:25,477 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:34:36,961 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:37,023 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:34:37,023 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:37,086 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:34:37,086 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:37,146 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:34:51,137 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:51,248 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:34:51,249 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:51,310 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:34:51,310 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:34:51,372 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:35:17,157 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:35:17,237 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:35:17,237 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:35:17,298 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:35:17,298 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:35:17,359 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:36:00,458 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:36:00,521 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:36:00,521 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:36:00,582 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:36:00,583 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:36:00,642 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:36:22,417 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:36:22,496 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:36:22,497 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:36:22,562 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:36:22,562 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:36:22,625 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:36:42,343 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:36:42,419 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:36:42,420 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:36:42,480 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:36:42,480 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:36:42,540 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:37:22,847 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:37:22,917 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:37:22,917 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:37:22,981 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:37:22,981 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:37:23,048 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:37:42,217 [feature=code-review] INFO step.end name=发送代码切片和 Skill 给模型 details={'chunks': 22, 'findings': 7, 'result': '成功'}
+2026-11-07 09:37:42,219 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:37:42,330 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:37:42,330 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:37:42,448 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:37:42,448 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:37:42,532 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:37:42,533 [feature=code-review] INFO step.begin name=汇总并保存检查结果 details={}
+2026-11-07 09:37:42,536 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%s', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:37:42,659 [feature=code-review] INFO git.completed output_length=27
+2026-11-07 09:37:42,659 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%an', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:37:42,818 [feature=code-review] INFO git.completed output_length=7
+2026-11-07 09:37:42,819 [feature=code-review] INFO git.command args=['git', 'show', '-s', '--format=%aI', '38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18']
+2026-11-07 09:37:42,949 [feature=code-review] INFO git.completed output_length=26
+2026-11-07 09:37:42,949 [feature=code-review] INFO review.summary sha=38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18 author=shitao subject=[25.4] 塔防托管是清理TimeScale和选择 status=failed findings=7 elapsed_seconds=820.635
+2026-11-07 09:37:42,951 [feature=code-review] INFO review.end status=failed current_sha=38b636f4a99bd6ec80c3a0f7ca4cc94b02d57d18 findings=7 agent_status=passed

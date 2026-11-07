@@ -237,16 +237,15 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/openai-agent/chat":
                 message = str(body.get("message", "")).strip()
                 if not message: raise ValueError("message is required")
-                if PROCESS_MANAGER.status("openai-agent").value != "running": PROCESS_MANAGER.start("openai-agent")
                 answer = PROCESS_MANAGER._entry("openai-agent").process.chat(message, str(body.get("model") or "gpt-5.6-terra"))
                 self.send_json(200, {"ok": True, "answer": answer}); return
             db = connect()
             if path == "/api/scheduler-tasks/code-review/run":
-                self.send_json(200, {"ok": True, "task": start_task(str(body.get("project_path", "")), str(body.get("branch", "")), body.get("skill_paths", ["skills"]))}); return
+                self.send_json(200, {"ok": True, "task": start_task(str(body.get("project_path", "")), str(body.get("branch", "")), body.get("skill_paths", ["skills"]), bool(body.get("allow_extra_rules", False)), str(body.get("failure_threshold", "high")))}); return
             if path == "/api/scheduler-tasks/code-review/stop":
                 self.send_json(200, {"ok": True, "task": stop_task()}); return
             if path == "/api/scheduler-tasks/code-review/config":
-                self.send_json(200, {"ok": True, "task": update_task_config(str(body.get("project_path", "")), str(body.get("branch", "")), body.get("skill_paths", ["skills"]))}); return
+                self.send_json(200, {"ok": True, "task": update_task_config(str(body.get("project_path", "")), str(body.get("branch", "")), body.get("skill_paths", ["skills"]), bool(body.get("allow_extra_rules", False)), str(body.get("failure_threshold", "high")))}); return
             if path == "/api/scheduler-tasks/code-review/choose":
                 import tkinter as tk
                 from tkinter import filedialog

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 CONFIG_PATH = Path(__file__).with_name("config.json")
-DEFAULT_CONFIG: dict[str, Any] = {"code_review": {"project_path": "", "branch": "", "skill_paths": ["skills"]}}
+DEFAULT_CONFIG: dict[str, Any] = {"code_review": {"project_path": "", "branch": "", "skill_paths": ["skills"], "allow_extra_rules": False, "failure_threshold": "high"}}
 
 
 def load_config() -> dict[str, Any]:
@@ -39,13 +39,15 @@ def code_review_config() -> dict[str, str]:
         "project_path": str(item.get("project_path", "") or ""),
         "branch": str(item.get("branch", "") or ""),
         "skill_paths": item.get("skill_paths", ["skills"]) or ["skills"],
+        "allow_extra_rules": bool(item.get("allow_extra_rules", False)),
+        "failure_threshold": str(item.get("failure_threshold", "high") or "high"),
     }
 
 
-def save_code_review_config(project_path: str, branch: str, skill_paths: list[str] | str = ["skills"]) -> dict[str, Any]:
+def save_code_review_config(project_path: str, branch: str, skill_paths: list[str] | str = ["skills"], allow_extra_rules: bool = False, failure_threshold: str = "high") -> dict[str, Any]:
     config = load_config()
     paths = [x.strip() for x in (skill_paths if isinstance(skill_paths, list) else skill_paths.splitlines()) if str(x).strip()]
-    saved = {"project_path": project_path.strip(), "branch": branch.strip(), "skill_paths": paths or ["skills"]}
+    saved = {"project_path": project_path.strip(), "branch": branch.strip(), "skill_paths": paths or ["skills"], "allow_extra_rules": bool(allow_extra_rules), "failure_threshold": failure_threshold if failure_threshold in {"low", "medium", "high"} else "high"}
     config["code_review"] = saved
     save_config(config)
     return saved

@@ -4,6 +4,8 @@
     "branch": "master",
     "skill_paths": [
       "D:\\koa-client-code\\Game\\.agents\\skills\\unity-code-review"
-    ]
+    ],
+    "allow_extra_rules": false,
+    "failure_threshold": "low"
   }
 }

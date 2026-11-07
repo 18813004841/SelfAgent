@@ -30,18 +30,18 @@ class CodeReviewScheduler(SchedulerBase):
 
     def display_data(self, args: Mapping[str, Any] | None = None) -> dict[str, str]:
         config = code_review_config()
-        return {"project_path": config["project_path"], "branch": config["branch"], "skill_paths": config["skill_paths"], "run_at": self.run_at}
+        return {"project_path": config["project_path"], "branch": config["branch"], "skill_paths": config["skill_paths"], "allow_extra_rules": config["allow_extra_rules"], "failure_threshold": config["failure_threshold"], "run_at": self.run_at}
 
     def execute(self, args: Mapping[str, Any], context: ScheduleContext) -> Any:
         context.metadata["cancel"] = _CANCEL.is_set
         config = code_review_config()
         project_path = config["project_path"]
         branch = config["branch"]
-        context.metadata.update(project_path=project_path, branch=branch, skill_paths=config["skill_paths"])
-        append("execute", "开始执行代码检查", project_path=project_path, branch=branch, skill_paths=config["skill_paths"])
-        context.progress(1, 4, "已读取工程配置", project_path=project_path, branch=branch, skill_paths=config["skill_paths"])
+        context.metadata.update(project_path=project_path, branch=branch, skill_paths=config["skill_paths"], allow_extra_rules=config["allow_extra_rules"])
+        append("execute", "开始执行代码检查", project_path=project_path, branch=branch, skill_paths=config["skill_paths"], allow_extra_rules=config["allow_extra_rules"])
+        context.progress(1, 4, "已读取工程配置", project_path=project_path, branch=branch, skill_paths=config["skill_paths"], allow_extra_rules=config["allow_extra_rules"])
         adapter = _load_tool_adapter()
-        return adapter.execute({"project_path": project_path, "branch": branch, "skill_paths": config["skill_paths"], "cancel": _CANCEL.is_set}, context)
+        return adapter.execute({"project_path": project_path, "branch": branch, "skill_paths": config["skill_paths"], "allow_extra_rules": config["allow_extra_rules"], "failure_threshold": config["failure_threshold"], "cancel": _CANCEL.is_set}, context)
 
     def run_scheduled(self, schedule_id: str | None = None) -> Any:
         """由通用调度循环调用，负责记录本次执行状态。"""
@@ -119,14 +119,14 @@ def task_payload() -> dict[str, Any]:
     return data
 
 
-def update_task_config(project_path: str, branch: str, skill_paths: list[str] | str = ["skills"]) -> dict[str, Any]:
-    save_code_review_config('' if project_path.strip() == '未配置' else project_path, '' if branch.strip() == '未配置' else branch, skill_paths)
+def update_task_config(project_path: str, branch: str, skill_paths: list[str] | str = ["skills"], allow_extra_rules: bool = False, failure_threshold: str = "high") -> dict[str, Any]:
+    save_code_review_config('' if project_path.strip() == '未配置' else project_path, '' if branch.strip() == '未配置' else branch, skill_paths, allow_extra_rules, failure_threshold)
     return task_payload()
 
 
-def start_task(project_path: str, branch: str, skill_paths: list[str] | str = ["skills"]) -> dict[str, Any]:
+def start_task(project_path: str, branch: str, skill_paths: list[str] | str = ["skills"], allow_extra_rules: bool = False, failure_threshold: str = "high") -> dict[str, Any]:
     """保存当前配置并在后台执行一次代码检查。"""
-    save_code_review_config('' if project_path.strip() == '未配置' else project_path, '' if branch.strip() == '未配置' else branch, skill_paths)
+    save_code_review_config('' if project_path.strip() == '未配置' else project_path, '' if branch.strip() == '未配置' else branch, skill_paths, allow_extra_rules, failure_threshold)
     _CANCEL.clear()
     if _RUN_LOCK.acquire(blocking=False):
         def worker() -> None:

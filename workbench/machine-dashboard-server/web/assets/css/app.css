@@ -20,4 +20,4 @@
 
 .review-skill{margin-top:-8px}.review-skill input{width:min(600px,100%)}
 
-.review-skill-row{display:flex;gap:8px;margin-bottom:8px}.review-skill-row input{flex:1;min-width:0}.review-skill-row button{white-space:nowrap}#review-skill-add{align-self:flex-start}
+.review-skill-row{display:flex;gap:8px;margin-bottom:8px}.review-skill-row input{flex:1;min-width:0}.review-skill-row button{white-space:nowrap}#review-skill-add{align-self:flex-start}.review-toggle{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:#314055}.review-toggle input{width:auto}
