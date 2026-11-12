@@ -6,13 +6,13 @@
 
 import json, os, sqlite3
 from pathlib import Path
+from .settings import get_user_root, get_user_settings_path
 
 # 仓库内资源，例如调度器 PID 文件。
 ROOT = Path(__file__).resolve().parents[2]
 # 用户级状态。生产环境默认位于 %LOCALAPPDATA%\\LocalWorkbench，测试时可覆盖。
-USER_ROOT = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "LocalWorkbench"
+USER_ROOT = get_user_root()
 PID_PATH = ROOT / "data" / "scheduler.pid"
-CONFIG_PATH = USER_ROOT / "config" / "settings.json"
 DB_PATH = USER_ROOT / "data" / "scheduler.db"
 
 def default_settings():
@@ -21,6 +21,7 @@ def default_settings():
 
 def get_settings():
     """读取设置；首次使用时创建默认设置文件。"""
+    CONFIG_PATH = get_user_settings_path()
     CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
     if not CONFIG_PATH.exists():
         save_settings(default_settings())
@@ -28,6 +29,7 @@ def get_settings():
 
 def save_settings(settings):
     """保存设置，并确保配置的存储目录已经存在。"""
+    CONFIG_PATH = get_user_settings_path()
     CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
     CONFIG_PATH.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
     Path(settings["storage_dir"]).mkdir(parents=True, exist_ok=True)
@@ -69,6 +71,10 @@ def connect():
         "ALTER TABLE schedules ADD COLUMN progress_total INTEGER NOT NULL DEFAULT 1",
         "ALTER TABLE schedules ADD COLUMN cancel_requested INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE schedules ADD COLUMN dispatcher TEXT NOT NULL DEFAULT 'scheduler'",
+        "ALTER TABLE schedules ADD COLUMN scheduler_type TEXT",
+        "ALTER TABLE schedules ADD COLUMN run_type INTEGER NOT NULL DEFAULT 1",
+        "ALTER TABLE schedules ADD COLUMN run_time TEXT",
+        "ALTER TABLE schedules ADD COLUMN param_json TEXT NOT NULL DEFAULT '{}'",
     ):
         try: db.execute(statement)
         except sqlite3.OperationalError:
@@ -83,5 +89,10 @@ def row_json(row):
 def decode_schedule(row):
     """解析定时任务记录，并反序列化其中的 JSON 参数。"""
     item = row_json(row)
-    if item: item["args"] = json.loads(item.pop("args_json", "{}"))
+    if item:
+        item["args"] = json.loads(item.get("args_json", "{}"))
+        item["param"] = json.loads(item.get("param_json", "{}") or "{}")
+        item["scheduler_type"] = item.get("scheduler_type") or item.get("dispatcher") or item.get("tool_id")
+        item["run_type"] = int(item.get("run_type") or (1 if item.get("schedule_type") == "daily" else 2))
+        item["run_time"] = item.get("run_time") or item.get("schedule_expr")
     return item

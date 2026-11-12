@@ -5,28 +5,40 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+import re
+from contextvars import ContextVar
 
-LOG_PATH = Path(__file__).with_name("logs") / "code_review_current.json"
+LOG_DIR = Path(__file__).with_name("logs")
+_CURRENT_TASK_ID = ContextVar("review_task_id", default="default")
+
+def set_task(task_id: str) -> None:
+    _CURRENT_TASK_ID.set(re.sub(r"[^A-Za-z0-9_.-]", "_", str(task_id)) or "default")
+
+def _log_path(task_id=None) -> Path:
+    key = re.sub(r"[^A-Za-z0-9_.-]", "_", str(task_id)) if task_id else _CURRENT_TASK_ID.get()
+    return LOG_DIR / f"code_review_{key}.json"
 
 
 def reset(task_id: str) -> None:
-    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    LOG_PATH.write_text(json.dumps({"task_id": task_id, "events": []}, ensure_ascii=False, indent=2), encoding="utf-8")
+    set_task(task_id)
+    path = _log_path(); path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"task_id": task_id, "events": []}, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def append(kind: str, message: str, **data: Any) -> None:
-    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    path = _log_path(); path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        current = json.loads(LOG_PATH.read_text(encoding="utf-8")) if LOG_PATH.is_file() else {"events": []}
+        current = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {"events": []}
     except (OSError, json.JSONDecodeError):
         current = {"events": []}
     current.setdefault("events", []).append({"time": datetime.now().isoformat(timespec="seconds"), "kind": kind, "message": message, "data": data})
-    LOG_PATH.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
+    path.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def read() -> dict[str, Any]:
+def read(task_id=None) -> dict[str, Any]:
     try:
-        loaded = json.loads(LOG_PATH.read_text(encoding="utf-8")) if LOG_PATH.is_file() else {"events": []}
+        path = _log_path(task_id)
+        loaded = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {"events": []}
     except (OSError, json.JSONDecodeError):
         loaded = {"events": []}
     loaded.setdefault("events", [])

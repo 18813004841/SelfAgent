@@ -5,3 +5,4 @@ workbench/machine-dashboard-server/src/schedulers/logs
 Tools/code-review-agent/data/koa-client-code-master/execution-sequence.json
 Tools/code-review-agent/code_review/log
 AiAgent/AiProject/Codes/Agents/OpenAiAgent/logs
+Tools/machine-control/server/control_center/__pycache__

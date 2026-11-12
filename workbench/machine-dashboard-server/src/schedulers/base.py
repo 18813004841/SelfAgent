@@ -9,6 +9,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import re
+import json
+import uuid
 from typing import Any, Callable, Mapping
 
 ProgressCallback = Callable[..., None]
@@ -48,6 +50,9 @@ class SchedulerBase(ABC):
     tool_id: str
     run_at: str = "04:00"
     schedule_type: str = "daily"
+    scheduler_type: str = "scheduler"
+    run_type: int = 1
+    run_time: str = "04:00"
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -64,6 +69,26 @@ class SchedulerBase(ABC):
         """返回每天自动执行的时间点。"""
         self._validate_run_at(self.run_at)
         return self.run_at
+
+    def new_tool_id(self) -> str:
+        """生成任务唯一标识；子类可覆盖为稳定的业务 ID。"""
+        return str(uuid.uuid4())
+
+    def get_param(self) -> dict[str, Any]:
+        """返回需要序列化进数据库的扩展参数。"""
+        return {}
+
+    def set_param(self, param: Mapping[str, Any] | None) -> None:
+        """从数据库参数恢复任务扩展配置。"""
+
+    def serialize_param(self) -> str:
+        return json.dumps(self.get_param(), ensure_ascii=False)
+
+    @classmethod
+    def deserialize_param(cls, value: str | Mapping[str, Any] | None) -> dict[str, Any]:
+        if isinstance(value, Mapping): return dict(value)
+        try: return json.loads(value or "{}")
+        except (TypeError, ValueError): return {}
 
     def next_run_at(self, now: float | None = None) -> float:
         """计算下一次每天固定时间点的时间戳。"""

@@ -18,7 +18,15 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from datetime import datetime
+
+# 每次工作台启动生成新会话；必须早于所有业务和日志模块的导入。
+START_TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+os.environ["LOCAL_WORKBENCH_START_TIMESTAMP"] = START_TIMESTAMP
+
 from core.storage import connect, decode_schedule, get_settings, save_settings, default_settings, PID_PATH
+from core.settings import load_local_settings
+from core.Log import AppLogger
 from process_manager import ProcessManager
 from process_manager.operation_log import get_operation_logger
 import subprocess, sys
@@ -28,7 +36,10 @@ from launchers.central_server import CentralServerLauncher
 from launchers.scheduler import SchedulerLauncher
 from launchers.worker_client import WorkerClientLauncher
 from launchers.openai_agent import OpenAIAgentLauncher
-from schedulers.code_review_scheduler import start_task, stop_task, task_payload, update_task_config
+from schedulers.code_review_scheduler import CodeReviewScheduler, start_task, stop_task, task_payload, update_task_config
+from schedulers.scheduler_controller import SchedulerController
+from view import router as view_router, ViewContext
+from view import routes as _view_routes
 
 # 工作台 HTTP 端口。所有服务端口均可通过环境变量配置，避免本地服务冲突。
 PORT = int(os.environ.get("MACHINE_DASHBOARD_PORT", "18888"))
@@ -166,6 +177,21 @@ class Handler(BaseHTTPRequestHandler):
         return json.loads(self.rfile.read(length) or b"{}")
 
     def do_POST(self):
+        try:
+            path = urllib.parse.urlparse(self.path).path
+            result = view_router.dispatch(ViewContext(self, path, self.read_body(), "POST", self._legacy_post))
+            if result is not None:
+                return result
+            return self._legacy_post()
+        except (ValueError, KeyError) as exc:
+            self.send_json(400, {"ok": False, "error": str(exc)})
+        except RuntimeError as exc:
+            self.send_json(409, {"ok": False, "error": str(exc)})
+        except Exception:
+            traceback.print_exc()
+            self.send_json(500, {"ok": False, "error": "接口执行失败，请查看服务日志"})
+
+    def _legacy_post(self):
         """分发会修改数据的接口，并返回 JSON 结果。"""
         try:
             path = urllib.parse.urlparse(self.path).path
@@ -240,12 +266,19 @@ class Handler(BaseHTTPRequestHandler):
                 answer = PROCESS_MANAGER._entry("openai-agent").process.chat(message, str(body.get("model") or "gpt-5.6-terra"))
                 self.send_json(200, {"ok": True, "answer": answer}); return
             db = connect()
+            if path == "/api/scheduler-tasks/create":
+                controller = SchedulerController()
+                sid = controller.create(str(body["scheduler_type"]), str(body.get("name") or "新任务"), body.get("param", {}), int(body.get("run_type", 1)), str(body.get("run_time", "04:00")))
+                self.send_json(201, {"ok": True, "id": sid}); return
+            if path == "/api/scheduler-tasks/delete":
+                deleted = SchedulerController().delete(str(body["id"]))
+                self.send_json(200, {"ok": deleted}); return
             if path == "/api/scheduler-tasks/code-review/run":
-                self.send_json(200, {"ok": True, "task": start_task(str(body.get("project_path", "")), str(body.get("branch", "")), body.get("skill_paths", ["skills"]), bool(body.get("allow_extra_rules", False)), str(body.get("failure_threshold", "high")))}); return
+                self.send_json(200, {"ok": True, "task": start_task(str(body.get("project_path", "")), str(body.get("branch", "")), body.get("skill_paths", ["skills"]), bool(body.get("allow_extra_rules", False)), str(body.get("failure_threshold", "high")), str(body.get("schedule_id") or CodeReviewScheduler.schedule_id))}); return
             if path == "/api/scheduler-tasks/code-review/stop":
                 self.send_json(200, {"ok": True, "task": stop_task()}); return
             if path == "/api/scheduler-tasks/code-review/config":
-                self.send_json(200, {"ok": True, "task": update_task_config(str(body.get("project_path", "")), str(body.get("branch", "")), body.get("skill_paths", ["skills"]), bool(body.get("allow_extra_rules", False)), str(body.get("failure_threshold", "high")))}); return
+                self.send_json(200, {"ok": True, "task": update_task_config(str(body.get("project_path", "")), str(body.get("branch", "")), body.get("skill_paths", ["skills"]), bool(body.get("allow_extra_rules", False)), str(body.get("failure_threshold", "high")), str(body.get("schedule_id") or CodeReviewScheduler.schedule_id))}); return
             if path == "/api/scheduler-tasks/code-review/choose":
                 import tkinter as tk
                 from tkinter import filedialog
@@ -273,9 +306,16 @@ class Handler(BaseHTTPRequestHandler):
                 db.execute("INSERT OR REPLACE INTO tools(tool_id,name,type,entry,workdir,enabled) VALUES(?,?,?,?,?,?)", (body["tool_id"], body.get("name", body["tool_id"]), body.get("type", "local_process"), body["entry"], body.get("workdir"), int(body.get("enabled", True))))
                 db.commit(); self.send_json(201, {"ok": True, "tool_id": body["tool_id"]}); return
             if path == "/api/scheduler-tasks":
-                self.send_json(200, {"ok": True, "tasks": [task_payload()]}); return
+                self.send_json(200, {"ok": True, "tasks": SchedulerController().list()}); return
+            if path == "/api/scheduler-tasks/types":
+                self.send_json(200, {"ok": True, "types": SchedulerController().types()}); return
             if path == "/api/scheduler-tasks/code-review":
                 self.send_json(200, {"ok": True, "task": task_payload()}); return
+            if path.startswith("/api/scheduler-tasks/code-review/"):
+                sid = urllib.parse.unquote(path.rsplit("/", 1)[-1])
+                row = db.execute("SELECT * FROM schedules WHERE id=?", (sid,)).fetchone()
+                if not row: self.send_json(404, {"ok": False, "error": "task not found"}); return
+                self.send_json(200, {"ok": True, "task": task_payload(sid)}); return
             if path == "/api/schedules":
                 sid = body.get("id") or str(int(time.time() * 1000))
                 db.execute("INSERT INTO schedules(id,name,tool_id,schedule_type,schedule_expr,args_json,timeout,retry,enabled,next_run,task_type,dispatcher,progress_total) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", (sid, body["name"], body["tool_id"], body.get("schedule_type", "interval"), body.get("schedule_expr", "60"), json.dumps(body.get("args", {}), ensure_ascii=False), int(body.get("timeout", 300)), int(body.get("retry", 0)), int(body.get("enabled", True)), time.time(), body.get("task_type", "scheduled"), body.get("dispatcher", "scheduler"), int(body.get("progress_total", 1))))
@@ -292,6 +332,13 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(400, {"ok": False, "error": repr(exc)})
 
     def do_GET(self):
+        path = urllib.parse.urlparse(self.path).path
+        result = view_router.dispatch(ViewContext(self, path, {}, "GET", self._legacy_get))
+        if result is not None:
+            return result
+        return self._legacy_get()
+
+    def _legacy_get(self):
         """返回静态页面或只读接口数据。"""
         try:
             path = urllib.parse.urlparse(self.path).path
@@ -315,6 +362,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(200, {"ok": True, "tasks": [task_payload()]}); return
             if path == "/api/scheduler-tasks/code-review":
                 self.send_json(200, {"ok": True, "task": task_payload()}); return
+            if path.startswith("/api/scheduler-tasks/code-review/"):
+                sid = urllib.parse.unquote(path.rsplit("/", 1)[-1])
+                self.send_json(200, {"ok": True, "task": task_payload(sid)}); return
             if path == "/api/health":
                 self.send_json(200, {"ok": True, "service": "machine-dashboard-server", "mode": "local"})
                 return
@@ -400,6 +450,11 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    # 启动时先读取本地日志配置，再创建运行日志和调试日志。
+    settings = load_local_settings()
+    logger = AppLogger("machine-dashboard")
+    logger.info("服务启动 host=%s port=%s log_level=%s debug_log=%s output_dir=%s", HOST, PORT, settings["log_level"], settings["debug_log"], settings["output_dir"])
+    logger.debug("调试日志已开启")
     OPERATION_LOG.info("[feature=machine-dashboard] server.started url=http://%s:%s mode=local-only", HOST, PORT)
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
 
@@ -409,6 +464,13 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         OPERATION_LOG.info("[feature=machine-dashboard] server.stopped")
+
+
+
+
+
+
+
 
 
 

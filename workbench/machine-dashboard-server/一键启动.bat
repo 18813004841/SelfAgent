@@ -6,8 +6,8 @@ set "PYTHON=%~dp0.venv\Scripts\python.exe"
 if not exist "%PYTHON%" set "PYTHON=python"
 set "PYTHONPATH=%~dp0src"
 set "MACHINE_DASHBOARD_HOST=0.0.0.0"
-set "PORT=%MACHINE_DASHBOARD_PORT%"
-if "%PORT%"=="" set "PORT=18888"
+set "PORT=18888"
+if defined MACHINE_DASHBOARD_PORT set "PORT=%MACHINE_DASHBOARD_PORT%"
 set "MACHINE_DASHBOARD_PORT=%PORT%"
 
 rem 清理占用工作台端口的监听进程，避免启动失败
