@@ -122,7 +122,9 @@ class ReviewPipeline:
         return errors
 
     def split_diff(self, diff: str, files: list[str], chunk_size: int = 32000) -> list[dict[str, Any]]:
-        chunks = []
+        if chunk_size <= 0:
+            raise ValueError("chunk_size 必须大于 0")
+        pieces = []
         for file_part in re.split(r"(?=^diff --git )", diff, flags=re.MULTILINE):
             if not file_part.strip():
                 continue
@@ -130,8 +132,25 @@ class ReviewPipeline:
             file_name = match.group(2) if match else ""
             if file_name and not self.is_review_script(file_name):
                 continue
-            chunk_files = [file_name] if file_name else files
-            chunks.extend({"files": chunk_files, "diff": file_part[i:i + chunk_size]} for i in range(0, len(file_part), chunk_size))
+            if not file_name:
+                continue
+            for i in range(0, len(file_part), chunk_size):
+                pieces.append({"file": file_name, "diff": file_part[i:i + chunk_size],
+                               "part": i // chunk_size + 1})
+        # First-fit decreasing: a large middle file cannot separate small ones.
+        chunks = []
+        for piece in sorted(pieces, key=lambda item: -len(item["diff"])):
+            for batch in chunks:
+                paths = set(batch["files"]) | {piece["file"]}
+                if len(paths) <= 8 and len(batch["diff"]) + len(piece["diff"]) <= chunk_size:
+                    break
+            else:
+                batch = {"files": [], "diff": "", "segments": []}
+                chunks.append(batch)
+            if piece["file"] not in batch["files"]:
+                batch["files"].append(piece["file"])
+            batch["segments"].append(piece)
+            batch["diff"] += piece["diff"]
         return chunks
 
     @staticmethod
@@ -166,10 +185,16 @@ class ReviewPipeline:
         instruction = "请依据以下 Skill 审查变更。" if not allow_extra_rules else "请依据以下 Skill 审查变更，也可以报告 Skill 未覆盖但有代码依据的问题。"
         if not allow_extra_rules:
             instruction += "每条 finding 的 rule 必须引用 Skill 原文中的条款，不能为 null，也不能输出 Skill 以外的分析。"
+        instruction += "请逐文件独立检查，不要遗漏批次内的文件。每条 finding 必须对应实际文件和行号，不得混淆文件归属；上下文不足时写入 open_questions。片段编号仅表示同一文件的分段，不是源码行号。"
+        diff_sections = "\n\n".join(
+            f"### 文件：{segment['file']}（片段 {segment['part']}）\n"
+            + fenced(segment["diff"], "diff")
+            for segment in chunk.get("segments", [])
+        ) or fenced(chunk["diff"], "diff")
         sections = ["# 代码变更检查", instruction, MODEL_OUTPUT_CONTRACT,
                     "## 变更文件", "\n".join(f"- {path}" for path in chunk["files"]),
                     "## 检查快照", f"快照 SHA：{chunk.get('metadata', {}).get('commit_sha') or '未知'}\n此 SHA 仅表示检查版本，不表示问题归属。请使用当前快照中的文件路径和行号定位问题，归属由 Git blame 解析。",
-                    "## 代码差异", "保留 Git diff 行号区间；+ 为新增，- 为删除，空格为上下文。", fenced(chunk["diff"], "diff"),
+                    "## 代码差异", "保留 Git diff 行号区间；+ 为新增，- 为删除，空格为上下文。", diff_sections,
                     # Git diff already contains the changed code. Keep the
                     # optional file context only for chunks without a diff,
                     # so unchanged source is not sent twice.
