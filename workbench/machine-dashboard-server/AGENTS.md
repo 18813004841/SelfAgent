@@ -5,6 +5,7 @@
 ## 开发前检查
 
 - 先定位真实入口、路由、配置来源、数据存储和现有实现，再修改代码；不要仅根据页面名称猜测接口或目录。
+- 处理本目录内的开发任务时，先读取工程内工作台助手 Skill：E:/SelfAgent/skills/workbench-assistant/SKILL.md。涉及 HTML、页面 JavaScript 或 src/view 接口时，再读取并执行 E:/SelfAgent/skills/workbench-ui-flow/SKILL.md。
 - 优先复用现有公共模块。新增工具函数前先搜索同类实现，尤其是日志、配置、路径、进程、调度和请求处理。
 - 明确区分“当前代码事实”“本次变更”“待确认事项”，不要把推测写成规范或接口契约。
 

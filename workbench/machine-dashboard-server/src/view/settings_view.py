@@ -24,6 +24,16 @@ def handle(ctx):
         ctx.request.send_json(200, {"ok": True, "settings": get_settings()})
     elif ctx.path == "/api/settings/storage/reset":
         save_settings(default_settings()); ctx.request.send_json(200, {"ok": True, "settings": get_settings()})
+    elif ctx.path == "/api/settings/storage/choose":
+        import tkinter as tk
+        from tkinter import filedialog
+        current = get_settings().get("storage_dir", default_settings()["storage_dir"])
+        root = tk.Tk(); root.withdraw(); root.attributes("-topmost", True)
+        selected = filedialog.askdirectory(title="选择本地文件保存目录", initialdir=current if Path(current).exists() else str(Path.home()))
+        root.destroy()
+        if selected:
+            save_settings({"storage_dir": str(Path(selected).resolve())})
+        ctx.request.send_json(200, {"ok": True, "selected": bool(selected), "settings": get_settings()})
     elif ctx.path == "/api/settings/storage/open":
         target = Path(get_settings().get("storage_dir", default_settings()["storage_dir"])); target.mkdir(parents=True, exist_ok=True)
         if os.name == "nt": os.startfile(str(target))

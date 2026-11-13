@@ -5,14 +5,14 @@
     当前状态：
     <b id="scheduler-status"> 检查中... </b>
   </p>
-  <button class="primary" id="scheduler-start">启动调度器</button>
-  <button id="scheduler-stop">关闭调度器</button>
+  <button type="button" class="primary" id="scheduler-start">启动调度器</button>
+  <button type="button" id="scheduler-stop">关闭调度器</button>
   <p id="scheduler-msg" class="muted"></p>
 </div>
 <section class="schedule-board">
   <div class="section-heading">
     <h3>任务列表</h3>
-    <button id="schedule-add">新增任务</button>
+    <button type="button" id="schedule-add">新增任务</button>
     <span class="muted"> 点击任务卡片查看详情 </span>
   </div>
   <div id="schedule-create" class="card" hidden>
@@ -28,8 +28,8 @@
       执行时间
       <input id="schedule-time" type="time" value="04:00" />
     </label>
-    <button class="primary" id="schedule-save">创建</button>
-    <button id="schedule-cancel">取消</button>
+    <button type="button" class="primary" id="schedule-save">创建</button>
+    <button type="button" id="schedule-cancel">取消</button>
     <span id="schedule-create-msg" class="muted"> </span>
   </div>
   <div id="schedule-list" class="schedule-grid">

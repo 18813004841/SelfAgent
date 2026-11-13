@@ -7,9 +7,9 @@
     · 端口
     <span id="agent-page-port"> 8765 </span>
   </p>
-  <button class="primary" id="agent-start">启动 Agent</button>
-  <button id="agent-stop">停止 Agent</button>
-  <button id="agent-cleanup">清理端口进程</button>
+  <button type="button" class="primary" id="agent-start">启动 Agent</button>
+  <button type="button" id="agent-stop">停止 Agent</button>
+  <button type="button" id="agent-cleanup">清理端口进程</button>
   <p id="openai-agent-msg" class="muted"></p>
 </div>
 <div class="card">
@@ -33,8 +33,8 @@
     placeholder="输入消息..."
   >
   </textarea>
-  <button class="primary" id="agent-chat-send">发送</button>
+  <button type="button" class="primary" id="agent-chat-send">发送</button>
   <p id="agent-chat-status" class="muted"></p>
   <pre id="agent-chat-answer" style="white-space: pre-wrap"></pre>
 </div>
-<button data-page="manage">返回管理</button>
+<button type="button" data-page="manage">返回管理</button>

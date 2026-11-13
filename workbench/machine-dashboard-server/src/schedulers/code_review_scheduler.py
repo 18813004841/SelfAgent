@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import threading
 import time
 from pathlib import Path
@@ -183,6 +184,7 @@ def task_payload(schedule_id: str | None = None) -> dict[str, Any]:
         "progress_total": row["progress_total"] if row else 4,
         "log": read(schedule_id),
     })
+    data["last_success"] = last_successful_check(data.get("project_path"), data.get("branch"))
     logger.debug("task_payload.end schedule_id=%s status=%s", schedule_id, data.get("last_status"))
     return data
 
@@ -192,13 +194,60 @@ def task_status_payload(schedule_id: str | None = None) -> dict[str, Any]:
     schedule_id = schedule_id or CodeReviewScheduler.schedule_id
     db = connect()
     row = db.execute("SELECT * FROM schedules WHERE id=?", (schedule_id,)).fetchone()
-    return {
+    status = {
         "id": schedule_id,
         "last_status": row["last_status"] if row else None,
         "progress_current": row["progress_current"] if row else 0,
         "progress_total": row["progress_total"] if row else 4,
         "log": read(schedule_id),
     }
+    params = CodeReviewScheduler().deserialize_param(row["param_json"]) if row else {}
+    status["last_success"] = last_successful_check(params.get("project_path"), params.get("branch"))
+    return status
+
+
+def last_successful_check(project_path: str | None, branch: str | None) -> dict[str, Any] | None:
+    """读取最近一次通过检查时持久化的提交和检查时间。"""
+    if not project_path or not branch:
+        return None
+    safe_project = re.sub(r"[^A-Za-z0-9._-]+", "-", Path(project_path).name) or "project"
+    safe_branch = re.sub(r"[^A-Za-z0-9._-]+", "-", str(branch)) or "branch"
+    state_path = TOOL_ROOT / "data" / f"{safe_project}-{safe_branch}" / "state.json"
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    sha = str(state.get("last_successful_sha") or "").strip()
+    if not sha:
+        return None
+    return {
+        "sha": sha,
+        "commit_message": state.get("last_successful_commit_message") or "",
+        "commit_author": state.get("last_successful_commit_author") or "",
+        "commit_time": state.get("last_successful_commit_time") or "",
+        "checked_at": state.get("checked_at") or "",
+    }
+
+
+def clear_review_history(project_path: str | None, branch: str | None) -> dict[str, Any]:
+    """Remove persisted reports and baseline for one project/branch."""
+    if not project_path or not branch:
+        raise ValueError("请先配置工程路径和 Git 分支")
+    safe_project = re.sub(r"[^A-Za-z0-9._-]+", "-", Path(project_path).name) or "project"
+    safe_branch = re.sub(r"[^A-Za-z0-9._-]+", "-", str(branch)) or "branch"
+    storage_root = TOOL_ROOT / "data" / f"{safe_project}-{safe_branch}"
+    removed = []
+    import shutil
+    for name in ("reports", "state.json", "execution-sequence.json"):
+        target = storage_root / name
+        if target.is_dir():
+            shutil.rmtree(target)
+            removed.append(name)
+        elif target.is_file():
+            target.unlink()
+            removed.append(name)
+    logger.info("代码检查历史已清理 project_path=%s branch=%s removed=%s", project_path, branch, removed)
+    return {"project_path": project_path, "branch": branch, "removed": removed}
 
 
 def update_task_config(project_path: str, branch: str, skill_paths: list[str] | str = ["skills"], allow_extra_rules: bool = False, failure_threshold: str = "high", schedule_id: str | None = None) -> dict[str, Any]:

@@ -4,7 +4,6 @@ let scope;
 const fetch = (...args) => scope.fetch(...args);
 const setInterval = (...args) => scope.setInterval(...args);
 async function initTestScheduler() {
-  if (window.__schedulerTimer) clearInterval(window.__schedulerTimer);
   document.getElementById("test-back").onclick = () => load("scheduler");
   async function refresh() {
     try {
@@ -46,7 +45,7 @@ async function initTestScheduler() {
     }
   }
   await refresh();
-  window.__testTimer = setInterval(refresh, 1000);
+  setInterval(refresh, 1000);
 }
 export async function mount() {
   scope = createPageScope();

@@ -6,6 +6,7 @@ async function refresh() {
     const response = await scope.fetch("/api/machines", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
+    if (!data.ok) throw new Error(data.error || "加载失败");
     const machine = data.machines?.[0];
     if (!machine) throw new Error("没有本机数据");
     document.querySelector("#hostname").textContent = machine.hostname;

@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import argparse
-import logging
 import sys
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [openai_agent] %(levelname)s %(message)s")
-logger = logging.getLogger("openai-agent.chat-script")
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from core.Log import AppLogger
+
+logger = AppLogger("openai-agent.chat-script", "openai_agent")
 
 
 def ask_once(project_root: Path, message: str, model: str = "gpt-5.6-terra") -> str:

@@ -10,6 +10,7 @@ async function initSettings() {
     try {
       const r = await fetch("/api/settings/storage");
       const d = await r.json();
+      if (!r.ok || !d.ok) throw Error(d.error || "加载失败");
       input.value = d.settings.storage_dir || d.default;
       msg.textContent = "已加载当前保存路径";
     } catch (e) {
@@ -18,8 +19,13 @@ async function initSettings() {
   }
   document.getElementById("load-storage").onclick = async () => {
     msg.textContent = "正在打开目录选择窗口...";
-    const r = await fetch("/api/settings/storage/choose", { method: "POST" });
+    const r = await fetch("/api/settings/storage/choose", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
     const d = await r.json();
+    if (!r.ok || !d.ok) throw Error(d.error || "目录选择失败");
     input.value = d.settings.storage_dir;
     msg.textContent = d.selected ? "已更新保存目录" : "未选择目录";
   };

@@ -342,6 +342,14 @@ header {
   color: #2f80ed;
 }
 
+.review-success {
+  max-width: 420px;
+  color: #314055;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: normal;
+}
+
 .review-skill {
   margin-top: -8px;
 }

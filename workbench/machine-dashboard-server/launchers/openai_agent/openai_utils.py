@@ -2,25 +2,18 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 from pathlib import Path
 import urllib.error
 import urllib.request
 from typing import Any
+from core.Log import AppLogger
 
 
 DEFAULT_BASE_URL = "http://10.0.27.224:8317/v1"
 CONFIG_PATH = Path(__file__).with_name("shared_pool.local.json")
 
-logger = logging.getLogger("openai-agent.chat")
-if not logger.handlers:
-    logger.setLevel(logging.INFO)
-    log_path = Path(__file__).resolve().parents[3] / "logs" / "openai-chat.log"
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    handler = logging.FileHandler(log_path, encoding="utf-8")
-    handler.setFormatter(logging.Formatter("%(asctime)s [openai_agent] %(levelname)s %(message)s"))
-    logger.addHandler(handler)
+logger = AppLogger("openai-agent.chat", "openai_agent")
 
 
 def load_shared_pool() -> tuple[str, str]:

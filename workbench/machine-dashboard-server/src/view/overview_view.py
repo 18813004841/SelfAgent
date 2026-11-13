@@ -13,8 +13,8 @@ def handle(ctx):
     import sys
     server = sys.modules.get("server") or sys.modules["__main__"]
     if ctx.path == "/api/health": ctx.request.send_json(200, {"ok": True, "service": "machine-dashboard-server", "mode": "local"})
-    elif ctx.path == "/api/processes": ctx.request.send_json(200, {"processes": server.PROCESS_MANAGER.snapshot()})
-    elif ctx.path == "/api/machines": ctx.request.send_json(200, {"machines": [server.local_machine()], "mode": "local"})
+    elif ctx.path == "/api/processes": ctx.request.send_json(200, {"ok": True, "processes": server.PROCESS_MANAGER.snapshot()})
+    elif ctx.path == "/api/machines": ctx.request.send_json(200, {"ok": True, "machines": [server.local_machine()], "mode": "local"})
     elif ctx.path.startswith("/api/machine/") and ctx.path.endswith("/metrics"):
         mid = ctx.path[len("/api/machine/"):-len("/metrics")]; ctx.request.send_json(200, {"ok": True, "machine_id": mid, "metrics": server.local_metrics()})
     elif ctx.path == "/api/central-server/start":

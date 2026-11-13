@@ -4,6 +4,7 @@ import { formatReviewLogData } from "../shared/review-log.js";
 let scope;
 const fetch = (...args) => scope.fetch(...args);
 const setInterval = (...args) => scope.setInterval(...args);
+let stopLogSelectionWatch = () => {};
 async function initCodeReview() {
   const taskId = window.__selectedTaskId || "code-review-daily";
   window.__selectedTaskId = taskId;
@@ -14,6 +15,12 @@ async function initCodeReview() {
     extraLoaded = false;
   let lastLogText = null;
   let pendingLogText = null;
+  function setLogText(nextText) {
+    const wasAtBottom = log.scrollHeight - log.scrollTop - log.clientHeight <= 8;
+    const previousScrollTop = log.scrollTop;
+    log.textContent = nextText;
+    log.scrollTop = wasAtBottom ? log.scrollHeight : Math.min(previousScrollTop, Math.max(0, log.scrollHeight - log.clientHeight));
+  }
   function flushPendingLog() {
     const selection = window.getSelection();
     const selectingLog =
@@ -23,12 +30,14 @@ async function initCodeReview() {
       log.contains(selection.anchorNode) &&
       log.contains(selection.focusNode);
     if (!selectingLog && pendingLogText !== null) {
-      log.textContent = pendingLogText;
+      setLogText(pendingLogText);
       lastLogText = pendingLogText;
       pendingLogText = null;
     }
   }
   document.addEventListener("selectionchange", flushPendingLog);
+  stopLogSelectionWatch = () =>
+    document.removeEventListener("selectionchange", flushPendingLog);
   const skills =
     document.getElementById("review-skill-paths") ||
     document.createElement("div");
@@ -104,6 +113,16 @@ async function initCodeReview() {
           : status === "running"
             ? "running"
             : "");
+    const success = document.getElementById("review-last-success");
+    if (success) {
+      const item = x.last_success;
+      success.textContent = item
+        ? `上次成功检查：${item.checked_at || "时间未知"}｜${item.sha || "SHA 未知"}｜${item.commit_message || "提交日志未知"}`
+        : "上次成功检查：暂无";
+      success.title = item
+        ? `SHA：${item.sha || "未知"}\n提交日志：${item.commit_message || "未知"}\n提交时间：${item.commit_time || "未知"}\n检查时间：${item.checked_at || "未知"}`
+        : "";
+    }
     if (Object.prototype.hasOwnProperty.call(x, "project_path")) {
       document.getElementById("review-time").textContent =
         "每天 " + (x.run_at || "04:00");
@@ -128,7 +147,7 @@ async function initCodeReview() {
         selection.rangeCount > 0 &&
         log.contains(selection.anchorNode);
       if (!selectingLog) {
-        log.textContent = nextLogText;
+        setLogText(nextLogText);
         lastLogText = nextLogText;
       } else {
         pendingLogText = nextLogText;
@@ -208,6 +227,31 @@ async function initCodeReview() {
         msg.textContent = "终止失败：" + e.message;
       }
     };
+  const clearButton = document.getElementById("review-clear-history");
+  if (clearButton)
+    clearButton.onclick = async () => {
+      const projectPath = document.getElementById("review-project-path").value.trim();
+      const branch = document.getElementById("review-branch").value.trim();
+      if (!confirm("确定清空该工程和分支的历史检查结果？")) return;
+      msg.hidden = false;
+      msg.textContent = "正在清空历史...";
+      clearButton.disabled = true;
+      try {
+        const response = await fetch("/api/scheduler-tasks/code-review/clear-history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ project_path: projectPath, branch, schedule_id: taskId }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw Error(data.error || "清空失败");
+        msg.textContent = "历史检查结果已清空";
+        if (data.task) render(data.task);
+      } catch (error) {
+        msg.textContent = "清空失败：" + error.message;
+      } finally {
+        clearButton.disabled = false;
+      }
+    };
   const runButton = document.getElementById("review-run");
   if (runButton)
     runButton.onclick = async () => {
@@ -244,13 +288,13 @@ async function initCodeReview() {
         if (d.task) render(d.task);
       } catch (e) {
         msg.textContent = "执行失败：" + e.message;
-        log.textContent += "\n" + msg.textContent;
+        setLogText(log.textContent + "\n" + msg.textContent);
       } finally {
         runButton.disabled = false;
       }
     };
   await refresh().catch((e) => {
-    log.textContent = "配置读取失败：" + e.message;
+    setLogText("配置读取失败：" + e.message);
   });
   if (window.__codeReviewTimer) clearInterval(window.__codeReviewTimer);
   window.__codeReviewTimer = setInterval(() => {
@@ -260,7 +304,7 @@ async function initCodeReview() {
     }
     if (!document.hidden)
       refresh(true).catch((e) => {
-        log.textContent = "状态读取失败：" + e.message;
+        setLogText("状态读取失败：" + e.message);
       });
   }, 2000);
 }
@@ -269,6 +313,8 @@ export async function mount() {
   await initCodeReview();
 }
 export function unmount() {
-  document.removeEventListener("selectionchange", flushPendingLog);
+  stopLogSelectionWatch();
+  stopLogSelectionWatch = () => {};
   scope?.dispose();
 }
+

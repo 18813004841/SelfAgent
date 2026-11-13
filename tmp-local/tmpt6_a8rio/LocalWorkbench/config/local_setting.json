@@ -1,0 +1,6 @@
+{
+  "log_level": "INFO",
+  "debug_log": false,
+  "output_dir": "E:\\SelfAgent\\tmp-local\\tmpt6_a8rio\\LocalWorkbench\\output",
+  "log_dir": "E:\\SelfAgent\\tmp-local\\tmpt6_a8rio\\LocalWorkbench\\config\\logs"
+}

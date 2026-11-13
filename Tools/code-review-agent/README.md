@@ -40,6 +40,8 @@ python -m code_review.cli check --config config.json
 
 ## 检查范围
 
+只检查 Game/Assets 目录内的 .cs 脚本。其他目录和其他文件类型的增量会被跳过，不进入编码校验和模型审查。
+
 第一版确定性检查：
 
 - Git 增量是否可获取；

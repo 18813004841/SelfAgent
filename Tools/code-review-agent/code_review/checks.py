@@ -56,10 +56,42 @@ def unity_runtime_findings(root: Path, files: list[str], markers: list[str]) -> 
             continue
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
         editor_lines = _inside_editor_macro(lines)
+        in_block_comment = False
         for line_no, line in enumerate(lines, 1):
+            # Comments must be excluded before marker matching. Keep physical
+            # line numbers unchanged so reported locations still point to the
+            # source file. This intentionally handles ordinary C# comments;
+            # strings are left intact because they can contain valid code text.
+            code = line
+            if in_block_comment:
+                end = code.find("*/")
+                if end < 0:
+                    continue
+                code = code[end + 2:]
+                in_block_comment = False
+            while True:
+                start = code.find("/*")
+                if start < 0:
+                    break
+                end = code.find("*/", start + 2)
+                if end < 0:
+                    code = code[:start]
+                    in_block_comment = True
+                    break
+                code = code[:start] + code[end + 2:]
+            code = re.sub(r"//.*$", "", code).strip()
+            if not code:
+                continue
             if editor_lines[line_no - 1]:
                 continue
-            if any(marker.lower() in line.lower() for marker in markers):
+            if re.match(r"^\s*#", code):
+                continue
+            # A bare UnityEditor import is harmless for this boundary check:
+            # Unity can remove editor-only imports during player compilation.
+            # Report actual editor API/path usage outside an editor macro.
+            if re.match(r"^\s*using\s+UnityEditor(?:\s*\.[^;]+)?\s*;", code):
+                continue
+            if any(marker.lower() in code.lower() for marker in markers):
                 findings.append({"source": "unity-rule", "severity": "high", "file": rel, "line": line_no, "rule": "runtime-editor-boundary", "message": "Runtime C# code references Unity Editor code or namespace", "suggestion": "Move editor-only code under an Editor assembly/directory."})
     return findings
 
@@ -68,3 +100,5 @@ def run_compile(root: Path, command: str | None, timeout: int = 300) -> dict[str
     if not command: return None
     p = subprocess.run(command, cwd=root, shell=True, text=True, capture_output=True, timeout=timeout)
     return {"name": "compile", "status": "passed" if p.returncode == 0 else "failed", "returncode": p.returncode, "stdout": p.stdout[-10000:], "stderr": p.stderr[-10000:]}
+
+

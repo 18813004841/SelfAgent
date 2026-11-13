@@ -15,14 +15,32 @@ class GitRepository:
         self.root, self.remote = root.resolve(), remote
 
     def run(self, *args: str) -> str:
-        logging.getLogger("code-review.pipeline").info("git.command args=%s", ["git", *args])
-        p = subprocess.run(["git", *args], cwd=self.root, encoding="utf-8", errors="replace", capture_output=True, timeout=60)
-        stderr = p.stderr or ""
-        stdout = p.stdout or ""
-        if p.returncode:
-            logging.getLogger("code-review.pipeline").error("git.failed returncode=%s stderr=%s", p.returncode, stderr.strip())
-            raise GitError(stderr.strip() or stdout.strip() or "git command failed")
-        logging.getLogger("code-review.pipeline").info("git.completed output_length=%s", len(stdout))
+        command = ["git", *args]
+        logger = logging.getLogger("code-review.pipeline")
+        logger.info("git.command args=%s", command)
+        try:
+            completed = subprocess.run(command, cwd=self.root, encoding="utf-8", errors="replace", capture_output=True, timeout=60)
+        except subprocess.TimeoutExpired as exc:
+            detail = ""
+            for value in (exc.stderr, exc.stdout):
+                if not value:
+                    continue
+                detail = value if isinstance(value, str) else value.decode("utf-8", "replace")
+                detail = detail.strip()
+                if detail:
+                    break
+            message = "git " + " ".join(args) + " 超时（60秒）"
+            if detail:
+                message += "：" + detail
+            logger.error("git.timeout command=%s detail=%s", command, detail)
+            raise GitError(message) from exc
+        stderr = completed.stderr or ""
+        stdout = completed.stdout or ""
+        if completed.returncode:
+            detail = stderr.strip() or stdout.strip() or "git command failed"
+            logger.error("git.failed command=%s returncode=%s detail=%s", command, completed.returncode, detail)
+            raise GitError("git " + " ".join(args) + " 失败（退出码 %s）：%s" % (completed.returncode, detail))
+        logger.info("git.completed command=%s output_length=%s", command, len(stdout))
         return stdout.strip()
 
     def sync(self, branch: str) -> str:
@@ -37,15 +55,22 @@ class GitRepository:
         return self.run("rev-parse", "HEAD")
 
     def sync_with_trace(self, branch: str) -> tuple[str, list[str]]:
-        operations = [f"git checkout {branch}"]
-        self.run("checkout", branch)
+        operations: list[str] = []
+
+        def execute(*args: str) -> str:
+            operations.append("git " + " ".join(args))
+            try:
+                return self.run(*args)
+            except GitError as exc:
+                reason = str(exc) + chr(10) + "已执行操作：" + "; ".join(operations)
+                raise GitError(reason) from exc
+
+        execute("checkout", branch)
         remotes = self.run("remote").splitlines()
         if self.remote in remotes:
-            operations.extend([f"git fetch {self.remote} {branch}", f"git pull --ff-only {self.remote} {branch}"])
-            self.run("fetch", self.remote, branch)
-            self.run("pull", "--ff-only", self.remote, branch)
-        operations.append("git rev-parse HEAD")
-        return self.run("rev-parse", "HEAD"), operations
+            execute("fetch", self.remote, branch)
+            execute("pull", "--ff-only", self.remote, branch)
+        return execute("rev-parse", "HEAD"), operations
 
     def commit_summary(self, sha: str) -> dict[str, str]:
         return {"sha": sha, "subject": self.run("show", "-s", "--format=%s", sha), "author": self.run("show", "-s", "--format=%an", sha), "date": self.run("show", "-s", "--format=%aI", sha)}

@@ -7,7 +7,7 @@
     <span class="review-label"> 工程地址 </span>
     <div class="review-control">
       <input id="review-project-path" placeholder="未配置" />
-      <button type="button" id="review-choose">选择目录</button>
+      <button type="button" type="button" id="review-choose">选择目录</button>
     </div>
   </div>
   <div class="review-field">
@@ -16,10 +16,12 @@
   </div>
   <div class="review-actions">
     <span class="review-result" id="review-result"> 执行结果：未执行 </span>
-    <button id="review-save">写入配置</button>
-    <button class="primary" id="review-run">执行</button>
-    <button type="button" id="review-stop">终止</button>
-    <button id="back-scheduler">返回</button>
+    <span class="review-success" id="review-last-success"> 上次成功检查：暂无 </span>
+    <button type="button" id="review-save">写入配置</button>
+    <button type="button" class="primary" id="review-run">执行</button>
+    <button type="button" type="button" id="review-stop">终止</button>
+    <button type="button" id="review-clear-history">清空历史</button>
+    <button type="button" id="back-scheduler">返回</button>
     <span id="review-config-msg" hidden> </span>
   </div>
 </div>
@@ -27,7 +29,7 @@
   <div class="review-field">
     <span class="review-label"> Skill 路径 </span>
     <div id="review-skill-paths"></div>
-    <button type="button" id="review-skill-add">添加 Skill 路径</button>
+    <button type="button" type="button" id="review-skill-add">添加 Skill 路径</button>
     <label class="review-toggle">
       <input type="checkbox" id="review-extra-rules" />
       允许 Skill 以外的规则检查
