@@ -1,0 +1,26 @@
+<h1>本地 Codex</h1>
+<p class="muted">将工作台连接到本机 Codex App Server。默认地址为 ws://127.0.0.1:4500。</p>
+<div class="card"><h3>任务列表 <button type="button" id="local-codex-new" class="primary">新增任务</button></h3><p class="muted">点击任务卡片进入与 Codex 的对话。</p><div id="local-codex-task-list"></div></div>
+<div class="card">
+  <h3>服务器进程</h3>
+  <p>状态：<b id="local-codex-process-status">检查中...</b> · PID：<span id="local-codex-pid">-</span></p>
+  <p>可视化进程：<b id="local-codex-console">-</b> · App Server PID：<span id="local-codex-server-pid">-</span></p>
+  <button type="button" class="primary" id="local-codex-start">一键启动服务器</button>
+  <button type="button" id="local-codex-stop">停止服务器</button>
+  <p id="local-codex-process-msg" class="muted"></p>
+</div>
+<div class="card">
+  <h3>连接配置</h3>
+  <label for="local-codex-url">App Server 地址</label>
+  <div class="review-control">
+    <input id="local-codex-url" type="text" placeholder="ws://127.0.0.1:4500" />
+    <button type="button" class="primary" id="local-codex-save">保存配置</button>
+    <button type="button" id="local-codex-test">测试连接</button>
+  </div>
+  <p id="local-codex-status" class="muted" role="status"></p>
+</div>
+<div class="card">
+  <h3>启动提示</h3>
+  <p class="muted">在本机终端运行 <code>codex app-server --listen ws://127.0.0.1:4500</code>，然后返回本页测试连接。</p>
+</div>
+<button type="button" data-page="manage">返回管理</button>

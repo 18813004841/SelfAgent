@@ -36,6 +36,7 @@ from launchers.central_server import CentralServerLauncher
 from launchers.scheduler import SchedulerLauncher
 from launchers.worker_client import WorkerClientLauncher
 from launchers.openai_agent import OpenAIAgentLauncher
+from launchers.local_codex import LocalCodexLauncher
 from schedulers.code_review_scheduler import CodeReviewScheduler, start_task, stop_task, task_payload, update_task_config
 from schedulers.scheduler_controller import SchedulerController
 from view import router as view_router, ViewContext
@@ -57,6 +58,7 @@ PROCESS_MANAGER.register(WorkerClientLauncher(
     os.environ.get("MACHINE_CONTROL_TOKEN", "dev-token"),
 ))
 PROCESS_MANAGER.register(OpenAIAgentLauncher(Path(__file__).resolve().parents[3] / "AiAgent" / "AiProject" / "Codes" / "Agents" / "OpenAiAgent", int(os.environ.get("CODEX_GATEWAY_PORT", "8765"))))
+PROCESS_MANAGER.register(LocalCodexLauncher(Path(__file__).resolve().parent.parent, int(os.environ.get("CODEX_APP_SERVER_PORT", "4500"))))
 OPERATION_LOG = get_operation_logger()
 
 def process_exists(pid):

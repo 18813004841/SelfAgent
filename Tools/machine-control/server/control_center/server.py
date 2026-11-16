@@ -33,10 +33,10 @@ class ControlHandler(BaseHTTPRequestHandler):
             print(f"[{self.log_date_time_string()}] {self.client_address[0]} {fmt % args}", flush=True)
 
     def do_GET(self) -> None:
-        if not self._require_auth() and self.path != "/health":
+        path, parts = parse_path(self.path)
+        if path != "health" and not self._require_auth():
             return
         store: JsonStore = self.server.store  # type: ignore[attr-defined]
-        path, parts = parse_path(self.path)
         store.record_connection(self.client_address[0], self.path, self.headers.get("User-Agent", ""))
         try:
             if path == "health":

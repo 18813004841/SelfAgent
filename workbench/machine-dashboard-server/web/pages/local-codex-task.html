@@ -1,0 +1,16 @@
+<h1>Codex 任务</h1>
+<p><button type="button" data-page="local-codex">返回任务列表</button></p>
+<div class="card">
+  <h3 id="codex-task-title">任务</h3>
+  <label for="codex-task-workspace">工程工作区</label>
+  <input id="codex-task-workspace" type="text" style="display:block;width:100%;max-width:100%;margin:6px 0 12px" placeholder="例如 E:\\Projects\\my-project" />
+  <div id="codex-task-skills"><label>Skill 路径</label></div>
+  <button type="button" id="codex-task-add-skill">添加 Skill 路径</button>
+  <label style="display:block;margin:12px 0"><input id="codex-task-extra-rules" type="checkbox" /> 允许 Skill 以外的规则检查</label>
+  <button type="button" id="codex-task-save-settings">保存设置</button><span id="codex-task-settings-status" class="muted" style="margin-left:10px"></span>
+  <div style="position:relative;max-width:100%"><textarea id="codex-task-prompt" rows="6" style="display:block;width:100%;max-width:100%;resize:vertical" placeholder="输入 @ 选择 Skill，或直接描述任务"></textarea><div id="codex-task-skill-menu" hidden style="position:absolute;left:0;right:0;top:100%;z-index:5;background:white;border:1px solid #ccd5e0;border-radius:4px;box-shadow:0 4px 12px #0002"></div></div>
+  <button type="button" class="primary" id="codex-task-submit">提交任务</button>
+  <p id="codex-task-status" class="muted"></p>
+  <div id="codex-task-log"></div>
+</div>
+

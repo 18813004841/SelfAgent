@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable
 
-from .checks import run_compile, unity_runtime_findings
+from .checks import classify_skill_rules, model_skill_rules, run_compile, run_local_checkers, unity_runtime_findings
 from .config import ReviewConfig
 from .git import GitRepository
 from .model_service import LocalModelClient, ModelServiceError
@@ -44,7 +44,7 @@ class ReviewPipeline:
         self.progress_callback = progress or (lambda **_: None)
         self.log_callback = log or (lambda **_: None)
         self.cancel_callback = cancel or (lambda: False)
-        self.step_total = 11
+        self.step_total = 14
         self.step = 0
         self.step_name = ""
 
@@ -66,6 +66,10 @@ class ReviewPipeline:
         self.progress_callback(current=self.step, total=self.step_total, step_name=self.step_name, message=f"{message}执行完毕", **details)
         self.log_callback(kind="pipeline", message=f"{message}执行完毕", **details)
 
+
+    def plan_tool_coverage(self, rules: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], str]:
+        """Match Skill clauses to deterministic checkers without calling the model."""
+        return classify_skill_rules(rules), "local-keywords"
     def load_previous_sha(self, state_path: Path) -> str | None:
         state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.is_file() else {}
         return state.get("last_successful_sha")
@@ -109,6 +113,26 @@ class ReviewPipeline:
             if match and ReviewPipeline.is_review_script(match.group(2)):
                 parts.append(part)
         return cs_files, skipped, "".join(parts)
+
+    @staticmethod
+    def filter_model_scope(files: list[str], diff: str, rules: list[dict[str, Any]]) -> tuple[list[str], str]:
+        terms = set()
+        for rule in rules:
+            terms.update(word.lower() for word in re.findall(r"[A-Za-z_][A-Za-z0-9_]{5,}", str(rule.get("content") or "")))
+        if not terms:
+            return files, diff
+        sections = re.split(r"(?=^diff --git )", diff, flags=re.MULTILINE)
+        selected, selected_files = [], []
+        for section in sections:
+            if not section.strip():
+                continue
+            match = re.search(r"^diff --git a/(.*?) b/(.*?)$", section, re.MULTILINE)
+            path = match.group(2) if match else ""
+            if any(term in section.lower() for term in terms):
+                selected.append(section)
+                if path and path not in selected_files:
+                    selected_files.append(path)
+        return (selected_files, "".join(selected)) if selected else (files, diff)
 
     def validate_changed_files(self, files: list[str]) -> list[str]:
         errors = []
@@ -314,9 +338,22 @@ class ReviewPipeline:
         # model findings outside the configured Skill rules.
         result.findings.extend(Finding(**x) for x in unity_runtime_findings(self.root, files, self.config.checks.get("editor_markers", ["UnityEditor", "/Editor/", "\\Editor\\"])))
         self._done("检查 Runtime 代码中的 Editor 引用", findings=len(result.findings))
+        self._step("执行本地检查器", files=len(files))
+        local_findings = run_local_checkers(self.root, files)
+        result.findings.extend(Finding(**x) for x in local_findings)
+        result.tool_results.append({"name": "local-checkers", "status": "passed", "findings": local_findings, "count": len(local_findings)})
+        self._done("执行本地检查器", findings=len(local_findings), tools=["unity-api-misuse", "hot-path-performance", "comment-hygiene", "naming-conventions"])
         self._step("读取代码检查 Skill")
         skill_paths=self.config.checks.get("skill_paths") or []; rules = load_matching(self.root, files, skill_paths); missing=[item for item in skill_paths if not Path(item).expanduser().exists()]
         self._done("读取代码检查 Skill", skills=len(rules), paths=[rule["path"] for rule in rules], missing=missing)
+        self._step("生成工具匹配计划")
+        coverage, plan_source = self.plan_tool_coverage(rules)
+        self._done("生成工具匹配计划", source=plan_source, rules=len(coverage))
+        self._step("匹配本地检查器")
+        local_rules = [item for item in coverage if item["mode"] == "local_tool"]
+        model_rules = model_skill_rules(rules, coverage)
+        self._done("匹配本地检查器", coverage=coverage, local_rules=len(local_rules), model_rules=len(model_rules))
+        result.tool_results.append({"name": "skill-coverage", "rules": coverage})
         if not rules and skill_paths:
             result.warnings.append("已配置 Skill 路径，但没有读取到 SKILL.md")
             result.agent_status = "unavailable"; result.status = "error"
@@ -324,20 +361,24 @@ class ReviewPipeline:
         compile_result = run_compile(self.root, self.config.checks.get("compile_command"))
         if compile_result: result.tool_results.append(compile_result)
         self._done("执行编译检查", result=compile_result or "未配置编译命令")
+        self._step("筛选模型检查范围", model_rules=len(model_rules), files=len(files))
+        model_files, model_diff = self.filter_model_scope(files, diff, model_rules)
+        self._done("筛选模型检查范围", files=len(model_files), diff_chars=len(model_diff), skipped=len(files) - len(model_files))
         self._step("切分代码内容")
-        chunks = self.split_diff(diff, files); context_files = len({file for chunk in chunks for file in chunk["files"] if self.is_review_script(str(file))})
+        chunks = self.split_diff(model_diff, model_files) if model_rules else []; context_files = len({file for chunk in chunks for file in chunk["files"] if self.is_review_script(str(file))})
         self._done("切分代码内容", chunks=len(chunks), context_files=context_files)
         self._step("发送代码切片和 Skill 给模型", chunks=len(chunks))
         try:
             client = LocalModelClient(self.config.model_service.get("api_url", "http://10.0.27.224:8317/v1"), self.config.model_service.get("model", "gpt-5.6-sol"), self.config.model_service.get("timeout_seconds", 300), self.config.model_service.get("max_output_tokens", 2000), self.config.model_service.get("api_key"))
             findings = []
+            failed_chunks = []
             allow_extra_rules = bool(self.config.checks.get("allow_extra_rules"))
-            if not rules:
+            if not model_rules:
                 chunks = []
             for index, chunk in enumerate(chunks, 1):
                 chunk["metadata"] = {"commit_sha": current}
                 file_context = ""
-                prompt = self.format_review_prompt(chunk, rules, file_context, allow_extra_rules)
+                prompt = self.format_review_prompt(chunk, model_rules, file_context, allow_extra_rules)
                 prompt_path = diff_path.parent / f"model-input-{index:03d}.md"
                 prompt_path.write_text(prompt, encoding="utf-8")
                 self.progress_callback(current=self.step, total=self.step_total, step_name=self.step_name, message="发送模型检查代码切片", chunk=index, chunks=len(chunks), diff_chars=len(chunk["diff"]), prompt_path=str(prompt_path))
@@ -361,14 +402,22 @@ class ReviewPipeline:
                         if attempt < max_attempts:
                             self.progress_callback(current=self.step, total=self.step_total, step_name=self.step_name, message="模型请求重试", chunk=index, chunks=len(chunks), attempt=attempt + 1, max_attempts=max_attempts)
                 if parsed is None:
-                    raise ModelServiceError(f"切片 {index} 重试 {max_attempts} 次后仍失败: {last_error}")
+                    # A single slow/unavailable request must not abort the whole
+                    # review. Keep the failure explicit so the report can be
+                    # retried later without pretending that this chunk passed.
+                    failed_chunks.append({"chunk": index, "error": str(last_error), "attempts": max_attempts, "files": chunk.get("files", [])})
+                    result.tool_results.append({"name": "model-review", "chunk": index, "status": "failed", "error": str(last_error), "attempts": max_attempts, "files": chunk.get("files", [])})
+                    result.warnings.append(f"模型切片 {index}/{len(chunks)} 重试 {max_attempts} 次后失败：{last_error}")
+                    continue
                 chunk_findings = parsed.get("findings", [])
                 if not allow_extra_rules:
-                    chunk_findings = [item for item in chunk_findings if self.finding_matches_skill(item, rules)]
+                    chunk_findings = [item for item in chunk_findings if self.finding_matches_skill(item, model_rules)]
                 findings.extend(chunk_findings); result.tool_results.append({"name":"model-review","chunk":index,"open_questions":parsed.get("open_questions",[]),"test_gaps":parsed.get("test_gaps",[])})
-            self._done("发送代码切片和 Skill 给模型", chunks=len(chunks), findings=len(findings))
+            self._done("发送代码切片和 Skill 给模型", chunks=len(chunks), findings=len(findings), failed_chunks=failed_chunks)
             if rules:
-                result.agent_status = "passed"
+                result.agent_status = "partial" if failed_chunks else "passed"
+            if failed_chunks:
+                result.status = "error"
             for item in findings: result.findings.append(Finding("agent", item.get("severity", "medium"), item.get("message", ""), item.get("file"), item.get("line"), item.get("rule"), item.get("suggestion"), item.get("confidence")))
         except (ModelServiceError, json.JSONDecodeError, OSError) as exc:
             result.agent_status = "unavailable"
@@ -396,7 +445,8 @@ class ReviewPipeline:
         current_info = self.repo.commit_summary(current)
         logger.info("review.summary sha=%s author=%s subject=%s status=%s findings=%d elapsed_seconds=%s", current_info.get("sha"), current_info.get("author"), current_info.get("subject"), result.status, len(result.findings), elapsed)
         summary = {
-            "检查结果": f"失败数量：{len(result.findings)}" if result.findings else "检查通过",
+            "检查结果": result.as_display_dict()["检查结果"],
+            "失败切片": result.as_display_dict()["失败切片"],
             "上次检查节点": old,
             "当前检查节点": current,
             "更新文件": files,
@@ -411,3 +461,4 @@ class ReviewPipeline:
         self.log_callback(kind="result", message="检查结果", **summary)
         logger.info("review.end status=%s current_sha=%s findings=%d agent_status=%s", result.status, current, len(result.findings), result.agent_status)
         return result
+

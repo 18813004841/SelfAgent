@@ -16,11 +16,15 @@ async function initManage() {
       const d = await fetch("/api/central-server/status", {
         cache: "no-store",
       }).then((r) => r.json());
-      status.textContent = d.running ? "运行中" : "已停止";
-      status.style.color = d.running ? "green" : "#888";
+      if (status) {
+        status.textContent = d.running ? "运行中" : "已停止";
+        status.style.color = d.running ? "green" : "#888";
+      }
     } catch (e) {
-      status.textContent = "状态未知";
-      status.style.color = "#c77";
+      if (status) {
+        status.textContent = "状态未知";
+        status.style.color = "#c77";
+      }
     }
   }
   try {
@@ -44,10 +48,13 @@ async function initManage() {
         cache: "no-store",
       }).then((r) => r.json());
       const s = document.getElementById("central-client-status");
-      s.textContent = d.running ? "运行中" : "已停止";
-      s.style.color = d.running ? "green" : "#888";
+      if (s) {
+        s.textContent = d.running ? "运行中" : "已停止";
+        s.style.color = d.running ? "green" : "#888";
+      }
     } catch (e) {
-      document.getElementById("central-client-status").textContent = "状态未知";
+      const clientStatus = document.getElementById("central-client-status");
+      if (clientStatus) clientStatus.textContent = "状态未知";
     }
   }
   await refreshClient();
@@ -59,16 +66,21 @@ async function initManage() {
       const d = await fetch("/api/openai-agent/status", {
         cache: "no-store",
       }).then((r) => r.json());
-      agentStatus.textContent = d.running ? "运行中" : "已停止";
-      agentStatus.style.color = d.running ? "green" : "#888";
-      agentPort.textContent = d.port || 8765;
+      if (agentStatus) {
+        agentStatus.textContent = d.running ? "运行中" : "已停止";
+        agentStatus.style.color = d.running ? "green" : "#888";
+      }
+      if (agentPort) agentPort.textContent = d.port || 8765;
     } catch (e) {
-      agentStatus.textContent = "状态未知";
-      agentStatus.style.color = "#c77";
+      if (agentStatus) {
+        agentStatus.textContent = "状态未知";
+        agentStatus.style.color = "#c77";
+      }
     }
   }
   await refreshAgent();
-  document.getElementById("openai-agent-start").onclick = async () => {
+  const agentStart = document.getElementById("openai-agent-start");
+  if (agentStart) agentStart.onclick = async () => {
     agentMsg.textContent = "正在启动...";
     const r = await fetch("/api/openai-agent/start", { method: "POST" });
     const d = await r.json();
@@ -77,7 +89,8 @@ async function initManage() {
       : "启动失败：" + (d.error || "");
     await refreshAgent();
   };
-  document.getElementById("openai-agent-stop").onclick = async () => {
+  const agentStop = document.getElementById("openai-agent-stop");
+  if (agentStop) agentStop.onclick = async () => {
     agentMsg.textContent = "正在停止...";
     const r = await fetch("/api/openai-agent/stop", { method: "POST" });
     const d = await r.json();
@@ -91,26 +104,30 @@ async function initManage() {
     refreshClient();
     refreshAgent();
   }, 3000);
-  document.getElementById("central-server-start").onclick = async () => {
+  const centerStart = document.getElementById("central-server-start");
+  if (centerStart) centerStart.onclick = async () => {
     centerMsg.textContent = "正在启动...";
     await fetch("/api/central-server/start", { method: "POST" });
     await refreshCenter();
     centerMsg.textContent = "启动请求已发送";
   };
-  document.getElementById("central-server-stop").onclick = async () => {
+  const centerStop = document.getElementById("central-server-stop");
+  if (centerStop) centerStop.onclick = async () => {
     centerMsg.textContent = "正在关闭...";
     await fetch("/api/central-server/stop", { method: "POST" });
     await refreshCenter();
     centerMsg.textContent = "关闭请求已发送";
   };
   const clientMsg = document.getElementById("central-client-msg");
-  document.getElementById("central-client-start").onclick = async () => {
+  const clientStart = document.getElementById("central-client-start");
+  if (clientStart) clientStart.onclick = async () => {
     clientMsg.textContent = "正在启动...";
     await fetch("/api/central-client/start", { method: "POST" });
     await refreshClient();
     clientMsg.textContent = "启动请求已发送";
   };
-  document.getElementById("central-client-stop").onclick = async () => {
+  const clientStop = document.getElementById("central-client-stop");
+  if (clientStop) clientStop.onclick = async () => {
     clientMsg.textContent = "正在关闭...";
     await fetch("/api/central-client/stop", { method: "POST" });
     await refreshClient();

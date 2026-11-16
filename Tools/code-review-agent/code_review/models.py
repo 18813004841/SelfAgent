@@ -54,7 +54,9 @@ class CheckResult:
     def as_display_dict(self) -> dict[str, Any]:
         """User-facing report with the configured Chinese field names."""
         return {
-            "检查结果": "检查通过" if self.status in {"passed", "skipped"} and not self.findings else f"失败数量：{len(self.findings)}",
+            "检查结果": "检查未完成" if self.status == "error" else ("检查通过" if self.status in {"passed", "skipped"} and not self.findings else f"失败数量：{len(self.findings)}"),
+            "失败切片": [item for item in self.tool_results if item.get("name") == "model-review" and item.get("status") == "failed"],
+            "规则覆盖": next((item.get("rules") for item in self.tool_results if item.get("name") == "skill-coverage"), []),
             "上次检查节点": self.old_sha,
             "当前检查节点": self.current_sha,
             "更新文件": self.changed_files,
