@@ -4,13 +4,13 @@
 
 本分析基于当前工作区中的代码检查实现：
 
-- Tools/code-review-agent/code_review/pipeline.py
-- Tools/code-review-agent/code_review/git.py
-- Tools/code-review-agent/code_review/checks.py
-- Tools/code-review-agent/code_review/model_service.py
-- Tools/code-review-agent/code_review/cli.py
-- Tools/code-review-agent/README.md
-- Tools/code-review-agent/docs/architecture.md
+- workbench/machine-dashboard-server/tools/code-review-agent/code_review/pipeline.py
+- workbench/machine-dashboard-server/tools/code-review-agent/code_review/git.py
+- workbench/machine-dashboard-server/tools/code-review-agent/code_review/checks.py
+- workbench/machine-dashboard-server/tools/code-review-agent/code_review/model_service.py
+- workbench/machine-dashboard-server/tools/code-review-agent/code_review/cli.py
+- workbench/machine-dashboard-server/tools/code-review-agent/README.md
+- workbench/machine-dashboard-server/tools/code-review-agent/docs/architecture.md
 - workbench/machine-dashboard-server/src/schedulers/code_review_scheduler.py
 - 线程记录：codex检查过程记录.md
 
@@ -154,4 +154,3 @@ flowchart TD
   N -->|是| O[更新成功基线]
   N -->|否| P[保留原成功基线并标记待修复]
 ~~~
-

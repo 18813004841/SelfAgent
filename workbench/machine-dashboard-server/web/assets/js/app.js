@@ -12,6 +12,8 @@ const pageTitles = {
   "local-codex-task": "Codex 任务",
   settings: "设置",
   "test-scheduler": "测试任务",
+  login: "登录",
+  users: "用户管理",
 };
 const pageModules = {
   overview: () => import("./pages/overview.js"),
@@ -27,7 +29,23 @@ const pageModules = {
   "local-codex": () => import("./pages/local-codex.js"),
   "local-codex-task": () => import("./pages/local-codex-task.js"),
   "test-scheduler": () => import("./pages/test-scheduler.js"),
+  login: () => import("./pages/login.js"),
+  users: () => import("./pages/users.js"),
 };
+let currentUser;
+const levels = {user:1, advanced:2, developer:3, admin:4};
+function applyPermissions(root = document) {
+  if (!currentUser) return;
+  const level = levels[currentUser.role] || 1;
+  root.querySelectorAll("[data-page]").forEach(el => {
+    const page = el.dataset.page;
+    if ((page === "users" && level < 4) || (["central-server", "openai-agent"].includes(page) && level < 3)) el.hidden = true;
+  });
+  if (level < 2) {
+    root.querySelectorAll("#scheduler-start, #scheduler-stop, #schedule-add, #schedule-create, #review-save, #review-run, #review-stop, #review-clear-history, #review-choose, #review-skill-add, .review-skill-row button, [data-delete], .schedule-delete").forEach(el => { el.hidden = true; });
+    root.querySelectorAll(".review-bar input, .review-skill input, .review-skill select").forEach(el => { el.disabled = true; });
+  }
+}
 let activeModule;
 let navigation = 0;
 export async function load(page) {
@@ -46,15 +64,34 @@ export async function load(page) {
     const module = pageModules[name] ? await pageModules[name]() : undefined;
     if (version !== navigation) return;
     content.innerHTML = html;
+    applyPermissions(content);
     document.querySelector("#title").textContent = pageTitles[name];
     activeModule = module;
     await module?.mount(content, new URLSearchParams(query));
+    applyPermissions(content);
   } catch (error) {
     if (version !== navigation) return;
     activeModule?.unmount();
     content.textContent = `加载失败：${error.message}`;
     console.error(error);
   }
+}
+async function boot() {
+  const session = await fetch("/api/auth/session", {cache:"no-store"}).then(r=>r.json());
+  if (!session.user) { document.querySelector("#sidebar").hidden=true; await load("login"); return; }
+  currentUser = session.user;
+  new MutationObserver(() => applyPermissions()).observe(document.querySelector("#content"), {childList:true, subtree:true});
+  const allowed = new Set(session.user.modules); document.querySelector("#sidebar").hidden=false;
+  document.querySelectorAll("#sidebar [data-page]").forEach(b=>{ if(!allowed.has(b.dataset.page)) b.hidden=true; });
+  if (session.user.is_admin) { const b=document.createElement("button"); b.dataset.page="users"; b.textContent="用户管理"; document.querySelector("#sidebar").insertBefore(b, document.querySelector("#collapse")); }
+  const out=document.createElement("button"); out.id="logout"; out.textContent=`${session.user.display_name || session.user.username} · 退出`; out.onclick=async()=>{await fetch("/api/auth/logout",{method:"POST"}); location.reload();}; document.querySelector("#sidebar").insertBefore(out, document.querySelector("#collapse"));
+  const first = [...document.querySelectorAll("#sidebar [data-page]")].find(b=>!b.hidden);
+  if (!first) {
+    document.querySelector("#title").textContent = "暂无可用功能";
+    document.querySelector("#content").innerHTML = `<section class="access-denied card"><div class="access-icon">🔒</div><h1>暂无功能权限</h1><p>当前账号还没有开放任何功能，请联系管理员授权后再访问工作台。</p><p class="muted">账号：${session.user.display_name || session.user.username}</p></section>`;
+    return;
+  }
+  await load(first.dataset.page);
 }
 document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-page]");
@@ -69,4 +106,4 @@ document.querySelector("#collapse").onclick = () => {
     ? "›"
     : "‹";
 };
-load("overview");
+boot().catch(()=>load("login"));

@@ -42,6 +42,8 @@ from schedulers.code_review_scheduler import CodeReviewScheduler, start_task, st
 from schedulers.scheduler_controller import SchedulerController
 from view import router as view_router, ViewContext
 from view import routes as _view_routes
+from core.auth import ensure_admin, login, current, logout, _hash_password, has_module
+from core.permissions import MODULES, ALL_MODULES, ROLES, module_for_path, role_at_least, modules_for_role
 
 # 工作台 HTTP 端口。所有服务端口均可通过环境变量配置，避免本地服务冲突。
 PORT = int(os.environ.get("MACHINE_DASHBOARD_PORT", "18888"))
@@ -144,6 +146,12 @@ WEB_ROOT = Path(__file__).resolve().parent.parent / "web"
 def index_html():
     return (WEB_ROOT / "index.html").read_text(encoding="utf-8")
 
+def standalone_auth_html(kind):
+    title = "登录" if kind == "login" else "注册账号"
+    page = (WEB_ROOT / "pages" / f"{kind}.html").read_text(encoding="utf-8")
+    script = f'<script type="module">import {{ mount }} from "/assets/js/pages/{kind}.js?v=2"; mount();</script>'
+    return f'<!doctype html><html><head><meta charset="utf-8"><title>{title} - 工作台</title><link rel="stylesheet" href="/assets/css/app.css?v=18"></head><body><main>{page}</main>{script}</body></html>'
+
 class Handler(BaseHTTPRequestHandler):
     """处理工作台页面和本地 JSON 接口的 HTTP 请求。"""
     def log_message(self, fmt, *args):
@@ -158,6 +166,26 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _token(self):
+        raw = self.headers.get("Cookie", "")
+        for item in raw.split(";"):
+            if item.strip().startswith("workbench_session="): return item.strip().split("=", 1)[1]
+        return None
+    def _auth(self, path):
+        if path.startswith("/api/auth/") or path in ("/", "/index.html", "/pages/login.html", "/pages/register.html") or path.startswith("/assets/"):
+            return None
+        user = current(self._token())
+        if not user: self.send_json(401, {"ok": False, "code": "unauthorized", "error": "请先登录"}); return False
+        module = module_for_path(path)
+        if module == "users":
+            if not role_at_least(user, "admin"):
+                self.send_json(403, {"ok": False, "error": "仅管理员可管理用户"}); return False
+            module = "manage"
+        if module and module not in user["modules"]: self.send_json(403, {"ok": False, "code": "forbidden", "error": "没有该功能权限"}); return False
+        if path.startswith("/api/users") and not user["is_admin"]: self.send_json(403, {"ok": False, "code": "forbidden", "error": "仅管理员可管理用户"}); return False
+        self.current_user = user
+        return user
+
     def read_body(self):
         cached = getattr(self, "_request_body", None)
         if cached is not None:
@@ -166,9 +194,72 @@ class Handler(BaseHTTPRequestHandler):
         self._request_body = json.loads(self.rfile.read(length) or b"{}")
         return self._request_body
 
+    def do_PATCH(self):
+        return self.do_POST()
+
     def do_POST(self):
         try:
             path = urllib.parse.urlparse(self.path).path
+            if path == "/api/auth/login":
+                body = self.read_body(); result = login(str(body.get("username", "")).strip(), str(body.get("password", "")))
+                if not result: self.send_json(401, {"ok": False, "error": "用户名或密码错误"}); return
+                token, user = result; self.send_response(200); self.send_header("Set-Cookie", f"workbench_session={token}; HttpOnly; SameSite=Lax; Max-Age=604800; Path=/"); self.send_header("Content-Type", "application/json; charset=utf-8"); data = json.dumps({"ok": True, "user": user}, ensure_ascii=False).encode(); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
+            if path == "/api/auth/register":
+                body = self.read_body(); username = str(body.get("username", "")).strip(); password = str(body.get("password", "")); display_name = str(body.get("display_name") or username).strip()
+                if not username or len(username) < 3 or len(username) > 64: raise ValueError("用户名长度必须为 3-64 位")
+                if len(password) < 6: raise ValueError("密码至少需要 6 位")
+                db = __import__("core.storage", fromlist=["connect"]).connect()
+                try:
+                    db.execute("INSERT INTO users(username,password_hash,display_name,is_admin,enabled) VALUES(?,?,?,0,1)", (username, _hash_password(password), display_name or username)); db.commit()
+                except Exception as exc:
+                    db.rollback()
+                    if "UNIQUE" in str(exc).upper(): raise ValueError("用户名已存在")
+                    raise
+                finally: db.close()
+                self.send_json(201, {"ok": True, "message": "注册成功，请等待管理员开通功能权限"}); return
+            if path == "/api/auth/logout": logout(self._token()); self.send_response(200); self.send_header("Set-Cookie", "workbench_session=; Max-Age=0; Path=/"); self.send_header("Content-Type", "application/json; charset=utf-8"); data=b'{"ok":true}'; self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
+            user = self._auth(path)
+            if user is False: return
+            if path.startswith("/api/scheduler") or path.startswith("/api/schedules") or path.startswith("/api/scheduler-tasks") or path.startswith("/api/code-review"):
+                if not role_at_least(user, "advanced"):
+                    self.send_json(403, {"ok": False, "code": "forbidden", "error": "需要高级用户及以上权限"}); return
+            if path.startswith("/api/central-") or path.startswith("/api/central-server") or path.startswith("/api/openai-agent"):
+                if not role_at_least(user, "developer"):
+                    self.send_json(403, {"ok": False, "code": "forbidden", "error": "需要开发者及以上权限"}); return
+            if path == "/api/users":
+                body = self.read_body(); username = str(body.get("username", "")).strip(); password = str(body.get("password", "")); role = str(body.get("role", "user"))
+                if not username or len(password) < 6: raise ValueError("用户名和密码（至少6位）不能为空")
+                if role not in ROLES: raise ValueError("用户角色无效")
+                from core.storage import connect
+                with connect() as db:
+                    cur = db.execute("INSERT INTO users(username,password_hash,display_name,is_admin,role) VALUES(?,?,?,?,?)", (username, _hash_password(password), str(body.get("display_name") or username), int(role == "admin"), role))
+                self.send_json(201, {"ok": True, "id": cur.lastrowid}); return
+            if path.startswith("/api/users/"):
+                from core.storage import connect
+                uid = int(path.split("/")[3]); body = self.read_body()
+                db = connect()
+                try:
+                    db.execute("BEGIN IMMEDIATE")
+                    target = db.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
+                    if not target: raise ValueError("用户不存在")
+                    if path.endswith("/reset-password"):
+                        password = body.get("password", "")
+                        if not isinstance(password, str) or len(password) < 6: raise ValueError("密码至少6位")
+                        db.execute("UPDATE users SET password_hash=? WHERE id=?", (_hash_password(password), uid))
+                        db.execute("DELETE FROM sessions WHERE user_id=?", (uid,))
+                    else:
+                        role = body.get("role", target["role"]); enabled = body.get("enabled", bool(target["enabled"]))
+                        if role not in ROLES or type(enabled) is not bool: raise ValueError("角色或状态无效")
+                        if uid == user["id"] and (role != "admin" or not enabled): raise ValueError("不能降级或停用当前管理员")
+                        if target["role"] == "admin" and (role != "admin" or not enabled):
+                            if db.execute("SELECT count(*) FROM users WHERE role='admin' AND enabled=1 AND id!=?", (uid,)).fetchone()[0] == 0: raise ValueError("必须保留一个启用的管理员")
+                        db.execute("UPDATE users SET role=?,is_admin=?,enabled=?,display_name=?,updated_at=CURRENT_TIMESTAMP WHERE id=?", (role, int(role == "admin"), int(enabled), body.get("display_name", target["display_name"]), uid))
+                        db.execute("DELETE FROM user_permissions WHERE user_id=?", (uid,))
+                    db.commit()
+                except Exception:
+                    db.rollback(); raise
+                finally: db.close()
+                self.send_json(200, {"ok": True}); return
             result = view_router.dispatch(ViewContext(self, path, self.read_body(), "POST", self._legacy_post))
             if result is not None:
                 return result
@@ -293,6 +384,22 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
+        if path in ("/login", "/register"):
+            if current(self._token()):
+                self.send_response(302); self.send_header("Location", "/"); self.end_headers(); return
+            kind = path[1:]; data = standalone_auth_html(kind).encode("utf-8")
+            self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8"); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
+        if path == "/api/auth/session":
+            user = current(self._token()); self.send_json(200, {"ok": True, "user": user, "modules": MODULES}); return
+        if path == "/api/modules": self.send_json(200, {"ok": True, "modules": MODULES}); return
+        if path == "/api/users":
+            user = current(self._token())
+            if not user or not user["is_admin"]: self.send_json(403, {"ok": False, "error": "仅管理员可管理用户"}); return
+            db = __import__("core.storage", fromlist=["connect"]).connect(); rows = db.execute("SELECT id,username,display_name,is_admin,enabled,role FROM users ORDER BY id").fetchall(); result=[]
+            for row in rows: result.append({"id":row["id"],"username":row["username"],"display_name":row["display_name"],"is_admin":bool(row["is_admin"]),"enabled":bool(row["enabled"]),"role":row["role"]})
+            db.close(); self.send_json(200, {"ok": True, "users": result}); return
+        user = self._auth(path)
+        if user is False: return
         result = view_router.dispatch(ViewContext(self, path, {}, "GET", self._legacy_get))
         if result is not None:
             return result
@@ -303,6 +410,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             path = urllib.parse.urlparse(self.path).path
             if path in ("/", "/index.html"):
+                if not current(self._token()):
+                    self.send_response(302); self.send_header("Location", "/login"); self.end_headers(); return
                 data = index_html().encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -340,6 +449,7 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     # 启动时先读取本地日志配置，再创建运行日志和调试日志。
     settings = load_local_settings()
+    ensure_admin()
     logger = AppLogger("machine-dashboard")
     logger.info("服务启动 host=%s port=%s log_level=%s debug_log=%s output_dir=%s", HOST, PORT, settings["log_level"], settings["debug_log"], settings["output_dir"])
     logger.debug("调试日志已开启")

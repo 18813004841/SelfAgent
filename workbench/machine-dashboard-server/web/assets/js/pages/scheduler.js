@@ -67,6 +67,7 @@ async function initScheduler() {
           status.className = "schedule-status";
           status.textContent = "上次构建结果：" + statusText(item.last_status);
           const del = document.createElement("button");
+          del.className = "schedule-delete";
           del.textContent = "删除";
           del.onclick = async (e) => {
             e.stopPropagation();

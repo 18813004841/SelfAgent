@@ -84,6 +84,21 @@ def connect():
     if version == 0:
         backup_database()
     db.executescript("""
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL, display_name TEXT NOT NULL, is_admin INTEGER NOT NULL DEFAULT 0,
+      enabled INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS user_permissions (
+      user_id INTEGER NOT NULL, module_key TEXT NOT NULL,
+      PRIMARY KEY(user_id, module_key), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS sessions (
+      token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      expires_at TEXT NOT NULL, last_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
     CREATE TABLE IF NOT EXISTS tools (
       tool_id TEXT PRIMARY KEY, name TEXT NOT NULL, type TEXT NOT NULL,
       entry TEXT NOT NULL, workdir TEXT, enabled INTEGER NOT NULL DEFAULT 1,
@@ -111,7 +126,9 @@ def connect():
     );
     """)
     # 为任务进度和取消操作增加字段；已有安装启动时自动获得新字段。
+    migrate_roles = "role" not in {r[1] for r in db.execute("PRAGMA table_info(users)")}
     for statement in (
+        "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'",
         "ALTER TABLE schedules ADD COLUMN task_type TEXT NOT NULL DEFAULT 'scheduled'",
         "ALTER TABLE schedules ADD COLUMN progress_current INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE schedules ADD COLUMN progress_total INTEGER NOT NULL DEFAULT 1",
@@ -133,6 +150,10 @@ def connect():
                 db.rollback()
                 raise
     db.execute("PRAGMA user_version=1")
+    if migrate_roles:
+        db.execute("UPDATE users SET role='admin' WHERE is_admin=1")
+        db.execute("UPDATE users SET role='developer' WHERE is_admin=0 AND role='user' AND EXISTS (SELECT 1 FROM user_permissions p WHERE p.user_id=users.id AND p.module_key IN ('central-server','openai-agent'))")
+        db.execute("UPDATE users SET role='advanced' WHERE is_admin=0 AND role='user' AND EXISTS (SELECT 1 FROM user_permissions p WHERE p.user_id=users.id AND p.module_key IN ('scheduler','code-review'))")
     db.commit()
     return db
 
