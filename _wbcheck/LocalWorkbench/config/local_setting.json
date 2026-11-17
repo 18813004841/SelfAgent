@@ -1,8 +1,0 @@
-{
-  "log_level": "INFO",
-  "debug_log": false,
-  "output_dir": "E:\\SelfAgent\\_wbcheck\\LocalWorkbench\\output",
-  "log_path": "E:\\SelfAgent\\_wbcheck\\LocalWorkbench\\config\\logs",
-  "view_log_dir": "E:\\SelfAgent\\_wbcheck\\LocalWorkbench\\config\\logs\\view",
-  "log_dir": "E:\\SelfAgent\\_wbcheck\\LocalWorkbench\\config\\logs"
-}
