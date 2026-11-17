@@ -21,7 +21,8 @@ class SchedulerProcess(ManagedProcess):
         return ProcessHandle(proc.pid, 0)
 
     def stop(self, handle: ProcessHandle | None = None) -> None:
-        pid = handle.pid if handle and handle.pid else (int(self.pid_file.read_text()) if self.pid_file.exists() else None)
+        # 只停止本次 ProcessManager 登记的句柄；PID 文件可能已被其他会话重用。
+        pid = handle.pid if handle and handle.pid else None
         if not pid: return
         if os.name == "nt": subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True)
         else: os.kill(pid, 15)

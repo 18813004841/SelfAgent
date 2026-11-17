@@ -5,6 +5,7 @@ import json
 import platform
 import socket
 import time
+import threading
 import urllib.error
 import urllib.request
 from datetime import datetime
@@ -106,8 +107,32 @@ def main() -> None:
                 time.sleep(args.poll_interval)
                 continue
             log(f"picked task {task['task_id']} kind={task['kind']}")
-            result = execute_task(task["kind"], task.get("payload", {}), allowed)
-            status = "succeeded" if result.get("ok") else "failed"
+            cancel_event = threading.Event()
+            finished_event = threading.Event()
+            def watch_cancel(task_id=task['task_id'], cancelled=cancel_event, finished=finished_event) -> None:
+                while not finished.is_set():
+                    try:
+                        state = request("GET", f"{server}/api/tasks/{task_id}", args.token)
+                        if state.get("task", {}).get("cancel_requested"):
+                            cancelled.set()
+                            return
+                    except Exception:
+                        pass
+                    finished.wait(max(0.5, args.poll_interval))
+            watcher = threading.Thread(target=watch_cancel, daemon=True)
+            watcher.start()
+            result = execute_task(task["kind"], task.get("payload", {}), allowed, cancel_event)
+            finished_event.set()
+            watcher.join(timeout=1)
+            # A cancellation request is terminally cancelled only when the
+            # executor confirms process cleanup.  Cleanup failures must remain
+            # visible as failed so the center/UI cannot report a live process
+            # as safely stopped.
+            status = (
+                "cancelled"
+                if result.get("cancelled") and not result.get("cleanup_error")
+                else ("succeeded" if result.get("ok") else "failed")
+            )
             request("POST", f"{server}/api/tasks/{task['task_id']}/result", args.token, {
                 "status": status,
                 "result": result,

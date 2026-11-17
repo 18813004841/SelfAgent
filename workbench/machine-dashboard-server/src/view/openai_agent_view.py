@@ -17,7 +17,8 @@ def handle(ctx):
     import os
     if ctx.path == "/api/openai-agent/status":
         item = PROCESS_MANAGER.snapshot().get("openai-agent", {})
-        ctx.request.send_json(200, {"ok": True, "service": "openai-agent", "running": item.get("status") == "running", "pid": item.get("pid"), "port": item.get("port")})
+        project_dir = Path(__file__).resolve().parents[4] / "AiAgent" / "AiProject" / "Codes" / "Agents" / "OpenAiAgent"
+        ctx.request.send_json(200, {"ok": True, "service": "openai-agent", "running": item.get("status") == "running", "pid": item.get("pid"), "port": item.get("port"), "project_dir": str(project_dir), "entry_exists": (project_dir / "codex_agent" / "openai_gateway.py").is_file()})
     elif ctx.path == "/api/openai-agent/start":
         handle = PROCESS_MANAGER.start("openai-agent")
         ctx.request.send_json(200, {"ok": True, "pid": handle.pid, "port": handle.port})

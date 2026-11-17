@@ -17,7 +17,7 @@ def req(method: str, url: str, token: str, data=None):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--server", default="http://127.0.0.1:8765")
+    p.add_argument("--server", default="http://127.0.0.1:18765")
     p.add_argument("--token", default="dev-token")
     p.add_argument("--machine-id", required=True)
     p.add_argument("--command", required=True)

@@ -1,0 +1,4 @@
+# Workbench development and validation dependencies.
+# Runtime pins remain in the repository-root requirements.txt.
+pytest==8.3.5
+ruff==0.9.10

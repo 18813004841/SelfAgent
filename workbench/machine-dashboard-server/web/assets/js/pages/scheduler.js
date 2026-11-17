@@ -8,7 +8,6 @@ async function initScheduler() {
     msg = document.getElementById("scheduler-msg"),
     list = document.getElementById("schedule-list"),
     detail = document.getElementById("schedule-detail");
-  if (window.__schedulerTimer) clearInterval(window.__schedulerTimer);
   const statusText = (value) =>
     ({
       success: "成功",
@@ -151,7 +150,7 @@ async function initScheduler() {
     }
   };
   await refresh(false);
-  window.__schedulerTimer = setInterval(() => refresh(true), 3000);
+  setInterval(() => refresh(true), 3000);
   document.getElementById("scheduler-start").onclick = async () => {
     await fetch("/api/scheduler/start", { method: "POST" });
     msg.textContent = "启动请求已发送";

@@ -1,7 +1,7 @@
 <h1>设置</h1>
 <div class="card">
   <h3>本地文件保存目录</h3>
-  <p class="muted">当前工具生成文件的保存位置。</p>
+  <p class="muted">这是正在浏览工作台的这台电脑上的目录，不是中央服务器所在机器的目录。</p>
   <div style="display: flex; gap: 8px; align-items: center">
     <input
       id="storage"
@@ -15,6 +15,10 @@
       "
     />
     <button type="button" id="load-storage" class="primary">选择目录</button>
+    <button type="button" id="reset-storage">使用默认目录</button>
+    <button type="button" id="check-local-agent">检查本机服务</button>
   </div>
   <p id="msg" class="muted"></p>
+  <p id="local-agent-help" class="muted" hidden></p>
+  <p><a href="/api/local-agent/download" download>下载本机客户端组件</a>（解压后在客户机运行 setup-client.ps1）</p>
 </div>

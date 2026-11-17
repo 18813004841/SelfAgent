@@ -1,0 +1,7 @@
+# Local client has its own runtime only; no virtual environments or generated data are tracked.
+__pycache__/
+*.py[cod]
+.env
+runtime/
+.venv/
+dist/

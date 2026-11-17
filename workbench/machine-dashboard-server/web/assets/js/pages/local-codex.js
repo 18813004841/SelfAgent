@@ -1,7 +1,8 @@
+import { LOCAL_AGENT_ORIGIN } from "../shared/local-agent.js";
 import { createPageScope } from "../shared/page-scope.js";
 import { load } from "../app.js";
 let scope;
-const api = (...args) => scope.fetch(...args);
+const api = (path, options) => scope.fetch(path.startsWith("/api/local-codex/") ? LOCAL_AGENT_ORIGIN + path : path, options);
 export async function mount() {
   scope = createPageScope();
   const input = document.getElementById("local-codex-url");
@@ -16,7 +17,7 @@ export async function mount() {
   const list = document.getElementById("local-codex-task-list");
   let tasks = [];
   const loadTasks = async () => { const d = await (await api("/api/local-codex/tasks")).json(); tasks = d.tasks || []; };
-  const statusText = (task) => ({ completed: "执行完成", failed: "执行失败", running: "执行中" }[task.status] || "尚未执行");
+  const statusText = (task) => ({ completed: "执行完成", failed: "执行失败", cancelled: "已取消", timed_out: "执行超时", running: "执行中" }[task.status] || "尚未执行");
   function renderTasks() {
     list.replaceChildren();
     if (!tasks.length) { list.textContent = "暂无任务"; return; }
@@ -51,8 +52,3 @@ export async function mount() {
   await loadTasks(); renderTasks();
 }
 export function unmount() { scope?.dispose(); }
-
-
-
-
-

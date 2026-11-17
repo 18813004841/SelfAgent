@@ -6,8 +6,25 @@ from __future__ import annotations
 
 import logging
 import os
+import re
+import time
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from core.settings import LogLevel
+
+_HANDLERS: dict[str, RotatingFileHandler] = {}
+_SENSITIVE = re.compile(r"(?i)(bearer\s+|(?:token|password|passwd|secret|api[_-]?key)\s*[=:]\s*)([^\s,;]+)")
+
+def _redact(value):
+    if isinstance(value, str):
+        return _SENSITIVE.sub(lambda m: m.group(1) + "[REDACTED]", value)
+    return value
+
+class RedactingFormatter(logging.Formatter):
+    """Redact the rendered record, including arguments and exception text."""
+
+    def format(self, record):
+        return _redact(super().format(record))
 
 
 class AppLogger:
@@ -29,26 +46,29 @@ class AppLogger:
         log_dir = Path(log_dir)
         self.log_dir = log_dir
         self.log_file = self.initialize_log_file()
-        formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+        formatter = RedactingFormatter("%(asctime)s %(levelname)s %(message)s")
 
         # 运行日志持续记录正常流程、警告和错误。
         logger_key = f"{name}.{self.log_file}"
         self.runtime = logging.getLogger(f"{logger_key}.runtime")
         self.runtime.setLevel(level)
         self.runtime.propagate = False
+        handler_key = str(self.log_file.resolve()).lower()
+        shared_handler = _HANDLERS.get(handler_key)
+        if shared_handler is None:
+            shared_handler = RotatingFileHandler(self.log_file, maxBytes=10 * 1024 * 1024,
+                                                  backupCount=7, encoding="utf-8")
+            shared_handler.setFormatter(formatter)
+            _HANDLERS[handler_key] = shared_handler
         if not self.runtime.handlers:
-            runtime_handler = logging.FileHandler(self.log_file, encoding="utf-8")
-            runtime_handler.setFormatter(formatter)
-            self.runtime.addHandler(runtime_handler)
+            self.runtime.addHandler(shared_handler)
 
         # 调试日志单独存放，避免平时刷满运行日志。
         self.debugger = logging.getLogger(f"{logger_key}.debug")
         self.debugger.setLevel(logging.DEBUG)
         self.debugger.propagate = False
         if not self.debugger.handlers:
-            debug_handler = logging.FileHandler(self.log_file, encoding="utf-8")
-            debug_handler.setFormatter(formatter)
-            self.debugger.addHandler(debug_handler)
+            self.debugger.addHandler(shared_handler)
 
     def initialize_log_file(self) -> Path:
         """同一启动会话在同一目录共用日志文件，已存在时追加。"""
@@ -59,7 +79,29 @@ class AppLogger:
                 "LOCAL_WORKBENCH_START_TIMESTAMP"
             )
         self.log_dir.mkdir(parents=True, exist_ok=True)
+        self._prune_old_logs()
         return self.log_dir / f"{timestamp}.log"
+
+    def _prune_old_logs(self) -> None:
+        """Remove old session logs; retention is opt-in and bounded to this directory."""
+        raw = os.environ.get("WORKBENCH_LOG_RETENTION_DAYS", "30")
+        try:
+            days = int(raw)
+        except ValueError:
+            raise ValueError("WORKBENCH_LOG_RETENTION_DAYS 必须是非负整数")
+        if days < 0:
+            raise ValueError("WORKBENCH_LOG_RETENTION_DAYS 必须是非负整数")
+        cutoff = time.time() - days * 86400
+        current = os.environ.get("LOCAL_WORKBENCH_START_TIMESTAMP", "")
+        for path in self.log_dir.glob("*.log"):
+            try:
+                stem = path.name[:-4]
+                if not re.fullmatch(r"\d{8}_\d{6}_\d{6}", stem) or stem == current or path.is_symlink():
+                    continue
+                if path.stat().st_mtime < cutoff:
+                    path.unlink()
+            except OSError:
+                continue
 
     def set_debug(self, enabled: bool) -> None:
         """打开或关闭调试日志。"""
@@ -73,7 +115,8 @@ class AppLogger:
         minimum = getattr(logging, settings.log_level, logging.INFO)
         self.runtime.setLevel(minimum)
         self.debug_enabled = settings.debug_log if self._debug_override is None else self._debug_override
-        return level >= minimum and (not debug or self.debug_enabled)
+        is_debug = debug or level == logging.DEBUG
+        return level >= minimum and (not is_debug or self.debug_enabled)
 
     def log(self, level: LogLevel | int | str, message: str, *args) -> None:
         """按调用方传入的级别记录日志，并与配置级别比较。"""

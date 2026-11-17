@@ -41,6 +41,7 @@ class Task:
     picked_at: Optional[int] = None
     finished_at: Optional[int] = None
     result: Optional[Dict[str, Any]] = None
+    cancel_requested: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

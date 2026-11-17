@@ -18,7 +18,10 @@ class ViewLogger:
         from core.settings import get_settings
         options = {"debug": True} if debug_only else {}
         self.view = AppLogger(f"view.{feature}", get_settings().view_log_path, **options)
-        self.debug_log = AppLogger(f"debug.{feature}", debug_dir, **options)
+        # View 调试日志统一归档到配置输出根；历史调用方传入的源码目录只作为
+        # 功能名提示，不能让运行产物重新写入源码树。
+        configured_root = Path(get_settings().output_dir)
+        self.debug_log = AppLogger(f"debug.{feature}", configured_root / feature, **options)
 
     def debug(self, message, *args):
         self.view.debug(message, *args)

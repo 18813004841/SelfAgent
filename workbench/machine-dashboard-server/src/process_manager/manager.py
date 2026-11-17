@@ -49,12 +49,24 @@ class ProcessManager:
         entry.status = ProcessStatus.STOPPED
         entry.handle = None
 
+    def restart(self, name: str) -> ProcessHandle:
+        """停止当前已登记实例，再启动新实例；失败由 start 保留为 FAILED。"""
+        self.stop(name)
+        return self.start(name)
+
     def cleanup(self, name: str) -> list[int]:
         entry = self._entry(name)
-        port = entry.handle.port if entry.handle else getattr(entry.process, "port", None)
-        cleanup_handle = entry.handle or (ProcessHandle(None, port) if port else None)
-        self._logger.info("process.cleanup.begin name=%s port=%s", name, port)
-        killed = entry.process.cleanup(cleanup_handle)
+        # Cleanup is deliberately limited to a PID recorded by this manager.
+        # A port alone does not prove process ownership and must never trigger
+        # killing an unrelated process.
+        handle = entry.handle
+        self._logger.info("process.cleanup.begin name=%s pid=%s", name, handle.pid if handle else None)
+        killed: list[int] = []
+        if handle and handle.pid:
+            entry.process.stop(handle)
+            killed.append(handle.pid)
+        else:
+            self._logger.warning("process.cleanup.skipped_unowned name=%s", name)
         entry.status = ProcessStatus.STOPPED
         entry.handle = None
         self._logger.info("process.cleanup.end name=%s killed=%s", name, killed)
@@ -65,8 +77,8 @@ class ProcessManager:
         if entry.handle and entry.process.is_running(entry.handle):
             entry.status = ProcessStatus.RUNNING
         elif entry.status is ProcessStatus.RUNNING:
-            entry.status = ProcessStatus.STOPPED
-            self._logger.info("process.status.changed name=%s status=stopped", name)
+            entry.status = ProcessStatus.FAILED
+            self._logger.info("process.status.changed name=%s status=failed", name)
         return entry.status
 
     def snapshot(self) -> dict[str, dict]:

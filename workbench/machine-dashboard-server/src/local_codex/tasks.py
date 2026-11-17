@@ -1,10 +1,10 @@
 """提交本地 Codex 任务并收集 JSONL 执行事件。"""
 from __future__ import annotations
 import json, os, shutil, subprocess, threading, uuid
-from core.storage import connect
+from core.repositories import LocalCodexTaskRepository
 
 class LocalCodexTasks:
-    def __init__(self): self._tasks = {}; self._lock = threading.Lock()
+    def __init__(self): self._tasks = {}; self._lock = threading.Lock(); self._repository = LocalCodexTaskRepository()
     def submit(self, prompt: str, cwd: str, task_id: str | None = None, session_id: str | None = None) -> dict:
         task_id = task_id or uuid.uuid4().hex
         task = {"id": task_id, "prompt": prompt, "cwd": cwd, "session_id": session_id, "status": "running", "events": [], "returncode": None}
@@ -47,18 +47,13 @@ class LocalCodexTasks:
         except Exception as exc:
             task["status"] = "failed"; task["events"].append({"type": "error", "message": str(exc)})
         finally:
-            db = connect()
-            try:
-                row = db.execute("SELECT messages_json FROM local_codex_tasks WHERE id=?", (task_id,)).fetchone()
-                if row:
+            row = self._repository.get_fields(task_id, "messages_json")
+            if row:
                     messages = json.loads(row["messages_json"])
                     replies = [e["item"]["text"] for e in task["events"] if isinstance(e.get("item"), dict) and e["item"].get("type") == "agent_message" and e["item"].get("text")]
                     output = "\n\n".join(replies) or "\n".join(e.get("message", "") for e in task["events"] if e.get("message")) or "（无回复，请查看执行记录）"
                     messages.append({"role": "assistant", "content": output})
                     session_id = next((e.get("thread_id") for e in task["events"] if e.get("thread_id")), task.get("session_id"))
-                    db.execute("UPDATE local_codex_tasks SET status=?, session_id=COALESCE(?,session_id), messages_json=?, log=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (task["status"], session_id, json.dumps(messages, ensure_ascii=False), json.dumps(task["events"], ensure_ascii=False), task_id))
-                    db.commit()
-            finally:
-                db.close()
+                    self._repository.save_result(task_id, task["status"], session_id, messages, json.dumps(task["events"], ensure_ascii=False))
 
 tasks = LocalCodexTasks()

@@ -34,7 +34,9 @@ class MachineControlProcess(ManagedProcess):
             os.kill(handle.pid, 15)
 
     def is_running(self, handle: ProcessHandle | None = None) -> bool:
-        if handle and handle.pid:
+        if not handle or not handle.pid:
+            return False
+        if handle.pid:
             try:
                 if os.name == "nt":
                     result = subprocess.run(["tasklist", "/FI", f"PID eq {handle.pid}", "/FO", "CSV", "/NH"], capture_output=True, text=True)
@@ -44,8 +46,4 @@ class MachineControlProcess(ManagedProcess):
                     os.kill(handle.pid, 0)
             except Exception:
                 return False
-        try:
-            with socket.create_connection(("127.0.0.1", self.port), timeout=0.35):
-                return True
-        except OSError:
-            return False
+        return True

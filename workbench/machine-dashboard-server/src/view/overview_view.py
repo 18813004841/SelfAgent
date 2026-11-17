@@ -21,8 +21,10 @@ def handle(ctx):
         server.MACHINE_CONTROL_ROOT.mkdir(parents=True, exist_ok=True); h = server.PROCESS_MANAGER.start("central-server"); ctx.request.send_json(200, {"ok": True, "pid": h.pid})
     elif ctx.path == "/api/central-server/stop": server.PROCESS_MANAGER.stop("central-server"); ctx.request.send_json(200, {"ok": True})
     elif ctx.path == "/api/central-server/cleanup": ctx.request.send_json(200, {"ok": True, "port": server.CENTER_PORT, "killed": server.PROCESS_MANAGER.cleanup("central-server")})
-    elif ctx.path == "/api/central-client/start": h=server.PROCESS_MANAGER.start("central-client"); ctx.request.send_json(200, {"ok": True, "pid": h.pid})
-    elif ctx.path == "/api/central-client/stop": server.PROCESS_MANAGER.stop("central-client"); ctx.request.send_json(200, {"ok": True})
+    elif ctx.path == "/api/central-client/start": ctx.request.send_json(409, {"ok": False, "error": "中央客户端由浏览这台电脑的本地接入服务管理", "code": "client_local_only"})
+    elif False and ctx.path == "/api/central-client/start": h=server.PROCESS_MANAGER.start("central-client"); ctx.request.send_json(200, {"ok": True, "pid": h.pid})
+    elif ctx.path == "/api/central-client/stop": ctx.request.send_json(409, {"ok": False, "error": "中央客户端由浏览这台电脑的本地接入服务管理", "code": "client_local_only"})
+    elif False and ctx.path == "/api/central-client/stop": server.PROCESS_MANAGER.stop("central-client"); ctx.request.send_json(200, {"ok": True})
     return True
 
 

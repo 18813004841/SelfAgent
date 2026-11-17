@@ -3,17 +3,28 @@ from . import router
 from pathlib import Path
 from .logging import get_logger
 
-DEBUG_LOG_DIR = Path(__file__).resolve().parents[2] / 'src/schedulers/logs'
+DEBUG_LOG_DIR = "scheduler"
 logger = get_logger('scheduler', DEBUG_LOG_DIR)
 
-@router.route("GET", "/api/scheduler-tasks", "/api/scheduler-tasks/types")
+@router.route("GET", "/api/scheduler/status", "/api/scheduler-tasks", "/api/scheduler-tasks/types")
+@router.route("POST", "/api/scheduler-tasks", "/api/scheduler-tasks/types")
 @router.route("POST", "/api/scheduler/start", "/api/scheduler/stop", "/api/scheduler-tasks/create", "/api/scheduler-tasks/delete")
 def handle(ctx):
     logger.debug("handling %s %s", ctx.method, ctx.path)
     import sys
     server = sys.modules.get("server") or sys.modules["__main__"]
     from schedulers.scheduler_controller import SchedulerController
-    if ctx.path == "/api/scheduler-tasks/types":
+    if ctx.path == "/api/scheduler/status":
+        pid = None
+        try:
+            pid = int(server.PID_PATH.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            pass
+        running = server.process_exists(pid)
+        if not running:
+            server.PID_PATH.unlink(missing_ok=True)
+        ctx.request.send_json(200, {"ok": True, "service": "scheduler", "mode": "separate-process", "running": running, "pid": pid})
+    elif ctx.path == "/api/scheduler-tasks/types":
         ctx.request.send_json(200, {"ok": True, "types": SchedulerController().types()})
     elif ctx.path == "/api/scheduler-tasks":
         ctx.request.send_json(200, {"ok": True, "tasks": SchedulerController().list()})

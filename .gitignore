@@ -6,3 +6,35 @@ Tools/code-review-agent/data/koa-client-code-master/execution-sequence.json
 Tools/code-review-agent/code_review/log
 AiAgent/AiProject/Codes/Agents/OpenAiAgent/logs
 Tools/machine-control/server/control_center/__pycache__
+
+# Python and local runtime outputs
+**/__pycache__/
+*.py[cod]
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.log
+**/logs/
+**/.venv/
+**/.pytest_cache/
+**/.codex-runtime/
+**/tmp/
+**/build/
+**/*.egg-info/
+Tools/machine-control/packages/*.zip
+Tools/machine-control/packages/central-client/
+*.local.json
+
+# Migrated workbench code-review runtime data
+workbench/machine-dashboard-server/tools/code-review-agent/data/
+workbench/machine-dashboard-server/tools/code-review-agent/**/__pycache__/
+workbench/machine-dashboard-server/tools/code-review-agent/code_review/log/
+workbench/machine-dashboard-server/src/schedulers/logs/
+Tools/machine-control/server/data/
+
+# Local environment files; examples remain versioned.
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example

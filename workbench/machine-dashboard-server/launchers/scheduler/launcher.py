@@ -14,6 +14,7 @@ class SchedulerLauncher(ManagedProcess):
 
     def __init__(self, script: Path, pid_file: Path) -> None:
         self.script, self.pid_file = script, pid_file
+        self._process: subprocess.Popen | None = None
         self.logger = get_operation_logger()
 
     def start(self) -> ProcessHandle:
@@ -22,34 +23,28 @@ class SchedulerLauncher(ManagedProcess):
         if os.name == "nt":
             kwargs["creationflags"] = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
         proc = subprocess.Popen([sys.executable, str(self.script)], **kwargs)
+        self._process = proc
         self.logger.info("launcher.scheduler.start.end pid=%s", proc.pid)
         return ProcessHandle(proc.pid, 0)
 
     def stop(self, handle: ProcessHandle | None = None) -> None:
         self.logger.info("launcher.scheduler.stop.begin pid=%s", handle.pid if handle else None)
-        pid = handle.pid if handle and handle.pid else (int(self.pid_file.read_text()) if self.pid_file.exists() else None)
-        if not pid:
+        # 只允许停止当前 ProcessManager 持有的句柄；PID 文件不能证明所有权。
+        pid = handle.pid if handle and handle.pid else None
+        proc = self._process
+        if not pid or proc is None or proc.pid != pid:
             return
-        if os.name == "nt":
-            subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True)
-        else:
-            os.kill(pid, 15)
+        if proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=5)
+        self._process = None
         self.pid_file.unlink(missing_ok=True)
         self.logger.info("launcher.scheduler.stop.end pid=%s", pid)
 
     def is_running(self, handle: ProcessHandle | None = None) -> bool:
-        try:
-            pid = int(self.pid_file.read_text()) if self.pid_file.exists() else (handle.pid if handle else None)
-            if not pid:
-                return False
-            if os.name == "nt":
-                out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"], capture_output=True, text=True).stdout
-                running = f'"{pid}"' in out
-                self.logger.info("launcher.scheduler.status pid=%s running=%s", pid, running)
-                return running
-            os.kill(pid, 0)
-            self.logger.info("launcher.scheduler.status pid=%s running=true", pid)
-            return True
-        except Exception:
-            self.logger.info("launcher.scheduler.status pid=%s running=false", locals().get("pid"))
-            return False
+        proc = self._process
+        return bool(handle and proc and proc.pid == handle.pid and proc.poll() is None)

@@ -24,9 +24,9 @@
 
 ### Phase 1：架构事实审计
 
-- [ ] 列出所有可执行入口：HTTP 服务、CLI、启动脚本、调度器、MCP、网关和打包脚本。
+- [x] 列出所有可执行入口：HTTP 服务、CLI、启动脚本、调度器、MCP、网关和打包脚本。
 - [ ] 为每个入口记录调用方、工作目录、环境变量、端口、PID、配置文件和日志目录。
-- [ ] 建立真实依赖图，区分 Python import、HTTP、子进程、文件和数据库依赖。
+- [x] 建立真实依赖图，区分 Python import、HTTP、子进程、文件和数据库依赖。
 - [ ] 标记历史接口、legacy 分支、临时目录和未完成模块，不把推断写成规则。
 - [ ] 核对 `Tools/local_codex` 与工作台 local_codex 启动器的职责关系。
 
@@ -144,3 +144,14 @@
 - 不为了“统一架构”一次性重写 `server.py`、启动器或所有 legacy 接口。
 - 不把日志、缓存、临时数据库和本地凭据纳入架构源码。
 - 不把目录名推断成已确认职责。
+## 本轮增量（2026-11-16）
+
+- 工作台 PID 已迁移至用户目录 `LocalWorkbench/run`，旧源码路径保留为回滚点。
+- Local Codex 任务已完成首条 Repository 迁移，接口和表结构保持兼容。
+- 剩余 `server.py`、scheduler 和 code-review scheduler 的 SQL 尚未全部迁移，不能视为分层完成。
+
+### Repository 迁移台账
+
+- 已完成：Local Codex View、后台任务回调、调度主循环、SchedulerController。
+- 待迁移：`test_scheduler.py`、`execution_guard.py`、`code_review_scheduler.py` 及 `server.py` 的工具/计划接口。
+- 验收命令：`rg -n "db\\.execute|connect\\(\\)" workbench/machine-dashboard-server/src --glob '*.py'`；结果中除 `core/storage.py`、`core/repositories.py` 外的业务 SQL 应逐批消除。

@@ -9,13 +9,16 @@ class OpenAIAgentLauncher(ManagedProcess):
     def __init__(self, project_root: Path, port: int = 8765) -> None:
         self.project_root, self.port, self.logger = project_root, port, get_operation_logger()
         self._log_handle = None
+        self._process: subprocess.Popen | None = None
     def start(self) -> ProcessHandle:
         root = self.project_root.resolve()
         self.logger.info("launcher.openai_agent.start.begin root=%s port=%s", root, self.port)
         if not (root / "codex_agent" / "openai_gateway.py").is_file():
             self.logger.error("launcher.openai_agent.gateway_missing path=%s", root / "codex_agent" / "openai_gateway.py")
             raise FileNotFoundError(f"OpenAiAgent gateway not found: {root}")
-        log_path = root / "logs" / "gateway-launcher.log"
+        from core.settings import get_settings
+        output_root = get_settings().output_dir
+        log_path = output_root / "openai-agent" / "gateway-launcher.log"
         log_path.parent.mkdir(parents=True, exist_ok=True)
         self._log_handle = log_path.open("a", encoding="utf-8", buffering=1)
         kwargs = {"cwd": str(root), "env": {**os.environ, "CODEX_GATEWAY_PORT": str(self.port), "PYTHONPATH": str(root)}, "stdout": self._log_handle, "stderr": subprocess.STDOUT}
@@ -34,6 +37,7 @@ class OpenAIAgentLauncher(ManagedProcess):
         self.logger.info("launcher.openai_agent.exec interpreter=%s cwd=%s command=%s log=%s", interpreter, root, command, log_path)
         try:
             proc = subprocess.Popen(command, **kwargs)
+            self._process = proc
         except Exception:
             self.logger.exception("launcher.openai_agent.start.error command=%s", command)
             self._log_handle.close()
@@ -52,32 +56,26 @@ class OpenAIAgentLauncher(ManagedProcess):
         return ProcessHandle(proc.pid, self.port)
     def stop(self, handle: ProcessHandle | None = None) -> None:
         pid = handle.pid if handle else None
-        if pid:
-            if os.name == "nt": subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True)
-            else: os.kill(pid, 15)
-        if self._log_handle:
+        proc = self._process
+        if pid and proc and proc.pid == pid:
+            if proc.poll() is None:
+                proc.terminate()
+                try: proc.wait(timeout=5)
+                except subprocess.TimeoutExpired: proc.kill(); proc.wait(timeout=5)
+            self._process = None
+        if pid and proc and proc.pid == pid and self._log_handle:
             self._log_handle.close()
             self._log_handle = None
         self.logger.info("launcher.openai_agent.stop.end pid=%s", pid)
     def is_running(self, handle: ProcessHandle | None = None) -> bool:
-        if handle and handle.pid:
-            try:
-                if os.name == "nt":
-                    out = subprocess.run(["tasklist", "/FI", f"PID eq {handle.pid}", "/FO", "CSV", "/NH"], capture_output=True, text=True).stdout
-                    if f'"{handle.pid}"' not in out:
-                        try: os.kill(handle.pid, 0)
-                        except OSError: return False
-                else: os.kill(handle.pid, 0)
-            except Exception: return False
-        # The gateway imports optional dependencies before binding its socket;
-        # during that short window the child is alive but the port is not ready.
-        # Treat a live child as running so ProcessManager does not immediately
-        # mark a successful launch as failed.
-        if handle and handle.pid:
-            return True
-        try:
-            with socket.create_connection(("127.0.0.1", self.port), timeout=0.25): return True
-        except OSError: return False
+        if not handle or not handle.pid:
+            return False
+        proc = self._process
+        if not proc or proc.pid != handle.pid or proc.poll() is not None:
+            return False
+        # The owned child is authoritative during startup; the gateway exposes
+        # /health for external readiness checks without claiming other PIDs.
+        return True
 
     def chat(self, message: str, model: str | None = None) -> str:
         root = self.project_root.resolve()

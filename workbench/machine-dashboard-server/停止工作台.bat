@@ -1,3 +1,4 @@
 @echo off
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":18888" ^| findstr "LISTENING"') do taskkill /PID %%p /F >nul 2>nul
-for /f "tokens=5" %%p in ('wmic process where "commandline like '%%src\\scheduler.py%%'" get ProcessId ^| findstr /r "[0-9]"') do taskkill /PID %%p /F >nul 2>nul
+echo 不再通过端口或命令行匹配结束未知进程。
+echo 请在工作台页面停止，或使用本次启动产生的用户数据目录中的受管 PID/进程句柄。
+exit /b 0

@@ -5,6 +5,7 @@ export function createPageScope() {
   let disposed = false;
   const cancelled = () => new Promise(() => {});
   return {
+    get signal() { return controller.signal; },
     async fetch(url, options = {}) {
       if (disposed) return cancelled();
       try {

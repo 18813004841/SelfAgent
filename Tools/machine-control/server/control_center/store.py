@@ -238,8 +238,30 @@ class JsonStore:
     def finish_task(self, task_id: str, status: str, result: Dict[str, Any]) -> Task:
         with self._lock:
             task = self.get_task(task_id)
+            if status not in {"succeeded", "failed", "cancelled"}:
+                raise ValueError(f"invalid terminal task status: {status}")
+            if task.status in {"succeeded", "failed", "cancelled"}:
+                # Late or duplicate worker callbacks must not rewrite history.
+                return task
             task.status = status
             task.result = result
+            task.finished_at = now_ms()
+            task.updated_at = now_ms()
+            self._save()
+            return task
+
+    def cancel_task(self, task_id: str) -> Task:
+        with self._lock:
+            task = self.get_task(task_id)
+            if task.status == "running":
+                task.cancel_requested = True
+                task.updated_at = now_ms()
+                self._save()
+                return task
+            if task.status != "queued":
+                return task
+            task.status = "cancelled"
+            task.cancel_requested = True
             task.finished_at = now_ms()
             task.updated_at = now_ms()
             self._save()

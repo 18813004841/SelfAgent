@@ -72,4 +72,4 @@ save_config 应持久化并返回实际配置。将此 view 导入 src/view/rout
 
 ## 当前工程对照
 
-可查看工作台的 web/pages/code-review.html、web/assets/js/pages/code-review.js、src/view/code_review_view.py、src/schedulers/code_review_scheduler.py。接口由 src/server.py 构造 ViewContext 后经 src/view/router.py 分发；业务工具实际入口位于 Tools/code-review-agent。对照其分层，不照搬具体业务参数或现有缺陷。
+可查看工作台的 web/pages/code-review.html、web/assets/js/pages/code-review.js、src/view/code_review_view.py、src/schedulers/code_review_scheduler.py。接口由 src/server.py 构造 ViewContext 后经 src/view/router.py 分发；业务工具实际入口位于 workbench/machine-dashboard-server/tools/code-review-agent。对照其分层，不照搬具体业务参数或现有缺陷。

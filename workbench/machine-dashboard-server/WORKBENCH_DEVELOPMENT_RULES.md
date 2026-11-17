@@ -24,6 +24,9 @@
 | 代码检查 | `core.Log.log_helper.get_code_review_logger` | 写入代码检查功能目录 |
 | 进程/操作日志 | `process_manager.operation_log.get_operation_logger` | 供启动器、调度和操作流程复用 |
 
+同一启动会话和日志文件由 `AppLogger` 共享一个轮转 Handler，避免多个功能 Logger
+同时轮转同一文件造成 Windows 文件锁冲突；新增日志功能必须继续使用现有工厂。
+
 ### 日志路径与启动约定
 
 - `core.settings.get_settings()` 是日志路径和等级的配置来源。
@@ -73,3 +76,5 @@ except Exception:
 | 日期 | 变更 | 依据 |
 | --- | --- | --- |
 | 2026-11-12 | 建立工作台项目级维护规则，明确 Logger 复用、按功能分区、前后端联动和验证要求 | `src/core/Log/logger.py`、`src/core/Log/log_helper.py`、`src/view/logging.py`、`src/core/settings.py` 当前实现 |
+
+- View 日志路径统一由 `core.settings.Settings.output_dir` 决定；View 模块传入的历史目录参数不再决定实际写入位置。

@@ -16,6 +16,11 @@
 sh start.sh
 ```
 
-访问 `http://127.0.0.1:18888`。
+本机访问可用 `http://127.0.0.1:18888`；局域网用户使用服务端实际局域网地址，例如 `http://192.168.1.10:18888`。直接运行 `src/server.py` 默认监听 `0.0.0.0`，如需本机-only 部署可设置 `MACHINE_DASHBOARD_HOST=127.0.0.1`。
 
 可通过 `MACHINE_DASHBOARD_PORT` 修改端口。
+## 局域网访问与客户机配置
+
+局域网部署使用 `一键启动.bat`，服务端监听 `0.0.0.0:18888`。其他电脑浏览器访问服务端实际局域网地址，例如 `http://192.168.1.10:18888`；每台客户机还需在本机运行 `workbench/machine-dashboard-client/setup-client.ps1 -DashboardUrl http://192.168.1.10:18888 -Start`。浏览器的目录选择、中央客户端和本地 Codex 请求均由该客户机的 `127.0.0.1:18991` Local Agent 执行，服务端不读取客户机路径。
+
+部署前构建客户机下载包：`python workbench/machine-dashboard-client/scripts/build_package.py --output workbench/machine-dashboard-client/dist/workbench-machine-dashboard-client.zip`。用户可在设置页下载该包并在自己的电脑解压运行初始化脚本。

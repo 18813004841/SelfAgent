@@ -10,19 +10,8 @@ set "PORT=18888"
 if defined MACHINE_DASHBOARD_PORT set "PORT=%MACHINE_DASHBOARD_PORT%"
 set "MACHINE_DASHBOARD_PORT=%PORT%"
 
-rem 清理占用工作台端口的监听进程，避免启动失败
-echo 检查端口 %PORT% 是否被占用...
-for /f "tokens=5" %%P in ('netstat -ano -p tcp ^| findstr /R /C:":%PORT% .*LISTENING"') do (
-    if not "%%P"=="0" (
-        echo 端口 %PORT% 被进程 %%P 占用，正在结束...
-        taskkill /PID %%P /T /F
-        if errorlevel 1 (
-            echo 无法结束占用进程，请尝试以管理员身份运行此脚本。
-            pause
-            exit /b 1
-        )
-    )
-)
+rem 不结束未知端口进程；端口冲突由服务启动检查报告。
+echo 启动工作台服务（端口 %PORT%）；不会清理未知占用进程...
 
 echo 正在启动工作台服务（端口 %PORT%）...
 "%PYTHON%" src\server.py

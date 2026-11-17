@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import os
 import shlex
+import signal
 import subprocess
+import threading
 import time
 from typing import Any, Dict, List
 
@@ -23,10 +25,12 @@ def _command_name(command: str) -> str:
         parts = shlex.split(command, posix=os.name != "nt")
     except ValueError:
         parts = command.split()
-    return os.path.basename(parts[0]) if parts else ""
+    name = os.path.basename(parts[0].strip('"')) if parts else ""
+    return name[:-4] if name.lower().endswith(".exe") else name
 
 
-def run_shell(payload: Dict[str, Any], allowed: set[str] | None = None) -> Dict[str, Any]:
+def run_shell(payload: Dict[str, Any], allowed: set[str] | None = None,
+              cancel_event: threading.Event | None = None) -> Dict[str, Any]:
     command = payload.get("command", "")
     timeout = int(payload.get("timeout", 60))
     cwd = payload.get("cwd") or None
@@ -41,19 +45,66 @@ def run_shell(payload: Dict[str, Any], allowed: set[str] | None = None) -> Dict[
         }
     started = time.time()
     try:
-        proc = subprocess.run(
+        proc = subprocess.Popen(
             command,
             shell=True,
             cwd=cwd,
             text=True,
-            capture_output=True,
-            timeout=timeout,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=os.name != "nt",
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0,
         )
+        deadline = time.monotonic() + timeout
+        reason = None
+        while True:
+            if cancel_event is not None and cancel_event.is_set():
+                reason = "cancelled"
+            elif time.monotonic() >= deadline:
+                reason = "timeout"
+            if reason:
+                cleanup_error = None
+                if os.name == "nt":
+                    try:
+                        cleanup = subprocess.run(
+                            ["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+                            capture_output=True, text=True, timeout=10,
+                        )
+                        if cleanup.returncode != 0:
+                            cleanup_error = (cleanup.stderr or cleanup.stdout or "taskkill failed").strip()
+                    except (OSError, subprocess.TimeoutExpired) as exc:
+                        cleanup_error = str(exc)
+                else:
+                    try:
+                        os.killpg(proc.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                try:
+                    proc.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.wait()
+                # A descendant can retain inherited pipes after the shell exits;
+                # never block cancellation waiting for those pipes to close.
+                stdout, stderr = "", ""
+                result = {"ok": False, "exit_code": 130 if reason == "cancelled" else 124,
+                        "stdout": (stdout or "")[-20000:], "stderr": reason,
+                        "cancelled": reason == "cancelled",
+                        "duration_sec": round(time.time() - started, 3)}
+                if cleanup_error:
+                    result["cleanup_error"] = cleanup_error
+                    result["stderr"] = f"{reason}; process cleanup failed: {cleanup_error}"
+                return result
+            try:
+                stdout, stderr = proc.communicate(timeout=0.1)
+                break
+            except subprocess.TimeoutExpired:
+                continue
         return {
             "ok": proc.returncode == 0,
             "exit_code": proc.returncode,
-            "stdout": proc.stdout[-20000:],
-            "stderr": proc.stderr[-20000:],
+            "stdout": (stdout or "")[-20000:],
+            "stderr": (stderr or "")[-20000:],
             "duration_sec": round(time.time() - started, 3),
         }
     except subprocess.TimeoutExpired as e:
@@ -66,7 +117,8 @@ def run_shell(payload: Dict[str, Any], allowed: set[str] | None = None) -> Dict[
         }
 
 
-def execute_task(kind: str, payload: Dict[str, Any], allowed: set[str] | None = None) -> Dict[str, Any]:
+def execute_task(kind: str, payload: Dict[str, Any], allowed: set[str] | None = None,
+                 cancel_event: threading.Event | None = None) -> Dict[str, Any]:
     if kind == "shell":
-        return run_shell(payload, allowed)
+        return run_shell(payload, allowed, cancel_event)
     return {"ok": False, "error": f"unsupported task kind: {kind}"}

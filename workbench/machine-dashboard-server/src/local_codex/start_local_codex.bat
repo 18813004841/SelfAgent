@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0..\.."
 if not defined HOME set "HOME=%USERPROFILE%"
-if not defined CODEX_HOME set "CODEX_HOME=%~dp0..\..\.codex-runtime"
+if not defined CODEX_HOME set "CODEX_HOME=%LOCALAPPDATA%\LocalWorkbench\codex-runtime"
 if not exist "%CODEX_HOME%" mkdir "%CODEX_HOME%"
 set "CODEX_PORT=4500"
 if defined CODEX_APP_SERVER_PORT set "CODEX_PORT=%CODEX_APP_SERVER_PORT%"

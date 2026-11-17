@@ -25,6 +25,7 @@ def read_code_review_status(schedule_id=None):
     return task_status_payload(schedule_id)
 
 @router.route("GET", "/api/scheduler-tasks/code-review", "/api/scheduler-tasks/code-review/*")
+@router.route("POST", "/api/scheduler-tasks/code-review")
 @router.route("POST", "/api/scheduler-tasks/code-review/run", "/api/scheduler-tasks/code-review/stop", "/api/scheduler-tasks/code-review/config", "/api/scheduler-tasks/code-review/clear-history", "/api/scheduler-tasks/code-review/choose", "/api/scheduler-tasks/code-review/open", "/api/code-review/setup")
 def handle(ctx):
     """代码检查页面：读取、启动、停止、保存配置及目录操作。"""
@@ -32,8 +33,11 @@ def handle(ctx):
     logger.log(LogLevel.DEBUG, "handling %s %s", ctx.method, ctx.path)
     import os
     from pathlib import Path
-    from schedulers.code_review_scheduler import CodeReviewScheduler, clear_review_history, start_task, stop_task, update_task_config
-    if ctx.method == "GET":
+    from schedulers.code_review_scheduler import CodeReviewScheduler, clear_review_history, start_task, stop_task, update_task_config, task_payload
+    if ctx.method == "POST" and ctx.path == "/api/scheduler-tasks/code-review":
+        # Historical read-only alias: intentionally ignore the request body.
+        ctx.request.send_json(200, {"ok": True, "task": task_payload()})
+    elif ctx.method == "GET":
         sid = None if ctx.path == "/api/scheduler-tasks/code-review" else ctx.path.rsplit("/", 1)[-1]
         # 带 refresh=status 时只读取运行状态和执行日志，避免轮询反复读取配置。
         if ctx.request.path.find("refresh=status") >= 0:

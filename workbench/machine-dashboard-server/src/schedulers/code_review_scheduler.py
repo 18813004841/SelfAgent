@@ -4,18 +4,22 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
+import os
 import threading
 import time
 from pathlib import Path
 from typing import Any, Mapping
 
-from core.storage import connect
+from core.repositories import ScheduleRepository
+from core.settings import get_settings
 from core.Log import AppLogger
 from .base import ScheduleContext, SchedulerBase
 from .config import code_review_config
 from .run_log import append, read, reset, set_task
 
-TOOL_ROOT = Path(__file__).resolve().parents[4] / "Tools" / "code-review-agent"
+TOOL_ROOT = Path(__file__).resolve().parents[2] / "tools" / "code-review-agent"
+CODE_REVIEW_DATA_ROOT = Path(os.environ.get("WORKBENCH_CODE_REVIEW_DATA_DIR", str(get_settings().output_dir / "code-review")))
+os.environ.setdefault("WORKBENCH_CODE_REVIEW_DATA_DIR", str(CODE_REVIEW_DATA_ROOT))
 
 logger = AppLogger("code-review-scheduler", "code_review_scheduler")
 class ReviewCancelled(RuntimeError):
@@ -79,9 +83,8 @@ class CodeReviewScheduler(SchedulerBase):
         set_task(schedule_id)
         started = time.time()
         reset(schedule_id)
-        db = connect()
-        db.execute("UPDATE schedules SET last_run=?,last_status='running',last_error=NULL,progress_current=0,progress_total=4,cancel_requested=0 WHERE id=?", (started, schedule_id))
-        db.commit()
+        repository = ScheduleRepository()
+        repository.mark_code_review_running(schedule_id, started)
         logger.info("任务状态已更新为执行中 schedule_id=%s", schedule_id)
         finished = False
 
@@ -90,11 +93,7 @@ class CodeReviewScheduler(SchedulerBase):
             info.update(extra)
             append("progress", message or "进度更新", current=current, total=total, **info)
             logger.debug("进度更新 schedule_id=%s current=%s total=%s message=%s", schedule_id, current, total, message)
-            if total:
-                db.execute("UPDATE schedules SET progress_current=?,progress_total=? WHERE id=?", (current, total, schedule_id))
-            else:
-                db.execute("UPDATE schedules SET progress_current=? WHERE id=?", (current, schedule_id))
-            db.commit()
+            repository.mark_code_review_progress(schedule_id, current, total)
 
         def finish(status: str = "succeeded", result: Any = None, details: dict | None = None, **extra: Any) -> None:
             nonlocal finished
@@ -107,17 +106,12 @@ class CodeReviewScheduler(SchedulerBase):
             normalized = "succeeded" if status in {"succeeded", "passed", "skipped"} else "cancelled" if status == "cancelled" else "failed"
             append("result", "执行完成", status=normalized, result=result, **info)
             logger.info("任务执行结束 schedule_id=%s status=%s", schedule_id, normalized)
-            db.execute("INSERT INTO runs(schedule_id,started_at,finished_at,status,output,error) VALUES(?,?,?,?,?,?)", (schedule_id, started, time.time(), normalized, str(result), None if normalized == "succeeded" else str(result)))
-            db.execute("UPDATE schedules SET last_status=?,progress_current=progress_total,last_error=? WHERE id=?", (normalized, None if normalized == "succeeded" else str(result), schedule_id))
-            db.commit()
+            repository.mark_code_review_finished(schedule_id, started, normalized, result)
 
-        row = db.execute("SELECT param_json FROM schedules WHERE id=?", (schedule_id,)).fetchone()
-        params = self.deserialize_param(row["param_json"] if row else "{}")
+        params = self.deserialize_param(repository.params(schedule_id))
         logger.debug("run_scheduled.params schedule_id=%s keys=%s", schedule_id, list(params))
         def cancelled():
-            with connect() as cancel_db:
-                item = cancel_db.execute("SELECT cancel_requested FROM schedules WHERE id=?", (schedule_id,)).fetchone()
-                return bool(item and item[0])
+            return repository.cancellation_requested(schedule_id)
         context = ScheduleContext(run_id=schedule_id, report_progress=report_progress, finish=finish, metadata={"cancel": cancelled})
         try:
             result = self.execute(params, context)
@@ -144,10 +138,7 @@ def sync_schedule() -> None:
     logger.debug("sync_schedule.begin")
     scheduler = CodeReviewScheduler()
     config = scheduler.display_data()
-    db = connect()
-    db.execute("INSERT OR REPLACE INTO tools(tool_id,name,type,entry,workdir,enabled) VALUES(?,?,?,?,?,1)", (scheduler.tool_id, "代码检查", "scheduler", str(TOOL_ROOT / "code_review_scheduler.py"), str(TOOL_ROOT)))
-    db.execute("INSERT INTO schedules(id,name,tool_id,schedule_type,schedule_expr,args_json,timeout,retry,enabled,next_run,task_type,dispatcher,progress_total) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,tool_id=excluded.tool_id,schedule_type=excluded.schedule_type,schedule_expr=excluded.schedule_expr,args_json=excluded.args_json", (scheduler.schedule_id, scheduler.name, scheduler.tool_id, "daily", scheduler.run_at, "{}", 900, 0, 1, scheduler.next_run_at(), "scheduled", "scheduler", 4))
-    db.commit()
+    ScheduleRepository().sync_code_review((scheduler.tool_id, "代码检查", "scheduler", str(TOOL_ROOT / "code_review_scheduler.py"), str(TOOL_ROOT)), (scheduler.schedule_id, scheduler.name, scheduler.tool_id, "daily", scheduler.run_at, "{}", 900, 0, 1, scheduler.next_run_at(), "scheduled", "scheduler", 4))
     logger.info("代码检查调度器已同步 schedule_id=%s", scheduler.schedule_id)
     return config
 
@@ -161,14 +152,13 @@ def task_payload(schedule_id: str | None = None) -> dict[str, Any]:
     schedule_id = schedule_id or scheduler.schedule_id
     row = None
     try:
-        db = connect()
-        row = db.execute("SELECT * FROM schedules WHERE id=?", (schedule_id,)).fetchone()
+        row = ScheduleRepository().get_schedule(schedule_id)
     except Exception:
         logger.exception("读取代码检查任务失败 schedule_id=%s", schedule_id)
         row = None
     db_param = {}
     try:
-        db_param = scheduler.deserialize_param(connect().execute("SELECT param_json FROM schedules WHERE id=?", (schedule_id,)).fetchone()[0])
+        db_param = scheduler.deserialize_param(ScheduleRepository().params(schedule_id))
     except Exception:
         logger.exception("读取代码检查任务参数失败 schedule_id=%s", schedule_id)
         pass
@@ -192,8 +182,7 @@ def task_payload(schedule_id: str | None = None) -> dict[str, Any]:
 def task_status_payload(schedule_id: str | None = None) -> dict[str, Any]:
     """仅返回运行状态和执行日志，供页面轮询使用，不读取或重建配置。"""
     schedule_id = schedule_id or CodeReviewScheduler.schedule_id
-    db = connect()
-    row = db.execute("SELECT * FROM schedules WHERE id=?", (schedule_id,)).fetchone()
+    row = ScheduleRepository().get_schedule(schedule_id)
     status = {
         "id": schedule_id,
         "last_status": row["last_status"] if row else None,
@@ -212,7 +201,7 @@ def last_successful_check(project_path: str | None, branch: str | None) -> dict[
         return None
     safe_project = re.sub(r"[^A-Za-z0-9._-]+", "-", Path(project_path).name) or "project"
     safe_branch = re.sub(r"[^A-Za-z0-9._-]+", "-", str(branch)) or "branch"
-    state_path = TOOL_ROOT / "data" / f"{safe_project}-{safe_branch}" / "state.json"
+    state_path = CODE_REVIEW_DATA_ROOT / f"{safe_project}-{safe_branch}" / "state.json"
     try:
         state = json.loads(state_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -235,7 +224,7 @@ def clear_review_history(project_path: str | None, branch: str | None) -> dict[s
         raise ValueError("请先配置工程路径和 Git 分支")
     safe_project = re.sub(r"[^A-Za-z0-9._-]+", "-", Path(project_path).name) or "project"
     safe_branch = re.sub(r"[^A-Za-z0-9._-]+", "-", str(branch)) or "branch"
-    storage_root = TOOL_ROOT / "data" / f"{safe_project}-{safe_branch}"
+    storage_root = CODE_REVIEW_DATA_ROOT / f"{safe_project}-{safe_branch}"
     removed = []
     import shutil
     for name in ("reports", "state.json", "execution-sequence.json"):
@@ -254,7 +243,8 @@ def update_task_config(project_path: str, branch: str, skill_paths: list[str] | 
     logger.debug("update_task_config.begin schedule_id=%s project_path=%s branch=%s", schedule_id, project_path, branch)
     schedule_id = schedule_id or CodeReviewScheduler.schedule_id
     save_param = {"project_path": project_path, "branch": branch, "skill_paths": skill_paths, "allow_extra_rules": allow_extra_rules, "failure_threshold": failure_threshold}
-    db = connect(); db.execute("UPDATE schedules SET param_json=? WHERE id=?", (json.dumps(save_param, ensure_ascii=False), schedule_id)); db.commit()
+    if not ScheduleRepository().save_params(schedule_id, json.dumps(save_param, ensure_ascii=False)):
+        raise ValueError(f"代码检查任务不存在: {schedule_id}")
     logger.info("代码检查配置已保存 schedule_id=%s project_path=%s branch=%s", schedule_id, project_path, branch)
     return task_payload(schedule_id)
 
@@ -290,8 +280,7 @@ def start_task(project_path: str, branch: str, skill_paths: list[str] | str = ["
 def stop_task(schedule_id: str | None = None) -> dict[str, Any]:
     """通过数据库取消指定任务，支持跨进程。"""
     schedule_id = schedule_id or CodeReviewScheduler.schedule_id
-    with connect() as db:
-        db.execute("UPDATE schedules SET cancel_requested=1,last_status='cancelling' WHERE id=? AND last_status='running'", (schedule_id,))
+    ScheduleRepository().request_running_cancel(schedule_id)
     return task_payload(schedule_id)
 
 

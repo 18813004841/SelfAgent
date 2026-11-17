@@ -8,11 +8,18 @@ from typing import Any, Dict
 
 from control_mcp.client import ControlCenterClient
 
+MCP_IMPORT_ERROR = None
 try:
     from mcp.server.fastmcp import FastMCP
 except Exception as e:  # pragma: no cover
-    FastMCP = None
-    MCP_IMPORT_ERROR = e
+    try:
+        # MCP 2.x renamed FastMCP to MCPServer while retaining the tool/run
+        # surface used below. Keep the adapter here so the optional extra can
+        # follow its lockfile without forcing a legacy mcp<2 pin.
+        from mcp.server.mcpserver import MCPServer as FastMCP
+    except Exception:
+        FastMCP = None
+        MCP_IMPORT_ERROR = e
 else:
     MCP_IMPORT_ERROR = None
 

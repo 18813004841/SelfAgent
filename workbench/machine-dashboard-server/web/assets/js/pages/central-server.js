@@ -1,120 +1,36 @@
-import { load } from "../app.js";
 import { createPageScope } from "../shared/page-scope.js";
+import { localApi, LOCAL_AGENT_ORIGIN } from "../shared/local-agent.js";
 let scope;
-const fetch = (...args) => scope.fetch(...args);
-const setInterval = (...args) => scope.setInterval(...args);
-async function initCentralServer() {
-  const ipBox = document.getElementById("central-server-ips"),
-    connStatus = document.getElementById("central-client-connection-status");
-  async function refreshIps() {
-    try {
-      const d = await fetch("/api/central-server/connections", {
-        cache: "no-store",
-      }).then((r) => r.json());
-      const connected = !!(d.ips && d.ips.length);
-      ipBox.textContent = connected ? d.ips.join("、") : "暂无连接";
-      ipBox.style.color = connected ? "green" : "#888";
-      if (connStatus) {
-        connStatus.textContent = connected ? "已连接" : "未连接";
-        connStatus.style.color = connected ? "green" : "#888";
-      }
-    } catch (e) {
-      ipBox.textContent = "暂无连接";
-      if (connStatus) {
-        connStatus.textContent = "连接检查失败";
-        connStatus.style.color = "#c77";
-      }
-    }
-  }
-  await refreshIps();
-  const ss = document.getElementById("central-server-status"),
-    cs = document.getElementById("central-client-status"),
-    sm = document.getElementById("central-server-msg"),
-    cm = document.getElementById("central-client-msg");
-  async function refresh() {
-    try {
-      const [a, b] = await Promise.all([
-        fetch("/api/central-server/status", { cache: "no-store" }).then((r) =>
-          r.json(),
-        ),
-        fetch("/api/central-client/status", { cache: "no-store" }).then((r) =>
-          r.json(),
-        ),
-      ]);
-      ss.textContent = a.running ? "运行中" : "已停止";
-      document.getElementById("central-server-port").textContent =
-        a.port || 18765;
-      cs.textContent = b.running ? "运行中" : "已停止";
-      ss.style.color = a.running ? "green" : "#888";
-      cs.style.color = b.running ? "green" : "#888";
-      if (!b.running) {
-        ipBox.textContent = "暂无连接";
-        ipBox.style.color = "#888";
-        if (connStatus) {
-          connStatus.textContent = "未连接";
-          connStatus.style.color = "#888";
-        }
-      }
-      const f = document.getElementById("central-client-files");
-      f.textContent = b.client_entry_exists
-        ? "已找到客户端文件"
-        : "未找到客户端文件";
-      f.style.color = b.client_entry_exists ? "green" : "#c77";
-      document.getElementById("central-client-dir").textContent =
-        b.client_dir || "";
-    } catch (e) {
-      ss.textContent = cs.textContent = "状态未知";
-    }
-  }
-  await refresh();
-  if (window.__centralTimer) clearInterval(window.__centralTimer);
-  window.__centralTimer = setInterval(() => {
-    refresh();
-    refreshIps();
-  }, 3000);
-  document.getElementById("central-server-start").onclick = async () => {
-    sm.textContent = "正在启动...";
-    await fetch("/api/central-server/start", { method: "POST" });
-    await refresh();
-    sm.textContent = "启动请求已发送";
-  };
-  document.getElementById("central-server-stop").onclick = async () => {
-    sm.textContent = "正在关闭...";
-    await fetch("/api/central-server/stop", { method: "POST" });
-    await refresh();
-    sm.textContent = "关闭请求已发送";
-  };
-  document.getElementById("central-server-cleanup").onclick = async () => {
-    sm.textContent = "正在清理端口进程...";
-    const d = await fetch("/api/central-server/cleanup", {
-      method: "POST",
-    }).then((r) => r.json());
-    sm.textContent =
-      "已清理端口 " + d.port + "，结束进程 " + (d.killed || []).join(", ");
-    await refresh();
-  };
-  document.getElementById("central-client-start").onclick = async () => {
-    cm.textContent = "正在启动...";
-    await fetch("/api/central-client/start", { method: "POST" });
-    await refresh();
-    cm.textContent = "启动请求已发送";
-  };
-  document.getElementById("central-client-stop").onclick = async () => {
-    cm.textContent = "正在关闭...";
-    await fetch("/api/central-client/stop", { method: "POST" });
-    await refresh();
-    cm.textContent = "关闭请求已发送";
-  };
-  document.getElementById("central-client-open").onclick = async () => {
-    const r = await fetch("/api/settings/storage/open");
-    const d = await r.json();
-    cm.textContent = d.ok ? "已打开本地保存目录" : "打开失败";
-  };
-}
+const api = (...args) => scope.fetch(...args);
+const interval = (...args) => scope.setInterval(...args);
 export async function mount() {
   scope = createPageScope();
-  await initCentralServer();
+  const ip = document.getElementById("central-server-ips"), conn = document.getElementById("central-client-connection-status");
+  const ss = document.getElementById("central-server-status"), cs = document.getElementById("central-client-status");
+  const sm = document.getElementById("central-server-msg"), cm = document.getElementById("central-client-msg");
+  const serverInput = document.getElementById("central-client-server");
+  serverInput.value = localStorage.getItem("central-client-server") || `http://${location.hostname}:18765`;
+  async function refresh() {
+    try {
+      const server = await api("/api/central-server/status", { cache: "no-store" }).then(r => r.json());
+      ss.textContent = server.running ? "运行中" : "已停止"; ss.style.color = server.running ? "green" : "#888";
+      document.getElementById("central-server-port").textContent = server.port || 18765;
+      const client = await localApi("/api/central-client/status");
+      cs.textContent = client.running ? "运行中" : "已停止"; cs.style.color = client.running ? "green" : "#888";
+      const files = document.getElementById("central-client-files"); files.textContent = client.client_entry_exists ? "已找到本机客户端文件" : "本机未找到客户端文件"; files.style.color = client.client_entry_exists ? "green" : "#c77";
+      document.getElementById("central-client-dir").textContent = client.client_dir || "";
+      if (client.central_server_url) serverInput.value = client.central_server_url;
+      conn.textContent = server.running ? "已连接" : "未连接";
+    } catch (error) { cs.textContent = "本机服务不可用"; cs.style.color = "#c77"; cm.textContent = error.message; }
+  }
+  async function refreshIps() { try { const d = await api("/api/central-server/connections", { cache: "no-store" }).then(r => r.json()); ip.textContent = d.ips?.length ? d.ips.join("、") : "暂无连接"; } catch { ip.textContent = "暂无连接"; } }
+  await refresh(); await refreshIps(); interval(() => { refresh(); refreshIps(); }, 3000);
+  document.getElementById("central-server-start").onclick = async () => { sm.textContent = "正在启动..."; await api("/api/central-server/start", { method: "POST" }); await refresh(); };
+  document.getElementById("central-server-stop").onclick = async () => { sm.textContent = "正在关闭..."; await api("/api/central-server/stop", { method: "POST" }); await refresh(); };
+  document.getElementById("central-server-cleanup").onclick = async () => { const d = await api("/api/central-server/cleanup", { method: "POST" }).then(r => r.json()); sm.textContent = "已清理端口 " + d.port; await refresh(); };
+  document.getElementById("central-client-start").onclick = async () => { cm.textContent = "正在本机启动..."; try { localStorage.setItem("central-client-server", serverInput.value.trim()); await localApi("/api/central-client/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ central_server_url: serverInput.value.trim() }) }); cm.textContent = "已向本机发送启动请求"; } catch (e) { cm.textContent = e.message; } await refresh(); };
+  document.getElementById("central-client-stop").onclick = async () => { try { await localApi("/api/central-client/stop", { method: "POST" }); cm.textContent = "已关闭本机客户端"; } catch (e) { cm.textContent = e.message; } await refresh(); };
+  document.getElementById("central-client-open").onclick = async () => { try { await localApi("/api/settings/storage/open", { method: "POST" }); cm.textContent = "已打开本机保存目录"; } catch (e) { cm.textContent = e.message; } };
+  document.getElementById("central-client-download").onclick = async e => { e.preventDefault(); cm.textContent = "正在下载并安装到本机..."; try { const response = await api("/api/central-client/download"); const bytes = await response.arrayBuffer(); const installed = await fetch(LOCAL_AGENT_ORIGIN + "/api/central-client/install", { method: "POST", headers: { "Content-Type": "application/zip" }, body: bytes }); const data = await installed.json(); if (!installed.ok || !data.ok) throw Error(data.error || "安装失败"); cm.textContent = "已安装到本机：" + data.client_dir; await refresh(); } catch (e) { cm.textContent = e.message; } };
 }
-export function unmount() {
-  scope?.dispose();
-}
+export function unmount() { scope?.dispose(); }

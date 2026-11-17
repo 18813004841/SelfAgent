@@ -2,7 +2,7 @@
 from __future__ import annotations
 import json
 import time
-from core.storage import connect
+from core.repositories import ScheduleRepository
 from .base import SchedulerBase
 
 class TestScheduler(SchedulerBase):
@@ -22,18 +22,14 @@ class TestScheduler(SchedulerBase):
         """执行测试任务并写入统一运行记录。"""
         from .base import ScheduleContext
         started = time.time()
-        db = connect()
-        db.execute("UPDATE schedules SET last_run=?,last_status='running',progress_current=0,progress_total=10 WHERE id=?", (started, schedule_id))
-        db.commit()
+        repository = ScheduleRepository()
+        repository.mark_running(schedule_id, started, 10)
 
         def report_progress(current, total=None, message="", **details):
-            db.execute("UPDATE schedules SET progress_current=?,progress_total=? WHERE id=?", (current, total or 10, schedule_id))
-            db.commit()
+            repository.progress(schedule_id, current, total or 10)
 
         result = self.execute({}, ScheduleContext(schedule_id, report_progress, lambda *a, **k: None))
-        with connect() as db:
-            db.execute("INSERT INTO runs(schedule_id,started_at,finished_at,status,output) VALUES(?,?,?,?,?)", (schedule_id, started, time.time(), "succeeded", json.dumps(result, ensure_ascii=False)))
-            db.execute("UPDATE schedules SET last_run=?,last_status='succeeded' WHERE id=?", (started, schedule_id))
+        repository.record_run(schedule_id, started, "succeeded", json.dumps(result, ensure_ascii=False))
         return result
 
 

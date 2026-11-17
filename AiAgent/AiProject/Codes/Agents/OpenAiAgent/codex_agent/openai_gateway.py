@@ -105,7 +105,7 @@ def chat_completion(request: dict[str, Any], client: CodexClient) -> dict[str, A
     messages = request.get("messages")
     if not isinstance(messages, list):
         raise ValueError("messages must be a list")
-    logger.info("网关收到的消息内容: %s", json.dumps(messages, ensure_ascii=False))
+    # Do not log prompts, tool arguments, or model output; they may contain secrets.
     tools = _to_responses_tools(request.get("tools") or [])
     # The upstream Codex Responses endpoint requires SSE for these models.
     # Buffer the stream inside CodexClient, then return a normal JSON response
@@ -129,7 +129,7 @@ def chat_completion(request: dict[str, Any], client: CodexClient) -> dict[str, A
     message: dict[str, Any] = {"role": "assistant", "content": text or None}
     if calls:
         message["tool_calls"] = calls
-    logger.info("网关返还给用户的内容: %s", json.dumps(message, ensure_ascii=False))
+    logger.info("网关返还结果: tool_calls=%d content_chars=%d", len(calls), len(text))
     return {
         "id": f"chatcmpl-{uuid.uuid4().hex}", "object": "chat.completion",
         "created": int(time.time()), "model": request.get("model") or client.settings.model,
@@ -152,6 +152,12 @@ class _Handler(BaseHTTPRequestHandler):
     def _sse(self, data: dict[str, Any]) -> None:
         body = f"data: {json.dumps(data, ensure_ascii=False)}\n\n".encode("utf-8")
         self.wfile.write(body)
+
+    def do_GET(self) -> None:
+        if self.path == "/health":
+            self._json(200, {"ok": True, "service": "codex-agent-gateway"})
+            return
+        self._json(404, {"error": {"message": "Unknown endpoint"}})
 
     def do_POST(self) -> None:
         if self.path != "/v1/chat/completions":

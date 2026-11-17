@@ -67,8 +67,7 @@ async function stopOpenAiAgent() {
 
 async function initOpenAiAgent() {
   await refreshOpenAiAgentStatus();
-  if (window.__openAiAgentTimer) clearInterval(window.__openAiAgentTimer);
-  window.__openAiAgentTimer = setInterval(refreshOpenAiAgentStatus, 1000);
+  setInterval(refreshOpenAiAgentStatus, 1000);
   document.getElementById("agent-chat-send").onclick = async () => {
     const input = document.getElementById("agent-chat-input"),
       status = document.getElementById("agent-chat-status"),

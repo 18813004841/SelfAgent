@@ -31,6 +31,10 @@ class ControlCenterClient:
     def get_task(self, task_id: str) -> Dict[str, Any]:
         return self.request("GET", f"/api/tasks/{task_id}")
 
+    def cancel_task(self, task_id: str) -> Dict[str, Any]:
+        """Cancel queued tasks or request cancellation of a running Worker task."""
+        return self.request("POST", f"/api/tasks/{task_id}/cancel", {})
+
     def submit_shell_task(self, machine_id: str, command: str, timeout: int = 60, cwd: str | None = None) -> Dict[str, Any]:
         payload: Dict[str, Any] = {"command": command, "timeout": timeout}
         if cwd:

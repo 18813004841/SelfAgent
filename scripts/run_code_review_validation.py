@@ -15,7 +15,7 @@ from threading import Thread
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REVIEW_ROOT = ROOT / "Tools" / "code-review-agent"
+REVIEW_ROOT = ROOT / "workbench" / "machine-dashboard-server" / "tools" / "code-review-agent"
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -84,12 +84,14 @@ def main() -> int:
     config_path.write_text(json.dumps(config), encoding="utf-8")
     env = os.environ.copy()
     env["PYTHONPATH"] = str(review_root)
+    env["WORKBENCH_CODE_REVIEW_DATA_DIR"] = str(review_root / "validation-data")
+    env["WORKBENCH_CODE_REVIEW_LOG_DIR"] = str(review_root / "validation-logs")
     first = subprocess.run([sys.executable, "-m", "code_review.cli", "check", "--config", str(config_path)], cwd=review_root, env=env, text=True, capture_output=True)
     (source / "Bad.cs").write_text("public class Bad { void Start(){ UnityEditor.AssetDatabase.Refresh(); } }\n", encoding="utf-8")
     run(["git", "add", "."], project)
     run(["git", "commit", "-m", "bad"], project)
     second = subprocess.run([sys.executable, "-m", "code_review.cli", "check", "--config", str(config_path)], cwd=review_root, env=env, text=True, capture_output=True)
-    state_path = review_root / "data" / f"{project.name}-main" / "state.json"
+    state_path = review_root / "validation-data" / f"{project.name}-main" / "state.json"
     state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.is_file() else {}
     print(json.dumps({
         "workspace": str(work),
@@ -109,8 +111,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-
-
-
-

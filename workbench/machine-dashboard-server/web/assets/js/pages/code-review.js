@@ -10,7 +10,6 @@ async function initCodeReview() {
   window.__selectedTaskId = taskId;
   const msg = document.getElementById("review-config-msg"),
     log = document.getElementById("review-log");
-  if (window.__schedulerTimer) clearInterval(window.__schedulerTimer);
   let skillsLoaded = false,
     extraLoaded = false;
   let lastLogText = null;
@@ -296,10 +295,8 @@ async function initCodeReview() {
   await refresh().catch((e) => {
     setLogText("配置读取失败：" + e.message);
   });
-  if (window.__codeReviewTimer) clearInterval(window.__codeReviewTimer);
-  window.__codeReviewTimer = setInterval(() => {
+  setInterval(() => {
     if (!document.getElementById("review-log")) {
-      clearInterval(window.__codeReviewTimer);
       return;
     }
     if (!document.hidden)
@@ -317,4 +314,3 @@ export function unmount() {
   stopLogSelectionWatch = () => {};
   scope?.dispose();
 }
-

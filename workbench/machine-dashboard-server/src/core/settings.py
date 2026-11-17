@@ -5,6 +5,8 @@ import json
 import platform
 import os
 import sys
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Any
 from dataclasses import dataclass
@@ -22,10 +24,16 @@ def get_user_root() -> Path:
 
 # 配置文件仍放在 Infos 目录，settings 模块统一放在 core 下。
 SETTING_PATH: Path | None = None
-# 用户端设置保存地址，与 storage.CONFIG_PATH 保持一致。
+# 服务端设置保存地址；客户机固定使用同目录下的 settings.json，二者不可共用。
 USER_SETTINGS_PATH: Path | None = None
 LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR")
 DEFAULT_SETTINGS = {"log_level": "INFO", "debug_log": False}
+ENV_KEYS = {
+    "log_level": "WORKBENCH_LOG_LEVEL",
+    "debug_log": "WORKBENCH_DEBUG_LOG",
+    "output_dir": "WORKBENCH_OUTPUT_DIR",
+    "log_path": "WORKBENCH_LOG_PATH",
+}
 
 
 class LogLevel(IntEnum):
@@ -79,12 +87,12 @@ def _initialize_paths() -> tuple[Path, Path, dict[str, Any]]:
     if SETTING_PATH is None:
         SETTING_PATH = root / "config" / "local_setting.json"
     if USER_SETTINGS_PATH is None:
-        USER_SETTINGS_PATH = root / "config" / "settings.json"
+        USER_SETTINGS_PATH = root / "config" / "server-settings.json"
     defaults = {
         **DEFAULT_SETTINGS,
         "output_dir": str(root / "output"),
         # SETTING_PATH 所在配置目录下的 logs 子目录。
-        "log_path": str(SETTING_PATH.parent / "logs"),
+        "log_path": str(root / "output" / "logs"),
         "view_log_dir": "view",
     }
     return SETTING_PATH, USER_SETTINGS_PATH, defaults
@@ -96,36 +104,92 @@ def get_user_settings_path() -> Path:
 
 
 def load_local_settings() -> dict[str, Any]:
-    """读取本地配置；文件缺失或字段非法时使用默认值。"""
+    """读取配置；缺失时使用默认值，非法配置明确报错。"""
     setting_path, _, defaults = _initialize_paths()
     settings = dict(defaults)
     if setting_path.is_file():
         try:
             loaded = json.loads(setting_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            loaded = {}
-        if isinstance(loaded, dict):
-            settings.update(loaded)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"无法读取工作台配置: {setting_path}") from exc
+        if not isinstance(loaded, dict):
+            raise ValueError("工作台配置必须是 JSON 对象")
+        settings.update(loaded)
+    if "WORKBENCH_LOG_PATH" not in os.environ:
+        migrated = _migrate_legacy_logs(setting_path, settings, defaults)
+        if migrated:
+            settings["log_path"] = str(migrated)
+    persisted_settings = dict(settings)
+    # 优先级：内置默认值 < 用户配置文件 < 环境变量。
+    for field, env_name in ENV_KEYS.items():
+        if env_name in os.environ:
+            settings[field] = os.environ[env_name]
     level = str(settings.get("log_level", "INFO")).upper()
-    settings["log_level"] = level if level in LOG_LEVELS else "INFO"
-    settings["debug_log"] = bool(settings.get("debug_log", False))
+    if level not in LOG_LEVELS:
+        raise ValueError(f"log_level 必须是 {', '.join(LOG_LEVELS)}")
+    settings["log_level"] = level
+    raw_debug = settings.get("debug_log", False)
+    if not isinstance(raw_debug, (bool, str, int)) or str(raw_debug).strip().lower() not in {"1", "true", "yes", "on", "0", "false", "no", "off"}:
+        raise ValueError("debug_log 必须是布尔值或 true/false")
+    settings["debug_log"] = str(raw_debug).strip().lower() in {"1", "true", "yes", "on"}
     output_dir = Path(str(settings.get("output_dir") or defaults["output_dir"])).expanduser()
-    output_dir.mkdir(parents=True, exist_ok=True)
+    if not output_dir.is_absolute():
+        output_dir = get_user_root() / output_dir
+    _ensure_directory(output_dir, "output_dir")
     settings["output_dir"] = str(output_dir)
     log_dir = Path(str(settings.get("log_path") or settings.get("log_dir") or defaults["log_path"])).expanduser()
-    log_dir.mkdir(parents=True, exist_ok=True)
+    if not log_dir.is_absolute():
+        log_dir = get_user_root() / log_dir
+    _ensure_directory(log_dir, "log_path")
     settings["log_path"] = str(log_dir)
     # 兼容 AppLogger 和旧配置的 log_dir 字段。
     settings["log_dir"] = str(log_dir)
     view_log_dir = Path(str(settings.get("view_log_dir") or defaults["view_log_dir"])).expanduser()
     if not view_log_dir.is_absolute():
         view_log_dir = log_dir / view_log_dir
-    view_log_dir.mkdir(parents=True, exist_ok=True)
+    _ensure_directory(view_log_dir, "view_log_dir")
     settings["view_log_dir"] = str(view_log_dir)
     if not setting_path.exists():
         setting_path.parent.mkdir(parents=True, exist_ok=True)
-        setting_path.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
+        setting_path.write_text(json.dumps(persisted_settings, ensure_ascii=False, indent=2), encoding="utf-8")
     return settings
+
+
+def _ensure_directory(path: Path, field: str) -> None:
+    """创建并验证运行目录，提前暴露不可写路径。"""
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryFile(dir=path):
+            pass
+    except OSError as exc:
+        raise ValueError(f"配置项 {field} 指向不可写目录: {path}") from exc
+
+
+def _migrate_legacy_logs(setting_path: Path, settings: dict[str, Any], defaults: dict[str, Any]) -> Path | None:
+    """把历史默认日志目录复制到输出目录，并保留原目录用于回滚。"""
+    legacy = setting_path.parent / "logs"
+    target = Path(defaults["log_path"])
+    current = settings.get("log_path")
+    if current and Path(str(current)).expanduser().resolve() != legacy.resolve():
+        return None
+    if not legacy.is_dir() or legacy.resolve() == target.resolve():
+        return None
+    target.mkdir(parents=True, exist_ok=True)
+    copied = []
+    for source in legacy.rglob("*"):
+        if not source.is_file():
+            continue
+        destination = target / source.relative_to(legacy)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if not destination.exists():
+            shutil.copy2(source, destination)
+            copied.append(str(destination))
+    manifest = get_user_root() / "backups" / f"log-migration-{os.getpid()}.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps({"legacy": str(legacy), "target": str(target), "copied": copied}, ensure_ascii=False, indent=2), encoding="utf-8")
+    settings["log_path"] = str(target)
+    setting_path.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
+    return target
 
 
 def get_settings() -> Settings:

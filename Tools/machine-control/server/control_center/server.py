@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import os
 import platform
 import socket
+from pathlib import Path
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from typing import Any, Dict, List
 
@@ -116,7 +118,21 @@ class ControlHandler(BaseHTTPRequestHandler):
                 task = store.create_task(task)
                 write_json(self, 200, {"ok": True, "task": task.to_dict()})
                 return
+            if len(parts) == 4 and parts[:2] == ["api", "tasks"] and parts[3] == "cancel":
+                try:
+                    task = store.cancel_task(parts[2])
+                except ValueError as exc:
+                    write_json(self, 409, {"ok": False, "error": str(exc)})
+                    return
+                write_json(self, 202 if task.status == "running" else 200, {"ok": True, "task": task.to_dict()})
+                return
             if len(parts) == 4 and parts[:2] == ["api", "tasks"] and parts[3] == "result":
+                if data.get("status", "succeeded") not in ("succeeded", "failed", "cancelled"):
+                    write_json(self, 400, {"ok": False, "error": "invalid terminal task status"})
+                    return
+                if not isinstance(data.get("result", {}), dict):
+                    write_json(self, 400, {"ok": False, "error": "result must be an object"})
+                    return
                 task = store.finish_task(parts[2], data.get("status", "succeeded"), dict(data.get("result", {})))
                 write_json(self, 200, {"ok": True, "task": task.to_dict()})
                 return
@@ -161,18 +177,23 @@ def _print_connection_info(host: str, port: int, token: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--port", type=int, default=18765)
     parser.add_argument("--token", default="dev-token")
-    parser.add_argument("--store", default="data/control-center.json")
+    parser.add_argument("--store", default=None, help="JSON store path (default: user data directory)")
     parser.add_argument("--verbose-access-log", action="store_true", help="Print every HTTP GET/POST request")
     args = parser.parse_args()
 
+    if args.store:
+        store_path = args.store
+    else:
+        user_root = Path(os.environ.get("LOCALAPPDATA") or os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
+        store_path = str(user_root / "MachineControl" / "data" / "control-center.json")
     server = ThreadingHTTPServer((args.host, args.port), ControlHandler)
-    server.store = JsonStore(args.store)  # type: ignore[attr-defined]
+    server.store = JsonStore(store_path)  # type: ignore[attr-defined]
     server.token = args.token  # type: ignore[attr-defined]
     server.verbose_access_log = args.verbose_access_log  # type: ignore[attr-defined]
     print(f"Machine Control Center listening on http://{args.host}:{args.port}", flush=True)
-    print(f"Store: {args.store}", flush=True)
+    print(f"Store: {store_path}", flush=True)
     _print_connection_info(args.host, args.port, args.token)
     try:
         server.serve_forever()

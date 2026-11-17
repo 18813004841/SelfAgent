@@ -3,13 +3,15 @@ from concurrent.futures import ThreadPoolExecutor
 _POOL = ThreadPoolExecutor(max_workers=3)
 _PENDING = {}
 from datetime import datetime, timedelta
-from core.storage import connect, decode_schedule, PID_PATH
+from core.storage import decode_schedule, PID_PATH
+from core.repositories import ScheduleRepository
 import os
 from core.Log import AppLogger
 from schedulers.code_review_scheduler import CodeReviewScheduler, sync_schedule
 from schedulers.scheduler_controller import SchedulerController
 
 logger = AppLogger("machine-dashboard.scheduler", "schedulers")
+SCHEDULES = ScheduleRepository()
 
 CONTROLLER = SchedulerController()
 
@@ -43,11 +45,10 @@ def execute_schedule(schedule_id):
 def due_loop(interval=5):
     logger.info("调度循环启动 interval=%s秒", interval)
     while True:
-        db=connect(); now=time.time(); rows=db.execute("SELECT id FROM schedules WHERE enabled=1 AND (next_run IS NULL OR next_run<=?)",(now,)).fetchall()
-        if rows:
-            logger.info("发现到期任务 count=%s ids=%s", len(rows), ",".join(str(row["id"]) for row in rows))
-        for row in rows:
-            schedule_id = row["id"]
+        now=time.time(); ids=SCHEDULES.due_ids(now)
+        if ids:
+            logger.info("发现到期任务 count=%s ids=%s", len(ids), ",".join(ids))
+        for schedule_id in ids:
             try:
                 pending = _PENDING.get(schedule_id)
                 if pending is None:
@@ -57,19 +58,19 @@ def due_loop(interval=5):
                     continue
                 del _PENDING[schedule_id]
                 pending.result()
-                schedule = decode_schedule(db.execute("SELECT * FROM schedules WHERE id=?", (schedule_id,)).fetchone())
+                schedule = decode_schedule(SCHEDULES.get(schedule_id))
                 nxt = next_run_at(schedule, now)
                 if nxt is None:
-                    db.execute("UPDATE schedules SET enabled=0,next_run=NULL WHERE id=?", (schedule_id,))
+                    SCHEDULES.disable(schedule_id)
                     logger.info("一次性任务已执行并停用 schedule_id=%s", schedule_id)
                 else:
-                    db.execute("UPDATE schedules SET next_run=? WHERE id=?", (nxt, schedule_id))
+                    SCHEDULES.set_next_run(schedule_id, nxt)
                     logger.info("任务下次执行时间已更新 schedule_id=%s next_run=%s", schedule_id, datetime.fromtimestamp(nxt).isoformat(timespec="seconds"))
             except Exception:
                 retry_at = now + 60
-                db.execute("UPDATE schedules SET next_run=? WHERE id=?",(retry_at,schedule_id))
+                SCHEDULES.set_next_run(schedule_id, retry_at)
                 logger.exception("任务执行异常，已安排重试 schedule_id=%s retry_at=%s", schedule_id, datetime.fromtimestamp(retry_at).isoformat(timespec="seconds"))
-        db.commit(); time.sleep(interval)
+        time.sleep(interval)
 
 
 if __name__ == '__main__':

@@ -1,50 +1,13 @@
-from pathlib import Path
 from . import router
-from .logging import get_logger
 
-DEBUG_LOG_DIR = Path(__file__).resolve().parents[2] / 'src/core/logs'
-logger = get_logger('settings', DEBUG_LOG_DIR)
 
 @router.route("GET", "/api/settings/storage", "/api/settings/storage/open")
-@router.route("POST", "/api/settings/storage", "/api/settings/storage/reset", "/api/settings/storage/choose")
+@router.route("POST", "/api/settings/storage", "/api/settings/storage/reset", "/api/settings/storage/choose", "/api/settings/storage/open")
 def handle(ctx):
-    logger.debug("handling %s %s", ctx.method, ctx.path)
-    """保存目录的读取、写入、重置和打开。"""
-    import sys
-    server = sys.modules.get("server") or sys.modules["__main__"]
-    get_settings, default_settings, save_settings = server.get_settings, server.default_settings, server.save_settings
-    import os, platform, subprocess
-    from pathlib import Path
-    if ctx.path == "/api/settings/storage" and ctx.method == "GET":
-        ctx.request.send_json(200, {"ok": True, "settings": get_settings(), "default": default_settings()["storage_dir"]})
-    elif ctx.path == "/api/settings/storage" and ctx.method == "POST":
-        value = str(ctx.body.get("storage_dir", "")).strip()
-        if not value: raise ValueError("storage_dir is required")
-        save_settings({"storage_dir": str(Path(value).expanduser().resolve())})
-        ctx.request.send_json(200, {"ok": True, "settings": get_settings()})
-    elif ctx.path == "/api/settings/storage/reset":
-        save_settings(default_settings()); ctx.request.send_json(200, {"ok": True, "settings": get_settings()})
-    elif ctx.path == "/api/settings/storage/choose":
-        import tkinter as tk
-        from tkinter import filedialog
-        current = get_settings().get("storage_dir", default_settings()["storage_dir"])
-        root = tk.Tk(); root.withdraw(); root.attributes("-topmost", True)
-        selected = filedialog.askdirectory(title="选择本地文件保存目录", initialdir=current if Path(current).exists() else str(Path.home()))
-        root.destroy()
-        if selected:
-            save_settings({"storage_dir": str(Path(selected).resolve())})
-        ctx.request.send_json(200, {"ok": True, "selected": bool(selected), "settings": get_settings()})
-    elif ctx.path == "/api/settings/storage/open":
-        target = Path(get_settings().get("storage_dir", default_settings()["storage_dir"])); target.mkdir(parents=True, exist_ok=True)
-        if os.name == "nt": os.startfile(str(target))
-        elif platform.system() == "Darwin": subprocess.Popen(["open", str(target)])
-        else: subprocess.Popen(["xdg-open", str(target)])
-        ctx.request.send_json(200, {"ok": True, "storage_dir": str(target)})
-    else:
-        return ctx.legacy()
+    """Client filesystem settings belong exclusively to the loopback agent."""
+    ctx.request.send_json(409, {
+        "ok": False,
+        "error": "Client storage settings require the local agent at http://127.0.0.1:18991",
+        "code": "client_local_only",
+    })
     return True
-
-
-
-
-

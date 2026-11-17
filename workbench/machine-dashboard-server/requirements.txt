@@ -1,0 +1,3 @@
+# Workbench runtime dependencies (the standard library provides HTTP, SQLite,
+# scheduling, process control and static asset serving).
+psutil==6.1.1

@@ -5,15 +5,18 @@
 """
 
 import json, os, sqlite3
+from datetime import datetime
+from contextlib import closing
 from pathlib import Path
 from .settings import get_user_root, get_user_settings_path
 
-# 仓库内资源，例如调度器 PID 文件。
-ROOT = Path(__file__).resolve().parents[2]
 # 用户级状态。生产环境默认位于 %LOCALAPPDATA%\\LocalWorkbench，测试时可覆盖。
 USER_ROOT = get_user_root()
-PID_PATH = ROOT / "data" / "scheduler.pid"
+RUN_DIR = USER_ROOT / "run"
+PID_PATH = RUN_DIR / "scheduler.pid"
+CENTER_PID_PATH = RUN_DIR / "central-server.pid"
 DB_PATH = USER_ROOT / "data" / "scheduler.db"
+MACHINE_CONTROL_STORE_PATH = USER_ROOT / "data" / "machine-control" / "control-center.json"
 
 def default_settings():
     """返回用户尚未配置存储路径时使用的默认设置。"""
@@ -34,6 +37,35 @@ def save_settings(settings):
     CONFIG_PATH.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
     Path(settings["storage_dir"]).mkdir(parents=True, exist_ok=True)
 
+def backup_database() -> Path | None:
+    """在打开迁移前创建数据库副本；没有数据库时返回 None。"""
+    if not DB_PATH.is_file():
+        return None
+    backup_dir = USER_ROOT / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    target = backup_dir / f"scheduler-{datetime.now():%Y%m%d_%H%M%S_%f}.db"
+    # SQLite backup 包含 WAL 中已提交的数据，不能直接复制主数据库文件。
+    source = sqlite3.connect(DB_PATH, timeout=10)
+    destination = sqlite3.connect(target)
+    try:
+        source.backup(destination)
+    finally:
+        destination.close()
+        source.close()
+    return target
+
+
+def check_database() -> bool:
+    """执行 SQLite 完整性检查，失败时返回 False。"""
+    if not DB_PATH.is_file():
+        return True
+    try:
+        with closing(sqlite3.connect(DB_PATH, timeout=5)) as db:
+            return db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+    except sqlite3.DatabaseError:
+        return False
+
+
 def connect():
     """打开调度器数据库并执行兼容式结构迁移。
 
@@ -41,9 +73,16 @@ def connect():
     迁移只增加带默认值的字段，保证已有安装可以继续使用。
     """
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    db = sqlite3.connect(DB_PATH)
+    db = sqlite3.connect(DB_PATH, timeout=10)
     db.row_factory = sqlite3.Row
     db.execute("PRAGMA journal_mode=WAL")
+    db.execute("PRAGMA busy_timeout=10000")
+    version = db.execute("PRAGMA user_version").fetchone()[0]
+    if version > 1:
+        db.close()
+        raise sqlite3.DatabaseError("Database schema is newer than this application")
+    if version == 0:
+        backup_database()
     db.executescript("""
     CREATE TABLE IF NOT EXISTS tools (
       tool_id TEXT PRIMARY KEY, name TEXT NOT NULL, type TEXT NOT NULL,
@@ -63,6 +102,13 @@ def connect():
       started_at REAL NOT NULL, finished_at REAL, status TEXT NOT NULL,
       output TEXT, error TEXT
     );
+    CREATE TABLE IF NOT EXISTS local_codex_tasks (
+      id TEXT PRIMARY KEY, name TEXT NOT NULL, cwd TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'idle', prompt TEXT NOT NULL DEFAULT '',
+      messages_json TEXT NOT NULL DEFAULT '[]', log TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     """)
     # 为任务进度和取消操作增加字段；已有安装启动时自动获得新字段。
     for statement in (
@@ -75,10 +121,18 @@ def connect():
         "ALTER TABLE schedules ADD COLUMN run_type INTEGER NOT NULL DEFAULT 1",
         "ALTER TABLE schedules ADD COLUMN run_time TEXT",
         "ALTER TABLE schedules ADD COLUMN param_json TEXT NOT NULL DEFAULT '{}'",
+        "ALTER TABLE local_codex_tasks ADD COLUMN session_id TEXT",
+        "ALTER TABLE local_codex_tasks ADD COLUMN skill_paths_json TEXT NOT NULL DEFAULT '[]'",
+        "ALTER TABLE local_codex_tasks ADD COLUMN allow_extra_rules INTEGER NOT NULL DEFAULT 0",
     ):
-        try: db.execute(statement)
-        except sqlite3.OperationalError:
-            pass
+        try:
+            db.execute(statement)
+        except sqlite3.OperationalError as exc:
+            # 仅允许“字段已存在”的兼容启动；锁、磁盘和其他错误必须暴露。
+            if "duplicate column name" not in str(exc).lower():
+                db.rollback()
+                raise
+    db.execute("PRAGMA user_version=1")
     db.commit()
     return db
 

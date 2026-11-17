@@ -1,0 +1,122 @@
+name: selfagent-validation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  architecture-and-runtime:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v5
+      - name: Create isolated project interpreters
+        run: python scripts/bootstrap_projects.py --no-install
+      - name: Install declared project runtime dependencies
+        run: python scripts/bootstrap_projects.py
+      - name: Architecture checks
+        run: python scripts/check_architecture.py --tracked-artifacts --tracked-local-config
+      - name: Documentation link checks
+        run: python scripts/validate_document_links.py
+      - name: Local regression aggregate
+        run: python scripts/validate_local.py
+      - name: Legacy route inventory
+        run: python scripts/audit_legacy_routes.py
+      - name: Workbench dependency declaration audit
+        run: python scripts/audit_workbench_dependencies.py
+      - name: Bootstrap contract regression
+        run: python scripts/validate_bootstrap_contract.py
+      - name: Tracked artifact gate
+        run: python scripts/audit_tracked_artifacts.py
+      - name: Storage regression
+        run: python scripts/validate_workbench_storage.py
+      - name: Repository regression
+        run: python scripts/validate_repositories.py
+      - name: SQLite concurrency regression
+        run: python scripts/validate_storage_concurrency.py
+      - name: Workbench HTTP regression
+        run: python scripts/validate_workbench_http.py
+      - name: Workbench settings regression
+        run: python scripts/validate_workbench_settings.py
+      - name: Logging output and rotation regression
+        run: |
+          python scripts/validate_workbench_logging.py
+          python scripts/validate_code_review_logging.py
+      - name: Review data migration regression
+        run: python scripts/validate_review_data_migration.py
+      - name: Process manager ownership regression
+        run: python scripts/validate_process_manager.py
+      - name: Port conflict ownership regression
+        run: python scripts/validate_port_conflict.py
+      - name: Launcher ownership regression
+        run: python scripts/validate_launcher_ownership.py
+      - name: Workbench web resource regression
+        run: python scripts/validate_workbench_web.py
+      - name: Joint runtime regression
+        run: python scripts/validate_joint_runtime.py
+      - name: Machine-control cancellation contract
+        run: python scripts/validate_machine_control_cancel.py
+      - name: Explicit project entrypoints
+        run: python scripts/validate_project_entrypoints.py --require-venv
+      - name: Python syntax
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Recurse -File -Filter *.py | Where-Object { $_.FullName -notmatch '\\.venv\\|\\.codex-runtime\\|__pycache__|node_modules' }
+          python -m py_compile $files.FullName
+      - name: JavaScript syntax
+        shell: pwsh
+        run: |
+          Get-ChildItem workbench/machine-dashboard-server/web/assets/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName }
+      - name: Page scope lifecycle
+        run: node scripts/validate_page_scope.mjs
+
+  ai-agent:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: AiAgent/AiProject/Codes/Agents/OpenAiAgent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --locked --extra test
+      - run: uv run --locked python -m pytest -q
+
+  machine-control:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: Tools/machine-control
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --locked --extra mcp
+      - run: .venv/Scripts/python.exe -m control_center.server --help
+        env:
+          PYTHONPATH: server;shared
+      - run: .venv/Scripts/python.exe -m control_mcp.server --help
+        env:
+          PYTHONPATH: server;shared
+      - name: Isolated Python distribution build
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'machine-control-python-dist'
+          python scripts/build_python_package.py --output-dir $out
+      - name: MCP stdio protocol regression
+        run: .venv/Scripts/python.exe ../../scripts/validate_machine_control_mcp.py
+      - name: Client package content and runtime regression
+        run: .venv/Scripts/python.exe ../../scripts/validate_machine_control_package.py
+      - name: Worker lifecycle and task regression
+        shell: pwsh
+        run: ../../scripts/validate_machine_control_worker_process.ps1
+      - name: LAN-visible binding regression
+        shell: pwsh
+        run: ../../scripts/validate_machine_control_lan.ps1

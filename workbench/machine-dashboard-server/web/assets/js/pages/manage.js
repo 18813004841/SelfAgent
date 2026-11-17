@@ -10,7 +10,6 @@ async function initManage() {
     msg = document.getElementById("manage-msg"),
     status = document.getElementById("central-server-status"),
     centerMsg = document.getElementById("central-server-msg");
-  if (window.__centralTimer) clearInterval(window.__centralTimer);
   async function refreshCenter() {
     try {
       const d = await fetch("/api/central-server/status", {
@@ -99,7 +98,7 @@ async function initManage() {
       : "停止失败：" + (d.error || "");
     await refreshAgent();
   };
-  window.__centralTimer = setInterval(() => {
+  setInterval(() => {
     refreshCenter();
     refreshClient();
     refreshAgent();

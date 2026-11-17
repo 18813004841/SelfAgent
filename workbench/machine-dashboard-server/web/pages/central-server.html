@@ -27,7 +27,7 @@
       <p id="central-server-msg" class="muted"></p>
     </div>
     <div class="service-item">
-      <h3>中央服务器客户端</h3>
+      <h3>中央服务器客户端（本机）</h3><label>本机连接的中央服务器 <input id="central-client-server" type="url" placeholder="http://服务器地址:18765" style="width:100%"></label>
       <p>
         当前状态：
         <b id="central-client-status"> 检查中... </b>
@@ -40,7 +40,7 @@
       <button type="button" class="primary" id="central-client-start">启动客户端</button>
       <button type="button" id="central-client-stop">关闭客户端</button>
       <button type="button" id="central-client-open" title="打开本地文件夹">📁</button>
-      <a class="button-link" href="/api/central-client/download">
+      <a class="button-link" id="central-client-download" href="#">
         下载客户端
       </a>
       <p id="central-client-msg" class="muted"></p>

@@ -3,13 +3,14 @@ from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from local_codex.tasks import tasks
-from core.storage import connect
+from core.repositories import LocalCodexTaskRepository
 import json, uuid
 from . import router
 from .logging import get_logger
 
 logger = get_logger("local_codex", Path(__file__).resolve().parents[2] / "src/core/logs")
 DEFAULT_URL = "ws://127.0.0.1:4500"
+TASK_REPOSITORY = LocalCodexTaskRepository()
 
 def _settings(server):
     value = server.get_settings()
@@ -19,30 +20,30 @@ def _settings(server):
 @router.route("GET", "/api/local-codex/config", "/api/local-codex/test", "/api/local-codex/status", "/api/local-codex/task", "/api/local-codex/tasks")
 @router.route("POST", "/api/local-codex/config", "/api/local-codex/test", "/api/local-codex/start", "/api/local-codex/stop", "/api/local-codex/task", "/api/local-codex/tasks")
 def handle(ctx):
+    ctx.request.send_json(409, {"ok": False, "error": "本地 Codex 由浏览这台电脑的本地接入服务管理", "code": "client_local_only"})
+    return True
     import sys
     server = sys.modules.get("server") or sys.modules["__main__"]
     if ctx.path == "/api/local-codex/tasks" and ctx.method == "GET":
-        db = connect(); rows = db.execute("SELECT * FROM local_codex_tasks ORDER BY updated_at DESC").fetchall(); db.close()
+        rows = TASK_REPOSITORY.list()
         ctx.request.send_json(200, {"ok": True, "tasks": [dict(row) | {"messages": json.loads(row["messages_json"]), "skill_paths": json.loads(row["skill_paths_json"] or "[]")} for row in rows]})
     elif ctx.path == "/api/local-codex/tasks" and ctx.method == "POST":
         if ctx.body.get("action") == "delete":
-            db = connect(); db.execute("DELETE FROM local_codex_tasks WHERE id=?", (str(ctx.body.get("id", "")),)); db.commit(); db.close()
+            TASK_REPOSITORY.delete(str(ctx.body.get("id", "")))
             ctx.request.send_json(200, {"ok": True}); return True
         if ctx.body.get("action") == "update":
-            db = connect()
-            existing = db.execute("SELECT skill_paths_json, allow_extra_rules FROM local_codex_tasks WHERE id=?", (str(ctx.body.get("id", "")),)).fetchone()
-            db.close()
+            existing = TASK_REPOSITORY.get_fields(str(ctx.body.get("id", "")))
             if not existing: raise ValueError("任务不存在")
             if "skill_paths" not in ctx.body:
                 ctx.body["skill_paths"] = json.loads(existing["skill_paths_json"] or "[]")
             if "allow_extra_rules" not in ctx.body:
                 ctx.body["allow_extra_rules"] = bool(existing["allow_extra_rules"])
             messages = json.dumps(ctx.body.get("messages") or [], ensure_ascii=False); skills = json.dumps(ctx.body.get("skill_paths") or [], ensure_ascii=False)
-            db = connect(); db.execute("UPDATE local_codex_tasks SET cwd=?, status=?, prompt=?, messages_json=?, log=?, skill_paths_json=?, allow_extra_rules=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (str(ctx.body.get("cwd", "")), str(ctx.body.get("status", "idle")), str(ctx.body.get("prompt", "")), messages, str(ctx.body.get("log", "")), skills, int(bool(ctx.body.get("allow_extra_rules"))), str(ctx.body.get("id", "")))); db.commit(); db.close()
+            TASK_REPOSITORY.update(str(ctx.body.get("id", "")), cwd=str(ctx.body.get("cwd", "")), status=str(ctx.body.get("status", "idle")), prompt=str(ctx.body.get("prompt", "")), messages=ctx.body.get("messages") or [], log=str(ctx.body.get("log", "")), skill_paths=ctx.body.get("skill_paths") or [], allow_extra_rules=ctx.body.get("allow_extra_rules"))
             ctx.request.send_json(200, {"ok": True}); return True
         name = str(ctx.body.get("name", "")).strip(); cwd = str(ctx.body.get("cwd", "")).strip()
         if not name or not cwd: raise ValueError("任务名称和工程工作区不能为空")
-        task_id = uuid.uuid4().hex; db = connect(); db.execute("INSERT INTO local_codex_tasks(id,name,cwd) VALUES(?,?,?)", (task_id, name, cwd)); db.commit(); db.close()
+        task_id = uuid.uuid4().hex; TASK_REPOSITORY.create(task_id, name, cwd)
         ctx.request.send_json(201, {"ok": True, "task": {"id": task_id, "name": name, "cwd": cwd, "status": "idle", "messages": []}})
     elif ctx.path == "/api/local-codex/task" and ctx.method == "POST":
         prompt = str(ctx.body.get("prompt", "")).strip()
@@ -52,13 +53,11 @@ def handle(ctx):
             raise ValueError("工程工作区不存在或不是目录")
         record_id = str(ctx.body.get("id", "")).strip()
         if not record_id: raise ValueError("任务 ID 不能为空")
-        db = connect()
-        row = db.execute("SELECT messages_json, session_id FROM local_codex_tasks WHERE id=?", (record_id,)).fetchone()
-        if not row: db.close(); raise ValueError("任务不存在")
+        row = TASK_REPOSITORY.get_fields(record_id, "messages_json, session_id")
+        if not row: raise ValueError("任务不存在")
         messages = json.loads(row["messages_json"] or "[]")
         messages.append({"role": "user", "content": prompt})
-        db.execute("UPDATE local_codex_tasks SET status='running', cwd=?, prompt=?, messages_json=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (cwd, prompt, json.dumps(messages, ensure_ascii=False), record_id))
-        db.commit(); db.close()
+        TASK_REPOSITORY.mark_running(record_id, cwd, prompt, messages)
         result = tasks.submit(prompt, cwd, record_id, row["session_id"])
         ctx.request.send_json(202, {"ok": True, **result})
     elif ctx.path == "/api/local-codex/task" and ctx.method == "GET":
@@ -69,13 +68,13 @@ def handle(ctx):
         if not task: ctx.request.send_json(404, {"ok": False, "error": "任务不存在"})
         else:
             if task["status"] != "running":
-                db = connect(); row = db.execute("SELECT messages_json FROM local_codex_tasks WHERE id=?", (task_id,)).fetchone()
+                row = TASK_REPOSITORY.get_fields(task_id, "messages_json")
                 messages = json.loads(row["messages_json"] or "[]") if row else []
                 output = "\n\n".join(event.get("text") or event.get("message") or json.dumps(event, ensure_ascii=False) for event in task["events"])
                 if not messages or messages[-1].get("role") != "assistant": messages.append({"role": "assistant", "content": output or "（无输出）"})
                 else: messages[-1]["content"] = output or "（无输出）"
                 session_id = next((event.get("thread_id") for event in task["events"] if event.get("thread_id")), task.get("session_id"))
-                db.execute("UPDATE local_codex_tasks SET status=?, session_id=COALESCE(?, session_id), messages_json=?, log=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (task["status"], session_id, json.dumps(messages, ensure_ascii=False), output, task_id)); db.commit(); db.close()
+                TASK_REPOSITORY.save_result(task_id, task["status"], session_id, messages, output)
             ctx.request.send_json(200, {"ok": True, "task": task})
     elif ctx.path == "/api/local-codex/status":
         item = server.PROCESS_MANAGER.snapshot().get("local-codex", {})
@@ -111,4 +110,3 @@ def handle(ctx):
         else:
             ctx.request.send_json(200, {"ok": True, "reachable": False, "address": address, "message": "Unix Socket 地址已保存，请通过 App Server 客户端验证"})
     return True
-

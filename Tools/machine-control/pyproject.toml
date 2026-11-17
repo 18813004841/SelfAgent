@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "selfagent-machine-control"
+version = "0.1.0"
+description = "Independent machine control center, worker and shared protocol"
+requires-python = ">=3.11,<3.15"
+dependencies = []
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.0.0"]
+test = ["pytest>=8,<9"]
+dev = ["pytest>=8,<9"]
+
+[project.scripts]
+machine-control-center = "control_center.server:main"
+
+[tool.setuptools]
+packages = ["control_center", "control_worker", "common", "control_mcp", "client_package", "client_package.process_manager"]
+package-dir = {control_center = "server/control_center", control_worker = "client/control_worker", common = "shared/common", control_mcp = "server/control_mcp", client_package = "client/client_package", "client_package.process_manager" = "client/client_package/process_manager"}

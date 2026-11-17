@@ -1,7 +1,8 @@
+import { LOCAL_AGENT_ORIGIN } from "../shared/local-agent.js";
 import { createPageScope } from "../shared/page-scope.js";
 let scope;
-const api = (...args) => scope.fetch(...args);
-const label = (status) => ({ completed: "执行完成", failed: "执行失败", running: "执行中" }[status] || "尚未执行");
+const api = (path, options) => scope.fetch(path.startsWith("/api/local-codex/") ? LOCAL_AGENT_ORIGIN + path : path, options);
+const label = (status) => ({ completed: "执行完成", failed: "执行失败", cancelled: "已取消", timed_out: "执行超时", running: "执行中" }[status] || "尚未执行");
 function formatEvents(events) {
   const sections = []; const diagnostics = [];
   (events || []).forEach((event) => {
@@ -49,7 +50,7 @@ function finalReply(messages) {
 export async function mount(content, params) {
   scope = createPageScope();
   const id = params.get("id");
-  const title = document.getElementById("codex-task-title"), prompt = document.getElementById("codex-task-prompt"), status = document.getElementById("codex-task-status"), log = document.getElementById("codex-task-log"), submit = document.getElementById("codex-task-submit"), workspace = document.getElementById("codex-task-workspace");
+  const title = document.getElementById("codex-task-title"), prompt = document.getElementById("codex-task-prompt"), status = document.getElementById("codex-task-status"), log = document.getElementById("codex-task-log"), submit = document.getElementById("codex-task-submit"), cancel = document.getElementById("codex-task-cancel"), workspace = document.getElementById("codex-task-workspace");
   const skills = document.getElementById("codex-task-skills");
   const extra = document.getElementById("codex-task-extra-rules");
   const saveSettings = document.getElementById("codex-task-save-settings");
@@ -64,7 +65,7 @@ export async function mount(content, params) {
       input.onchange = persistSkillConfig;
       const choose = document.createElement("button"); choose.type = "button"; choose.textContent = "选择目录";
       choose.onclick = async () => {
-        const response = await api("/api/scheduler-tasks/code-review/choose", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ current_path: document.getElementById("codex-task-workspace").value.trim() || input.value.trim() }) });
+        const response = await api("/api/local-codex/choose", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ current_path: document.getElementById("codex-task-workspace").value.trim() || input.value.trim() }) });
         const data = await response.json();
         if (!response.ok || !data.ok) throw Error(data.error || "目录选择失败");
         if (data.project_path) { input.value = data.project_path; await persistSkillConfig(); }
@@ -109,6 +110,8 @@ export async function mount(content, params) {
     if (!item) { title.textContent = "任务不存在"; submit.disabled = true; return null; }
     title.textContent = item.name; workspace.value = item.cwd || ""; renderSkills(item.skill_paths || []); extra.checked = Boolean(item.allow_extra_rules); status.textContent = label(item.status);
     submit.disabled = item.status === "running";
+    cancel.hidden = item.status !== "running";
+    if (item.status !== "running") cancel.disabled = false;
     submit.textContent = item.status === "running" ? "执行中…" : "提交任务";
     (item.messages || []).forEach((message) => addSection(log, message.role === "user" ? "你" : "Codex", message.content, message.role === "assistant" ? finalReply([message]) : ""));
     return item;
@@ -121,21 +124,28 @@ export async function mount(content, params) {
     const messages = [...(item.messages || []), { role: "user", content: text }];
     const selected = selectedSkillPaths.length ? "\n\n本轮请读取并遵循这些 Skill：" + selectedSkillPaths.join("；") : "";
     selectedSkillPaths = [];
-    prompt.value = ""; submit.disabled = true; await save({ cwd, status: "running", prompt: text, messages, log: "", skill_paths: skillPaths(), allow_extra_rules: extra.checked }); await render();
+    prompt.value = ""; submit.disabled = true;
     try {
       const response = await api("/api/local-codex/task", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, prompt: text + selected + (selected && !extra.checked ? "\n只依据本轮指定 Skill 检查，不使用 Skill 以外的规则。" : ""), cwd }) });
       const data = await response.json(); if (!response.ok || !data.ok) throw Error(data.error || "提交失败");
+      await render();
       const timer = scope.setInterval(async () => {
         const result = await (await api("/api/local-codex/task?task_id=" + data.task_id)).json(); if (!result.ok) return;
         const output = formatEvents(result.task.events).map((section) => section.title + "\n" + section.body).join("\n\n") || "（暂无结构化输出）";
-        if (result.task.status !== "running") { await save({ cwd, status: result.task.status, prompt: text, messages: [...messages, { role: "assistant", content: output }], log: output }); submit.disabled = false; clearInterval(timer); await render(); }
+        if (result.task.status !== "running") { submit.disabled = false; clearInterval(timer); await render(); }
       }, 700);
-    } catch (error) { await save({ cwd, status: "failed", prompt: text, messages: [...messages, { role: "assistant", content: "提交失败：" + error.message }], log: error.message }); submit.disabled = false; await render(); }
+    } catch (error) { submit.disabled = false; prompt.value = text; status.textContent = "提交失败：" + error.message; }
+  };
+  cancel.onclick = async () => {
+    cancel.disabled = true;
+    status.textContent = "正在取消…";
+    try {
+      const response = await api("/api/local-codex/task/cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw Error(data.error || "取消失败");
+      status.textContent = "已发送取消请求";
+    } catch (error) { status.textContent = "取消失败：" + error.message; cancel.disabled = false; }
   };
   await render();
 }
 export function unmount() { scope?.dispose(); }
-
-
-
-
