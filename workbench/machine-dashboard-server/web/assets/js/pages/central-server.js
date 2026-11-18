@@ -47,6 +47,28 @@ export async function mount() {
   document.getElementById("central-client-start").onclick = async () => { cm.textContent = "正在本机启动..."; try { localStorage.setItem("central-client-server", serverInput.value.trim()); await localApi("/api/central-client/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ central_server_url: serverInput.value.trim() }) }); cm.textContent = "已向本机发送启动请求"; } catch (e) { cm.textContent = e.message; } await refresh(); };
   document.getElementById("central-client-stop").onclick = async () => { try { await localApi("/api/central-client/stop", { method: "POST" }); cm.textContent = "已关闭本机客户端"; } catch (e) { cm.textContent = e.message; } await refresh(); };
   document.getElementById("central-client-open").onclick = async () => { try { await localApi("/api/settings/storage/open", { method: "POST" }); cm.textContent = "已打开本机保存目录"; } catch (e) { cm.textContent = e.message; } };
-  document.getElementById("central-client-download").onclick = async e => { e.preventDefault(); cm.textContent = "正在下载并安装到本机..."; try { const response = await api("/api/central-client/download"); const bytes = await response.arrayBuffer(); const installed = await fetch(LOCAL_AGENT_ORIGIN + "/api/central-client/install", { method: "POST", headers: { "Content-Type": "application/zip" }, body: bytes }); const data = await installed.json(); if (!installed.ok || !data.ok) throw Error(data.error || "安装失败"); cm.textContent = "已安装到本机：" + data.client_dir; await refresh(); } catch (e) { cm.textContent = e.message; } };
+  document.getElementById("central-client-download").onclick = async e => {
+    e.preventDefault(); cm.textContent = "正在下载并安装到本机...";
+    try {
+      const response = await api("/api/central-client/download");
+      if (!response.ok) {
+        let detail = `下载失败（HTTP ${response.status}）`;
+        try { const error = await response.json(); detail = error.error || detail; } catch {}
+        throw Error(detail);
+      }
+      const bytes = await response.arrayBuffer();
+      let installed;
+      try {
+        installed = await fetch(LOCAL_AGENT_ORIGIN + "/api/central-client/install", {
+          method: "POST", headers: { "Content-Type": "application/zip" }, body: bytes
+        });
+      } catch (error) {
+        throw Error(`无法连接本机接入服务（${error.message}），请确认 Local Agent 正在运行`);
+      }
+      const data = await installed.json();
+      if (!installed.ok || !data.ok) throw Error(data.error || `本机安装失败（HTTP ${installed.status}）`);
+      cm.textContent = "已安装到本机：" + data.client_dir; await refresh();
+    } catch (e) { cm.textContent = e.message; }
+  };
 }
 export function unmount() { scope?.dispose(); }
