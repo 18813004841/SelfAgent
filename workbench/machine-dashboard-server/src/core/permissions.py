@@ -23,7 +23,13 @@ API_MODULES = {
 }
 def module_for_path(path):
     if path.startswith("/pages/"):
-        return path[len("/pages/"):].split(".", 1)[0]
+        page = path[len("/pages/"):].split(".", 1)[0]
+        # Codex task detail is part of the local-codex feature.  It is a
+        # separate page fragment, but must use the same module permission as
+        # the task list; otherwise opening a task is rejected with 403.
+        if page == "local-codex-task":
+            return "local-codex"
+        return page
     if path.startswith("/pages/users"):
         return "manage"
     if path.startswith("/api/auth") or path.startswith("/api/users") or path == "/api/modules": return None

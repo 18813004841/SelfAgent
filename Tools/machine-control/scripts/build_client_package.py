@@ -23,7 +23,11 @@ def main() -> None:
             if not source.is_dir():
                 raise FileNotFoundError(source)
             shutil.copytree(source, package / target, ignore=shutil.ignore_patterns(
-                "__pycache__", "*.pyc", "*.pyo", ".env", ".env.*", "*.local.json", "*.log", ".venv"))
+                "__pycache__", "*.pyc", "*.pyo", ".env", ".env.*", "*.local.json", "*.log", ".venv", "VERSION"))
+        version_file = ROOT / "client" / "client_package" / "VERSION"
+        if not version_file.is_file():
+            raise FileNotFoundError(f"missing client package version: {version_file}")
+        shutil.copy2(version_file, package / "VERSION")
         archive = shutil.make_archive(str(destination / "central-client"), "zip", staging, "central-client")
     print(archive)
 

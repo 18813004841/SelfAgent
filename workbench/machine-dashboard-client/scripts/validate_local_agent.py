@@ -66,9 +66,20 @@ def main() -> None:
             assert status == 200 and Path(restored["settings"]["storage_dir"]).resolve() == (root / "storage").resolve(), restored
             status, body = request(port, "/api/central-client/status", headers={"Origin": "http://evil.example"})
             assert status == 403, body
-            good = zip_bytes({"central-client/control_worker/client.py": "print('client')\n"})
+            good = zip_bytes({"central-client/control_worker/client.py": "print('client')\n", "central-client/VERSION": "1.0.0\n"})
             status, body = request(port, "/api/central-client/install", good, {"Content-Type": "application/zip", "Origin": "http://127.0.0.1:18888"})
             assert status == 200 and Path(body["client_dir"], "control_worker", "client.py").is_file(), body
+            status, installed = request(port, "/api/central-client/status", headers={"Origin": "http://127.0.0.1:18888"})
+            assert status == 200 and installed["version"] == "1.0.0", installed
+            missing_version = zip_bytes({"central-client/control_worker/client.py": "print('new')\n"})
+            status, rejected_version = request(port, "/api/central-client/install", missing_version, {"Content-Type": "application/zip", "Origin": "http://127.0.0.1:18888"})
+            assert status == 400 and "VERSION" in rejected_version["error"], rejected_version
+            assert (root / "storage" / "central-client" / "VERSION").read_text(encoding="utf-8").strip() == "1.0.0"
+            upgraded = zip_bytes({"central-client/control_worker/client.py": "print('updated')\n", "central-client/VERSION": "1.0.1\n"})
+            status, upgraded_body = request(port, "/api/central-client/install", upgraded, {"Content-Type": "application/zip", "Origin": "http://127.0.0.1:18888"})
+            assert status == 200, upgraded_body
+            assert (root / "storage" / "central-client" / "VERSION").read_text(encoding="utf-8").strip() == "1.0.1"
+            assert (root / "storage" / "central-client.previous" / "VERSION").read_text(encoding="utf-8").strip() == "1.0.0"
             bad = zip_bytes({"../escape.py": "x"})
             status, body = request(port, "/api/central-client/install", bad, {"Content-Type": "application/zip", "Origin": "http://127.0.0.1:18888"})
             assert status == 400 and not (root.parent / "escape.py").exists(), body

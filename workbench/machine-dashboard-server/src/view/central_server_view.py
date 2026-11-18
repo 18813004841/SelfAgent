@@ -6,7 +6,7 @@ from .logging import get_logger
 DEBUG_LOG_DIR = "central-server"
 logger = get_logger('central_server', DEBUG_LOG_DIR)
 
-@router.route("GET", "/api/central-server/status", "/api/central-server/connections", "/api/central-client/status", "/api/central-client/download", "/api/local-agent/download")
+@router.route("GET", "/api/central-server/status", "/api/central-server/connections", "/api/central-client/status", "/api/central-client/version", "/api/central-client/download", "/api/local-agent/version", "/api/local-agent/download")
 def handle(ctx):
     logger.debug("handling %s %s", ctx.method, ctx.path)
     import sys, time, socket
@@ -21,6 +21,14 @@ def handle(ctx):
         ctx.request.send_json(200, {"ok": True, "service": "central-server", "running": running, "pid": pid, "port": server.CENTER_PORT})
     elif ctx.path == "/api/central-client/status":
         ctx.request.send_json(409, {"ok": False, "error": "中央客户端由浏览这台电脑的本地接入服务管理", "code": "client_local_only"})
+    elif ctx.path == "/api/central-client/version":
+        version_file = Path(__file__).resolve().parents[4] / "Tools" / "machine-control" / "client" / "client_package" / "VERSION"
+        if not version_file.is_file():
+            raise FileNotFoundError("central-client VERSION has not been configured")
+        version = version_file.read_text(encoding="utf-8").strip()
+        if not version:
+            raise ValueError("central-client VERSION is empty")
+        ctx.request.send_json(200, {"ok": True, "version": version})
     elif False and ctx.path == "/api/central-client/status":
         item = server.PROCESS_MANAGER.snapshot().get("central-client", {})
         storage = server.Path(server.get_settings().get("storage_dir", server.default_settings()["storage_dir"]))
@@ -52,6 +60,14 @@ def handle(ctx):
         ctx.request.send_header("Content-Disposition", 'attachment; filename="central-client.zip"')
         ctx.request.send_header("Content-Length", str(len(data)))
         ctx.request.end_headers(); ctx.request.wfile.write(data)
+    elif ctx.path == "/api/local-agent/version":
+        version_file = Path(__file__).resolve().parents[2].parent / "machine-dashboard-client" / "VERSION"
+        if not version_file.is_file():
+            raise FileNotFoundError("workbench local-agent VERSION has not been configured")
+        version = version_file.read_text(encoding="utf-8").strip()
+        if not version:
+            raise ValueError("workbench local-agent VERSION is empty")
+        ctx.request.send_json(200, {"ok": True, "service": "workbench-local-agent", "version": version})
     elif ctx.path == "/api/local-agent/download":
         package = Path(__file__).resolve().parents[2].parent / "machine-dashboard-client" / "dist" / "workbench-machine-dashboard-client.zip"
         if not package.is_file():

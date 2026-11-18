@@ -8,6 +8,7 @@ export async function mount() {
   const ip = document.getElementById("central-server-ips"), conn = document.getElementById("central-client-connection-status");
   const ss = document.getElementById("central-server-status"), cs = document.getElementById("central-client-status");
   const sm = document.getElementById("central-server-msg"), cm = document.getElementById("central-client-msg");
+  const download = document.getElementById("central-client-download"), update = document.getElementById("central-client-update");
   const serverInput = document.getElementById("central-client-server");
   serverInput.value = localStorage.getItem("central-client-server") || `http://${location.hostname}:18765`;
   async function refresh() {
@@ -18,6 +19,19 @@ export async function mount() {
       const client = await localApi("/api/central-client/status");
       cs.textContent = client.running ? "运行中" : "已停止"; cs.style.color = client.running ? "green" : "#888";
       const files = document.getElementById("central-client-files"); files.textContent = client.client_entry_exists ? "已找到本机客户端文件" : "本机未找到客户端文件"; files.style.color = client.client_entry_exists ? "green" : "#c77";
+      try {
+        const releaseResponse = await api("/api/central-client/version", { cache: "no-store" });
+        const release = await releaseResponse.json();
+        if (!releaseResponse.ok || !release.ok) throw Error(release.error || "无法读取客户端版本");
+        const hasUpdate = client.client_entry_exists && release.version !== client.version;
+        download.textContent = hasUpdate ? "更新客户端" : (client.client_entry_exists ? "重新安装客户端" : "下载客户端");
+        update.textContent = hasUpdate ? `当前 ${client.version || "未记录"}，可更新到 ${release.version}` : (client.version ? `版本 ${client.version}` : "");
+        update.style.color = hasUpdate ? "#b45309" : "";
+      } catch {
+        download.textContent = client.client_entry_exists ? "重新安装客户端" : "下载客户端";
+        update.textContent = client.version ? `版本 ${client.version}` : "版本检查暂不可用";
+        update.style.color = "#888";
+      }
       document.getElementById("central-client-dir").textContent = client.client_dir || "";
       if (client.central_server_url) serverInput.value = client.central_server_url;
       conn.textContent = server.running ? "已连接" : "未连接";

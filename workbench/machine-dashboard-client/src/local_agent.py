@@ -21,6 +21,7 @@ from .paths import ClientPaths
 from .processes import LocalProcesses
 
 DEFAULT_PORT = 18991
+CLIENT_VERSION = (Path(__file__).resolve().parents[1] / "VERSION").read_text(encoding="utf-8").strip()
 LOG_MAX_BYTES = int(os.environ.get("WORKBENCH_LOCAL_AGENT_LOG_MAX_BYTES", str(5 * 1024 * 1024)))
 LOG_BACKUPS = int(os.environ.get("WORKBENCH_LOCAL_AGENT_LOG_BACKUPS", "3"))
 if LOG_MAX_BYTES < 1 or not 1 <= LOG_BACKUPS <= 100:
@@ -102,16 +103,32 @@ class LocalAgent:
                 source = staging / "central-client" if (staging / "central-client").is_dir() else staging
                 if not (source / "control_worker" / "client.py").is_file():
                     raise ValueError("安装包缺少客户端入口")
+                version = self._package_version(source)
                 if target.exists():
                     backup = target.with_name("central-client.previous")
                     if backup.exists():
-                        raise ValueError("已有上次安装备份，请先确认备份后再升级")
+                        shutil.rmtree(backup)
                     target.rename(backup)
-                shutil.move(str(source), str(target))
+                try:
+                    shutil.move(str(source), str(target))
+                except Exception:
+                    if backup.exists() and not target.exists():
+                        backup.rename(target)
+                    raise
             finally:
                 if staging.exists():
                     shutil.rmtree(staging)
         return target
+
+    @staticmethod
+    def _package_version(source: Path) -> str:
+        version_file = source / "VERSION"
+        if not version_file.is_file():
+            raise ValueError("安装包缺少 VERSION")
+        version = version_file.read_text(encoding="utf-8").strip()
+        if not version:
+            raise ValueError("安装包 VERSION 为空")
+        return version
 
     def download_client(self) -> Path:
         package_url = os.environ.get("CENTRAL_CLIENT_PACKAGE_URL") or f"{self.dashboard_url}/api/central-client/download"
@@ -215,9 +232,11 @@ def make_handler(agent: LocalAgent):
             path = urlparse(self.path).path
             try:
                 if path == "/health" and method == "GET":
-                    self._send(200, {"ok": True, "service": "workbench-local-agent", "dashboard_url": agent.dashboard_url})
+                    self._send(200, {"ok": True, "service": "workbench-local-agent", "version": CLIENT_VERSION, "dashboard_url": agent.dashboard_url})
                     return
-                if path == "/api/settings/storage" and method == "GET":
+                if path == "/api/local-agent/version" and method == "GET":
+                    self._send(200, {"ok": True, "service": "workbench-local-agent", "version": CLIENT_VERSION, "scope": "client-local"})
+                elif path == "/api/settings/storage" and method == "GET":
                     self._send(200, {"ok": True, "settings": {"storage_dir": str(agent.storage()), "config_path": str(agent.paths.config)}, "scope": "client-local"})
                 elif path == "/api/settings/storage" and method == "POST":
                     body = self._json_body(raw)

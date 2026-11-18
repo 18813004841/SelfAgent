@@ -18,6 +18,8 @@ class LocalProcesses:
 
     def client_status(self, agent) -> dict:
         client = agent.storage() / "central-client"
+        version_file = client / "VERSION"
+        version = version_file.read_text(encoding="utf-8").strip() if version_file.is_file() else ""
         running = self._client is not None and self._client.poll() is None
         return {
             "service": "central-client",
@@ -28,6 +30,7 @@ class LocalProcesses:
             "client_dir": str(client),
             "client_dir_exists": client.is_dir(),
             "client_entry_exists": (client / "control_worker" / "client.py").is_file(),
+            "version": version,
             "central_server_url": agent.settings.get("central_server_url", ""),
             "machine_id": agent.settings.get("machine_id") or socket.gethostname(),
         }
