@@ -227,7 +227,16 @@ def make_handler(agent: LocalAgent):
 
         def _route(self, method: str, raw: bytes = b"") -> None:
             if not self._trusted_request():
-                self._send(403, {"ok": False, "error": "untrusted dashboard origin"})
+                # Keep the loopback agent closed to arbitrary web pages, but
+                # return enough non-sensitive context to diagnose a changed
+                # LAN address without inspecting the client config manually.
+                self._send(403, {
+                    "ok": False,
+                    "error": "untrusted dashboard origin",
+                    "configured_dashboard_url": agent.dashboard_url,
+                    "request_origin": self.headers.get("Origin", ""),
+                    "hint": "请用当前浏览器地址重新运行 setup-client.ps1 后重启本机服务",
+                })
                 return
             path = urlparse(self.path).path
             try:
