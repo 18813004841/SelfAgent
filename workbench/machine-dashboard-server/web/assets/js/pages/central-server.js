@@ -10,7 +10,10 @@ export async function mount() {
   const sm = document.getElementById("central-server-msg"), cm = document.getElementById("central-client-msg");
   const download = document.getElementById("central-client-download"), update = document.getElementById("central-client-update");
   const serverInput = document.getElementById("central-client-server");
-  serverInput.value = localStorage.getItem("central-client-server") || `http://${location.hostname}:18765`;
+  // The central server is reached through the same host the user opened in
+  // the browser.  A previously saved LAN address can belong to another
+  // machine or network, so it must not override the current page origin.
+  serverInput.value = `${location.protocol}//${location.hostname}:18765`;
   async function refresh() {
     try {
       const server = await api("/api/central-server/status", { cache: "no-store" }).then(r => r.json());
@@ -33,7 +36,6 @@ export async function mount() {
         update.style.color = "#888";
       }
       document.getElementById("central-client-dir").textContent = client.client_dir || "";
-      if (client.central_server_url) serverInput.value = client.central_server_url;
       conn.textContent = server.running ? "已连接" : "未连接";
     } catch (error) { cs.textContent = "本机服务不可用"; cs.style.color = "#c77"; cm.textContent = error.message; }
   }
