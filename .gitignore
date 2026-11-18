@@ -22,7 +22,6 @@ Tools/machine-control/server/control_center/__pycache__
 **/tmp/
 **/build/
 **/*.egg-info/
-Tools/machine-control/packages/*.zip
 Tools/machine-control/packages/central-client/
 *.local.json
 
