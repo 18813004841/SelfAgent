@@ -1,6 +1,6 @@
 {
-  "project": {"name": "my-unity", "path": "E:/Projects/MyUnity", "branch": "main", "remote": "origin"},
-  "model_service": {"api_url": "http://10.0.27.224:8317/v1", "model": "gpt-5.6-sol", "timeout_seconds": 300, "max_input_tokens": 12000, "max_output_tokens": 2000},
+  "project": {"name": "my-unity", "path": "E:/Projects/MyUnity", "branch": "main", "remote": "origin", "git_timeout_seconds": 300, "clean_before_sync": true},
+  "model_service": {"backend": "codex", "executable": null, "model": null, "sandbox": "read-only", "timeout_seconds": 900, "api_url": "http://10.0.27.224:8317/v1", "max_input_tokens": 12000, "max_output_tokens": 2000},
   "checks": {"compile_command": null, "runtime_roots": ["Assets/Scripts/Runtime", "Assets/Scripts"], "editor_markers": ["UnityEditor", "/Editor/", "\\Editor\\"]},
   "storage": {"state_file": ".code-review/state.json", "report_dir": ".code-review/reports"}
 }

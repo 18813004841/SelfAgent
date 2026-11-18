@@ -14,6 +14,7 @@ from .checks import classify_skill_rules, model_skill_rules, run_compile, run_lo
 from .config import ReviewConfig
 from .git import GitRepository
 from .model_service import LocalModelClient, ModelServiceError
+from .codex_runner import CodexRunner, CodexRunnerError
 from .models import CheckResult, Finding, format_elapsed_time
 from .rules import load_matching
 
@@ -48,7 +49,7 @@ class ReviewPipeline:
     def __init__(self, config: ReviewConfig, progress: Callable[..., None] | None = None, log: Callable[..., None] | None = None, cancel: Callable[[], bool] | None = None) -> None:
         self.config = config
         self.root = Path(config.project["path"]).resolve()
-        self.repo = GitRepository(self.root, config.project.get("remote", "origin"))
+        self.repo = GitRepository(self.root, config.project.get("remote", "origin"), config.project.get("git_timeout_seconds"), config.project.get("clean_before_sync", True))
         self.progress_callback = progress or (lambda **_: None)
         self.log_callback = log or (lambda **_: None)
         self.cancel_callback = cancel or (lambda: False)
@@ -191,10 +192,17 @@ class ReviewPipeline:
         fenced = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
         if fenced:
             text = fenced.group(1).strip()
-        start, end = text.find("{"), text.rfind("}")
-        if start >= 0 and end > start:
-            text = text[start:end + 1]
-        parsed = json.loads(text)
+        start = text.find("{")
+        if start >= 0:
+            # Codex JSONL can contain a valid object followed by diagnostics
+            # or another event. Decode exactly one object instead of using
+            # rfind("}"), which makes json.loads reject trailing content.
+            try:
+                parsed, _ = json.JSONDecoder().raw_decode(text[start:])
+            except json.JSONDecodeError:
+                parsed = json.loads(text)
+        else:
+            parsed = json.loads(text)
         if not isinstance(parsed, dict):
             raise json.JSONDecodeError("model response is not an object", text, 0)
         findings = parsed.get("findings", [])
@@ -202,6 +210,19 @@ class ReviewPipeline:
             raise ValueError("模型返回的 findings 必须是对象数组")
         if any(not str(item.get("message") or "").strip() for item in findings):
             raise ValueError("模型返回的问题 message 为空")
+        allowed_severity = {"critical", "high", "medium", "low"}
+        for item in findings:
+            severity = str(item.get("severity") or "medium").lower()
+            if severity not in allowed_severity:
+                raise ValueError(f"模型返回的问题 severity 无效: {severity}")
+            if item.get("file") is not None and not isinstance(item.get("file"), str):
+                raise ValueError("模型返回的问题 file 必须是字符串或 null")
+            if item.get("line") is not None and (isinstance(item.get("line"), bool) or not isinstance(item.get("line"), int) or item.get("line") < 1):
+                raise ValueError("模型返回的问题 line 必须是正整数或 null")
+            if item.get("confidence") is not None:
+                confidence = item.get("confidence")
+                if isinstance(confidence, bool) or not isinstance(confidence, (int, float)) or not 0 <= confidence <= 1:
+                    raise ValueError("模型返回的问题 confidence 必须在 0 到 1 之间")
         for key in ("open_questions", "test_gaps"):
             if key in parsed and not isinstance(parsed[key], list):
                 raise ValueError(f"模型返回的 {key} 必须是数组")
@@ -234,6 +255,15 @@ class ReviewPipeline:
         for rule in rules:
             sections.extend([f"### {rule.get('path', 'Skill')}", fenced(rule.get("content", ""), "markdown")])
         return "\n\n".join(sections)
+
+    @staticmethod
+    def format_codex_prompt(old_sha: str, current_sha: str, files: list[str], rules: list[dict[str, Any]], allow_extra_rules: bool) -> str:
+        scope = "可以补充 Skill 以外但有代码依据的问题。" if allow_extra_rules else "只报告 Skill 原文覆盖的问题。"
+        skills = "\n\n".join(f"### {item.get('path', 'Skill')}\n{item.get('content', '')}" for item in rules)
+        return ("你正在服务器工程目录中执行一次增量代码审查。请自行使用 git 查看并理解变更，不要修改任何文件，不要执行破坏性命令。\n"
+                f"审查范围：{old_sha}..{current_sha}\n变更文件：{json.dumps(files, ensure_ascii=False)}\n"
+                "请读取相关源码、调用方、生命周期和工程内 AGENTS.md/SKILL.md，必要时扩大搜索范围。" + scope + "\n"
+                + MODEL_OUTPUT_CONTRACT + "\n检查规则：\n" + skills)
 
     @staticmethod
     def finding_matches_skill(item: dict[str, Any], rules: list[dict[str, Any]]) -> bool:
@@ -365,20 +395,26 @@ class ReviewPipeline:
         compile_result = run_compile(self.root, self.config.checks.get("compile_command"))
         if compile_result: result.tool_results.append(compile_result)
         self._done("执行编译检查", result=compile_result or "未配置编译命令")
-        self._step("筛选模型检查范围", model_rules=len(model_rules), files=len(files))
-        model_files, model_diff = self.filter_model_scope(files, diff, model_rules)
-        self._done("筛选模型检查范围", files=len(model_files), diff_chars=len(model_diff), skipped=len(files) - len(model_files))
-        self._step("切分代码内容")
-        chunks = self.split_diff(model_diff, model_files) if model_rules else []; context_files = len({file for chunk in chunks for file in chunk["files"] if self.is_review_script(str(file))})
-        self._done("切分代码内容", chunks=len(chunks), context_files=context_files)
-        self._step("发送代码切片和 Skill 给模型", chunks=len(chunks))
+        configured_backend = self.config.model_service.get("backend")
+        # Legacy/custom configs that only provide api_url continue to use HTTP;
+        # the shipped config explicitly selects the server-local Codex backend.
+        backend = str(configured_backend or ("http" if self.config.model_service.get("api_url") else "codex")).lower()
+        self._step("执行代码审查", backend=backend, files=len(files))
         try:
-            client = LocalModelClient(self.config.model_service.get("api_url", "http://10.0.27.224:8317/v1"), self.config.model_service.get("model", "gpt-5.6-sol"), self.config.model_service.get("timeout_seconds", 300), self.config.model_service.get("max_output_tokens", 2000), self.config.model_service.get("api_key"))
             findings = []
             failed_chunks = []
             allow_extra_rules = bool(self.config.checks.get("allow_extra_rules"))
-            if not model_rules:
-                chunks = []
+            chunks = []
+            if backend == "codex":
+                prompt = self.format_codex_prompt(old, current, files, model_rules, allow_extra_rules)
+                runner = CodexRunner(self.root, self.config.model_service.get("timeout_seconds", 900), self.config.model_service.get("executable"), self.config.model_service.get("model"), self.config.model_service.get("sandbox", "read-only"))
+                parsed = self.parse_model_json(runner.run(prompt, self.cancel_callback))
+                findings.extend(parsed.get("findings", []))
+                result.tool_results.append({"name": "codex-review", "status": "passed", "open_questions": parsed.get("open_questions", []), "test_gaps": parsed.get("test_gaps", [])})
+            else:
+                model_files, model_diff = self.filter_model_scope(files, diff, model_rules)
+                chunks = self.split_diff(model_diff, model_files) if model_rules else []
+                client = LocalModelClient(self.config.model_service.get("api_url", "http://10.0.27.224:8317/v1"), self.config.model_service.get("model", "gpt-5.6-sol"), self.config.model_service.get("timeout_seconds", 300), self.config.model_service.get("max_output_tokens", 2000), self.config.model_service.get("api_key"))
             for index, chunk in enumerate(chunks, 1):
                 chunk["metadata"] = {"commit_sha": current}
                 file_context = ""
@@ -417,22 +453,26 @@ class ReviewPipeline:
                 if not allow_extra_rules:
                     chunk_findings = [item for item in chunk_findings if self.finding_matches_skill(item, model_rules)]
                 findings.extend(chunk_findings); result.tool_results.append({"name":"model-review","chunk":index,"open_questions":parsed.get("open_questions",[]),"test_gaps":parsed.get("test_gaps",[])})
-            self._done("发送代码切片和 Skill 给模型", chunks=len(chunks), findings=len(findings), failed_chunks=failed_chunks)
+            self._done("执行代码审查", backend=backend, chunks=len(chunks), findings=len(findings), failed_chunks=failed_chunks)
             if rules:
                 result.agent_status = "partial" if failed_chunks else "passed"
             if failed_chunks:
                 result.status = "error"
             for item in findings: result.findings.append(Finding("agent", item.get("severity", "medium"), item.get("message", ""), item.get("file"), item.get("line"), item.get("rule"), item.get("suggestion"), item.get("confidence")))
-        except (ModelServiceError, json.JSONDecodeError, OSError) as exc:
+        except (ModelServiceError, CodexRunnerError, json.JSONDecodeError, OSError, ValueError) as exc:
             result.agent_status = "unavailable"
             result.warnings.append(f"模型服务不可用或返回格式无效: {exc}")
             result.status = "error"
-        for finding in result.findings:
-            attribution = self.repo.blame_line(current, finding.file, finding.line)
-            finding.author = attribution["author"] if attribution else None
-            finding.commit_sha = attribution["sha"] if attribution else None
-            if not attribution:
-                result.warnings.append(f"无法确定问题行归属：{finding.file}:{finding.line}，修改人和提交 SHA 标记为未知")
+        # Blaming each finding one by one is prohibitively slow on large Unity
+        # repositories. Keep it opt-in; the review result is complete without
+        # blocking report persistence on hundreds of Git subprocesses.
+        if self.config.checks.get("enrich_attribution", False):
+            for finding in result.findings:
+                attribution = self.repo.blame_line(current, finding.file, finding.line)
+                finding.author = attribution["author"] if attribution else None
+                finding.commit_sha = attribution["sha"] if attribution else None
+                if not attribution:
+                    result.warnings.append(f"无法确定问题行归属：{finding.file}:{finding.line}，修改人和提交 SHA 标记为未知")
         if compile_result and compile_result["status"] == "failed": result.status = "failed"
         threshold = str(self.config.checks.get("failure_threshold", "high")).lower()
         levels = {"low": 1, "medium": 2, "high": 3, "critical": 4}

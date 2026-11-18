@@ -1,10 +1,8 @@
-import { load } from "../app.js";
 import { createPageScope } from "../shared/page-scope.js";
 let scope;
 const fetch = (...args) => scope.fetch(...args);
 const setInterval = (...args) => scope.setInterval(...args);
 async function initTestScheduler() {
-  document.getElementById("test-back").onclick = () => load("scheduler");
   async function refresh() {
     try {
       const r = await fetch(

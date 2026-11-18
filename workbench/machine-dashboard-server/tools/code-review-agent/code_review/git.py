@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import logging
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -11,15 +12,26 @@ class GitError(RuntimeError): pass
 
 
 class GitRepository:
-    def __init__(self, root: Path, remote: str = "origin") -> None:
+    def __init__(self, root: Path, remote: str = "origin", timeout: float | None = None, clean_before_sync: bool = True) -> None:
         self.root, self.remote = root.resolve(), remote
+        self.timeout = timeout or float(os.environ.get("WORKBENCH_CODE_REVIEW_GIT_TIMEOUT_SECONDS", "300"))
+        self.clean_before_sync = clean_before_sync
 
     def run(self, *args: str) -> str:
         command = ["git", *args]
         logger = logging.getLogger("code-review.pipeline")
         logger.info("git.command args=%s", command)
+        lock_path = self.root / ".git" / "index.lock"
+        if args and args[0] in {"checkout", "pull", "merge", "reset", "add", "commit"} and lock_path.exists():
+            try:
+                import time
+                age_seconds = max(0, int(time.time() - lock_path.stat().st_mtime))
+            except OSError:
+                age_seconds = None
+            age_text = f"，已存在约 {age_seconds} 秒" if age_seconds is not None else ""
+            raise GitError(f"Git 仓库存在锁文件 {lock_path}{age_text}。请确认没有其他 Git/Unity 操作后手动删除该锁文件，再重试；代码检查不会自动删除锁文件")
         try:
-            completed = subprocess.run(command, cwd=self.root, encoding="utf-8", errors="replace", capture_output=True, timeout=60)
+            completed = subprocess.run(command, cwd=self.root, encoding="utf-8", errors="replace", capture_output=True, timeout=self.timeout)
         except subprocess.TimeoutExpired as exc:
             detail = ""
             for value in (exc.stderr, exc.stdout):
@@ -29,9 +41,11 @@ class GitRepository:
                 detail = detail.strip()
                 if detail:
                     break
-            message = "git " + " ".join(args) + " 超时（60秒）"
+            message = "git " + " ".join(args) + f" 超时（{self.timeout:g}秒）"
             if detail:
                 message += "：" + detail
+            if "would be overwritten by merge" in detail or "would be overwritten by checkout" in detail:
+                message = "Git 同步被本地未提交或未跟踪文件阻止：" + detail
             logger.error("git.timeout command=%s detail=%s", command, detail)
             raise GitError(message) from exc
         stderr = completed.stderr or ""
@@ -44,15 +58,8 @@ class GitRepository:
         return stdout.strip()
 
     def sync(self, branch: str) -> str:
-        self.run("checkout", branch)
-        # A local-only clone is valid for the review service. Fetch/pull only
-        # when the configured remote exists; otherwise inspect the current
-        # local branch without pretending network access is required.
-        remotes = self.run("remote").splitlines()
-        if self.remote in remotes:
-            self.run("fetch", self.remote, branch)
-            self.run("pull", "--ff-only", self.remote, branch)
-        return self.run("rev-parse", "HEAD")
+        # All callers must use the same cleanup policy, including CLI callers.
+        return self.sync_with_trace(branch)[0]
 
     def sync_with_trace(self, branch: str) -> tuple[str, list[str]]:
         operations: list[str] = []
@@ -65,11 +72,21 @@ class GitRepository:
                 reason = str(exc) + chr(10) + "已执行操作：" + "; ".join(operations)
                 raise GitError(reason) from exc
 
+        # The review checkout is disposable by contract. Clear tracked edits
+        # and untracked files before syncing so developer worktrees cannot
+        # block the scheduled review. Ignored files (Unity caches, secrets)
+        # remain untouched by clean -fd.
+        if self.clean_before_sync:
+            execute("reset", "--hard", "HEAD")
+            execute("clean", "-fd")
         execute("checkout", branch)
         remotes = self.run("remote").splitlines()
         if self.remote in remotes:
             execute("fetch", self.remote, branch)
-            execute("pull", "--ff-only", self.remote, branch)
+            # The checkout is disposable. Reset directly to the fetched ref;
+            # pull performs a merge/index rewrite and can block on large Unity
+            # trees even after local edits were cleaned.
+            execute("reset", "--hard", f"{self.remote}/{branch}")
         return execute("rev-parse", "HEAD"), operations
 
     def commit_summary(self, sha: str) -> dict[str, str]:

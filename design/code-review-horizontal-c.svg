@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs><style>
+.t{font-family:"Segoe UI","Microsoft YaHei",Arial,sans-serif;fill:#20302d}.muted{fill:#6c7e78}.small{font-size:13px}.label{font-size:12px;font-weight:700;letter-spacing:.08em;fill:#6c7e78}.h{font-size:22px;font-weight:700}.body{font-size:14px}.mono{font-family:Consolas,monospace;font-size:13px;fill:#c6ddd0}.card{fill:#fff;stroke:#d9e5df}.input{fill:#f8fbf9;stroke:#c9d9d1}.teal{fill:#0f766e}.log{fill:#172522}</style></defs>
+<rect width="1600" height="900" fill="#eaf1ed"/>
+<text x="72" y="58" class="t" font-size="14" font-weight="700" fill="#0f766e" letter-spacing="2">CODE REVIEW · HORIZONTAL WORKSPACE</text>
+<text x="72" y="96" class="t" font-size="32" font-weight="700">代码检查 · 横版双栏工作区</text>
+<text x="72" y="124" class="t muted body">配置固定在左侧，执行状态与操作位于上方，右侧日志获得完整横向空间。</text>
+<rect x="72" y="164" width="1456" height="660" rx="16" class="card"/>
+<!-- top status bar -->
+<rect x="72" y="164" width="1456" height="94" rx="16" fill="#f7faf8"/>
+<text x="104" y="198" class="t label">代码检查任务</text><text x="104" y="231" class="t h">Unity 代码每日检查</text>
+<rect x="478" y="195" width="82" height="28" rx="14" fill="#dff3e7"/><text x="498" y="214" class="t small" fill="#176b45">已成功</text>
+<text x="610" y="211" class="t muted small">上次运行 2026-11-18 20:40:41 · 用时 02:18</text>
+<rect x="1210" y="188" width="122" height="44" rx="8" fill="#0f766e"/><text x="1240" y="215" fill="#fff" class="t" font-size="14" font-weight="700">立即执行</text>
+<rect x="1344" y="188" width="82" height="44" rx="8" fill="#fff" stroke="#c9d9d1"/><text x="1368" y="215" class="t" font-size="14" font-weight="700">停止</text>
+<!-- left pane -->
+<rect x="96" y="286" width="394" height="504" rx="12" fill="#f5f9f6"/>
+<text x="124" y="326" class="t" font-size="18" font-weight="700">检查配置</text>
+<text x="124" y="360" class="t label">工程地址</text><rect x="124" y="374" width="338" height="40" rx="7" class="input"/><text x="138" y="399" class="t small">D:\koa-client-code</text>
+<text x="124" y="454" class="t label">GIT 分支</text><rect x="124" y="468" width="160" height="40" rx="7" class="input"/><text x="138" y="493" class="t small">master</text>
+<text x="124" y="548" class="t label">失败级别</text><rect x="124" y="562" width="338" height="40" rx="7" class="input"/><text x="138" y="587" class="t small">高</text>
+<text x="124" y="640" class="t label">SKILL 路径</text><rect x="124" y="654" width="338" height="40" rx="7" class="input"/><text x="138" y="679" class="t small">unity-code-review</text>
+<text x="124" y="730" class="t muted small">☐ 允许 Skill 以外的规则检查</text>
+<!-- right pane -->
+<rect x="514" y="286" width="990" height="504" rx="12" class="log"/>
+<text x="546" y="326" fill="#fff" class="t" font-size="18" font-weight="700">实时执行日志</text><text x="1350" y="326" class="mono">自动滚动 · 运行中</text>
+<line x1="546" y1="348" x2="1472" y2="348" stroke="#2b4740"/>
+<text x="546" y="382" class="mono">[20:40:41] 执行任务  开始执行代码检查</text>
+<text x="546" y="414" class="mono">[20:40:42] 进度更新  已读取工程配置</text>
+<text x="546" y="446" class="mono">[20:40:44] 进度更新  正在检查项目文件  2 / 4</text>
+<text x="546" y="478" class="mono">[20:41:12] 进度更新  正在运行规则：unity-code-review</text>
+<text x="546" y="510" class="mono">[20:42:18] 执行结果  检查成功，发现 0 个阻断问题</text>
+<text x="546" y="748" class="mono">▌</text>
+<!-- annotations -->
+<path d="M490 540h24" stroke="#0f766e" stroke-width="2" stroke-dasharray="5 5"/><text x="96" y="862" class="t muted small">横版布局建议：左栏 394px 固定宽度 · 日志区域自适应 · 顶部状态栏保持单行 · 低于 980px 时再切回纵向布局</text>
+</svg>

@@ -48,11 +48,23 @@ function applyPermissions(root = document) {
 }
 let activeModule;
 let navigation = 0;
-export async function load(page) {
+const pageHistory = [];
+let restoringHistory = false;
+function updateBackButton() {
+  const button = document.querySelector("#page-back");
+  if (!button) return;
+  button.hidden = pageHistory.length <= 1;
+}
+export async function load(page, options = {}) {
   const parts = String(page).split("?");
   const name = parts[0];
   const query = parts[1] || "";
   if (!(name in pageTitles)) return;
+  if (!options.fromHistory && !restoringHistory) {
+    const current = pageHistory[pageHistory.length - 1];
+    if (current !== name) pageHistory.push(name);
+  }
+  updateBackButton();
   const version = ++navigation;
   activeModule?.unmount();
   activeModule = undefined;
@@ -78,7 +90,7 @@ export async function load(page) {
 }
 async function boot() {
   const session = await fetch("/api/auth/session", {cache:"no-store"}).then(r=>r.json());
-  if (!session.user) { document.querySelector("#sidebar").hidden=true; await load("login"); return; }
+  if (!session.user) { document.querySelector("#sidebar").hidden=true; pageHistory.length = 0; await load("login"); return; }
   currentUser = session.user;
   new MutationObserver(() => applyPermissions()).observe(document.querySelector("#content"), {childList:true, subtree:true});
   const allowed = new Set(session.user.modules); document.querySelector("#sidebar").hidden=false;
@@ -91,8 +103,17 @@ async function boot() {
     document.querySelector("#content").innerHTML = `<section class="access-denied card"><div class="access-icon">🔒</div><h1>暂无功能权限</h1><p>当前账号还没有开放任何功能，请联系管理员授权后再访问工作台。</p><p class="muted">账号：${session.user.display_name || session.user.username}</p></section>`;
     return;
   }
+  pageHistory.length = 0;
   await load(first.dataset.page);
 }
+document.querySelector("#page-back").onclick = () => {
+  if (!pageHistory.length) return;
+  pageHistory.pop();
+  const previous = pageHistory[pageHistory.length - 1] || "overview";
+  restoringHistory = true;
+  load(previous, { fromHistory: true }).finally(() => { restoringHistory = false; updateBackButton(); });
+};
+window.addEventListener("popstate", () => {});
 document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-page]");
   if (button) load(button.dataset.page);

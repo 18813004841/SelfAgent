@@ -1,4 +1,3 @@
-import { load } from "../app.js";
 import { createPageScope } from "../shared/page-scope.js";
 import { formatReviewLogData } from "../shared/review-log.js";
 let scope;
@@ -134,7 +133,7 @@ async function initCodeReview() {
     const events = ((x.log && x.log.events) || [])
       .map(
         (e) =>
-          `[${e.time}] ${e.kind === "execute" ? "执行任务" : e.kind === "progress" ? "进度更新" : "执行结果"} ${e.message}${e.data && Object.keys(e.data).length ? "\n" + JSON.stringify(e.data, formatReviewLogData, 2) : ""}`,
+          `[${e.time}] ${e.kind === "execute" ? "执行任务" : e.kind === "progress" ? "进度更新" : "执行结果"} ${e.message}${e.data && Object.keys(e.data).length ? "\n" + formatReviewLogValue(e.data) : ""}`,
       )
       .join("\n");
     const nextLogText = events || "本次还没有执行日志";
@@ -153,6 +152,26 @@ async function initCodeReview() {
       }
     }
   }
+
+  function formatReviewLogValue(value) {
+    if (typeof value === "string") {
+      try { return JSON.stringify(JSON.parse(value), formatReviewLogData, 2); } catch (_) {
+        const normalized = value
+          .replace(/^GitError\(['"]?/, "GitError: ")
+          .replace(/['"]\)?$/, "")
+          .replaceAll("\\r\\n", "\n")
+          .replaceAll("\\n", "\n")
+          .replaceAll('\\"', '"')
+          .replaceAll("\\'", "'");
+        // Legacy records stored repr(error). Keep them readable while still
+        // preserving the original message when it is not JSON.
+        return normalized;
+      }
+    }
+    if (value && typeof value === "object")
+      return JSON.stringify(value, formatReviewLogData, 2);
+    return String(value ?? "");
+  }
   async function refresh(statusOnly = false) {
     const d = await fetch(
       "/api/scheduler-tasks/code-review/" +
@@ -163,7 +182,6 @@ async function initCodeReview() {
     if (!d.ok || !d.task) throw Error(d.error || "配置读取失败");
     render(d.task);
   }
-  document.getElementById("back-scheduler").onclick = () => load("scheduler");
   document.getElementById("review-choose").onclick = async () => {
     msg.textContent = "正在打开目录选择窗口...";
     try {

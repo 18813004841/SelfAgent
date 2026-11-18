@@ -415,6 +415,7 @@ class Handler(BaseHTTPRequestHandler):
                 data = index_html().encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Cache-Control", "no-store")
                 self.send_header("Content-Length", str(len(data)))
                 self.end_headers()
                 self.wfile.write(data)
@@ -426,7 +427,7 @@ class Handler(BaseHTTPRequestHandler):
                     self.send_json(404, {"ok": False, "error": "static file not found"}); return
                 data = file_path.read_bytes()
                 content_type = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "application/javascript; charset=utf-8"}.get(file_path.suffix, "application/octet-stream")
-                self.send_response(200); self.send_header("Content-Type", content_type); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
+                self.send_response(200); self.send_header("Content-Type", content_type); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
             if path == "/api/scheduler-tasks":
                 self.send_json(200, {"ok": True, "tasks": [task_payload()]}); return
             if path == "/api/scheduler-tasks/code-review":

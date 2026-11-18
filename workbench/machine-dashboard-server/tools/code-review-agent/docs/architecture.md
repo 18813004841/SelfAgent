@@ -20,4 +20,4 @@ flowchart TD
 
 ## 边界
 
-`code_review` 不依赖 `OpenAiAgent`，不启动模型服务，不执行模型返回的命令。模型服务只通过 `model_service.py` 的 HTTP 客户端访问。
+`code_review` 不依赖 `OpenAiAgent`，不启动模型服务，也不执行模型返回的命令。默认通过服务器已登录的 Codex CLI 在目标工程目录内审查；兼容模式才通过 `model_service.py` 访问 OpenAI 兼容 HTTP 服务。

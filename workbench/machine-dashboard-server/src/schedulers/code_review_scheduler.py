@@ -60,7 +60,7 @@ class CodeReviewScheduler(SchedulerBase):
         project_path = config["project_path"]
         branch = config["branch"]
         context.metadata.update(project_path=project_path, branch=branch, skill_paths=config["skill_paths"], allow_extra_rules=config["allow_extra_rules"])
-        append("execute", "开始执行代码检查", project_path=project_path, branch=branch, skill_paths=config["skill_paths"], allow_extra_rules=config["allow_extra_rules"])
+        append("execute", "开始执行代码检查", implementation="codex-review-v3", project_path=project_path, branch=branch, skill_paths=config["skill_paths"], allow_extra_rules=config["allow_extra_rules"])
         logger.info("开始执行代码检查 schedule_id=%s project_path=%s branch=%s", context.run_id, project_path, branch)
         context.progress(1, 4, "已读取工程配置", project_path=project_path, branch=branch, skill_paths=config["skill_paths"], allow_extra_rules=config["allow_extra_rules"])
         adapter = _load_tool_adapter()
@@ -126,10 +126,11 @@ class CodeReviewScheduler(SchedulerBase):
                 if not finished:
                     finish("cancelled", {"error": "用户终止"})
                 return {"status": "cancelled"}
-            append("result", "执行失败", status="failed", error=repr(exc))
+            error_data = {"type": type(exc).__name__, "message": str(exc)}
+            append("result", "执行失败", status="failed", error=error_data)
             logger.exception("代码检查执行失败 schedule_id=%s", schedule_id)
             if not finished:
-                finish("failed", {"error": repr(exc)})
+                finish("failed", {"status": "failed", "error": error_data})
             raise
 
 
@@ -138,7 +139,11 @@ def sync_schedule() -> None:
     logger.debug("sync_schedule.begin")
     scheduler = CodeReviewScheduler()
     config = scheduler.display_data()
-    ScheduleRepository().sync_code_review((scheduler.tool_id, "代码检查", "scheduler", str(TOOL_ROOT / "code_review_scheduler.py"), str(TOOL_ROOT)), (scheduler.schedule_id, scheduler.name, scheduler.tool_id, "daily", scheduler.run_at, "{}", 900, 0, 1, scheduler.next_run_at(), "scheduled", "scheduler", 4))
+    repository = ScheduleRepository()
+    repository.sync_code_review((scheduler.tool_id, "代码检查", "scheduler", str(TOOL_ROOT / "code_review_scheduler.py"), str(TOOL_ROOT)), (scheduler.schedule_id, scheduler.name, scheduler.tool_id, "daily", scheduler.run_at, "{}", 900, 0, 1, scheduler.next_run_at(), "scheduled", "scheduler", 4))
+    # Upgrade historical registrations created before this module moved under
+    # the workbench.  Their stale tool entry must never dispatch old code.
+    repository.migrate_code_review_entries(str(TOOL_ROOT / "code_review_scheduler.py"), str(TOOL_ROOT))
     logger.info("代码检查调度器已同步 schedule_id=%s", scheduler.schedule_id)
     return config
 
@@ -163,6 +168,11 @@ def task_payload(schedule_id: str | None = None) -> dict[str, Any]:
         logger.exception("读取代码检查任务参数失败 schedule_id=%s", schedule_id)
         pass
     data = scheduler.display_data(db_param)
+    raw_error = row["last_error"] if row else None
+    try:
+        parsed_error = json.loads(raw_error) if isinstance(raw_error, str) and raw_error.strip() else raw_error
+    except json.JSONDecodeError:
+        parsed_error = {"type": "LegacyError", "message": raw_error}
     data.update({
         "id": schedule_id,
         "name": row["name"] if row else scheduler.name,
@@ -170,6 +180,7 @@ def task_payload(schedule_id: str | None = None) -> dict[str, Any]:
         "scheduler_type": row["scheduler_type"] if row else scheduler.scheduler_type,
         "run_at": row["run_time"] if row and row["run_time"] else (row["schedule_expr"] if row else scheduler.run_at),
         "last_status": row["last_status"] if row else None,
+        "last_error": parsed_error,
         "progress_current": row["progress_current"] if row else 0,
         "progress_total": row["progress_total"] if row else 4,
         "log": read(schedule_id),
@@ -183,9 +194,15 @@ def task_status_payload(schedule_id: str | None = None) -> dict[str, Any]:
     """仅返回运行状态和执行日志，供页面轮询使用，不读取或重建配置。"""
     schedule_id = schedule_id or CodeReviewScheduler.schedule_id
     row = ScheduleRepository().get_schedule(schedule_id)
+    raw_error = row["last_error"] if row else None
+    try:
+        parsed_error = json.loads(raw_error) if isinstance(raw_error, str) and raw_error.strip() else raw_error
+    except json.JSONDecodeError:
+        parsed_error = {"type": "LegacyError", "message": raw_error}
     status = {
         "id": schedule_id,
         "last_status": row["last_status"] if row else None,
+        "last_error": parsed_error,
         "progress_current": row["progress_current"] if row else 0,
         "progress_total": row["progress_total"] if row else 4,
         "log": read(schedule_id),

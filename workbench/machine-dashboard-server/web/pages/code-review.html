@@ -1,53 +1,17 @@
-<div class="card review-bar">
-  <div class="review-field">
-    <span class="review-label"> 任务定时 </span>
-    <b id="review-time"> 每天 04:00 </b>
+<section class="review-workspace">
+  <header class="review-header">
+    <div><span class="review-eyebrow">代码检查任务</span><h1>Unity 代码每日检查</h1><span id="review-last-success" class="review-success">上次运行：暂无</span></div>
+    <div class="review-header-actions"><span id="review-result" class="review-result">执行结果：未执行</span><button type="button" id="review-run" class="primary">立即执行</button><button type="button" id="review-stop">停止</button></div>
+  </header>
+  <div class="review-main">
+    <aside class="review-config"><h2>检查配置</h2><p class="review-label">任务定时 · <b id="review-time">每天 04:00</b></p>
+      <div class="review-field"><label class="review-label" for="review-project-path">工程地址</label><div class="review-control"><input id="review-project-path" placeholder="未配置" /><button type="button" id="review-choose">选择目录</button></div></div>
+      <div class="review-field"><label class="review-label" for="review-branch">Git 分支</label><input id="review-branch" placeholder="未配置" /></div>
+      <div class="review-field"><label class="review-label" for="review-failure-threshold">失败级别</label><select id="review-failure-threshold"><option value="low">低</option><option value="medium">中</option><option value="high" selected>高</option></select></div>
+      <div class="review-field"><span class="review-label">Skill 路径</span><div id="review-skill-paths"></div><button type="button" id="review-skill-add">添加 Skill 路径</button></div>
+      <label class="review-toggle"><input type="checkbox" id="review-extra-rules" />允许 Skill 以外的规则检查</label>
+      <div class="review-config-actions"><button type="button" id="review-save">保存配置</button><button type="button" id="review-clear-history">清空历史</button></div><span id="review-config-msg" hidden></span>
+    </aside>
+    <section class="review-log-panel"><div class="review-log-heading"><h2>实时执行日志</h2><span>自动滚动</span></div><pre class="task-log" id="review-log">本次还没有执行日志</pre></section>
   </div>
-  <div class="review-field review-path">
-    <span class="review-label"> 工程地址 </span>
-    <div class="review-control">
-      <input id="review-project-path" placeholder="未配置" />
-      <button type="button" type="button" id="review-choose">选择目录</button>
-    </div>
-  </div>
-  <div class="review-field">
-    <span class="review-label"> Git 分支 </span>
-    <input id="review-branch" placeholder="未配置" />
-  </div>
-  <div class="review-actions">
-    <span class="review-result" id="review-result"> 执行结果：未执行 </span>
-    <span class="review-success" id="review-last-success"> 上次成功检查：暂无 </span>
-    <button type="button" id="review-save">写入配置</button>
-    <button type="button" class="primary" id="review-run">执行</button>
-    <button type="button" type="button" id="review-stop">终止</button>
-    <button type="button" id="review-clear-history">清空历史</button>
-    <button type="button" id="back-scheduler">返回</button>
-    <span id="review-config-msg" hidden> </span>
-  </div>
-</div>
-<div class="card review-skill">
-  <div class="review-field">
-    <span class="review-label"> Skill 路径 </span>
-    <div id="review-skill-paths"></div>
-    <button type="button" type="button" id="review-skill-add">添加 Skill 路径</button>
-    <label class="review-toggle">
-      <input type="checkbox" id="review-extra-rules" />
-      允许 Skill 以外的规则检查
-    </label>
-    <label class="review-toggle">
-      失败级别
-      <select id="review-failure-threshold">
-        <option value="low">低</option>
-        <option value="medium">中</option>
-        <option value="high" selected>高</option>
-      </select>
-    </label>
-  </div>
-</div>
-<div class="card">
-  <h3>执行日志</h3>
-  <pre class="task-log" id="review-log">
-        本次还没有执行日志
-    </pre
-  >
-</div>
+</section>

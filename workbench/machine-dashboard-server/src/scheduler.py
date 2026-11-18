@@ -1,11 +1,15 @@
 import time
+import os
+from datetime import datetime
+# The scheduler is a separate process and cannot rely on server.py having
+# initialized the shared log-session timestamp.
+os.environ.setdefault("LOCAL_WORKBENCH_START_TIMESTAMP", datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
 from concurrent.futures import ThreadPoolExecutor
 _POOL = ThreadPoolExecutor(max_workers=3)
 _PENDING = {}
 from datetime import datetime, timedelta
 from core.storage import decode_schedule, PID_PATH
 from core.repositories import ScheduleRepository
-import os
 from core.Log import AppLogger
 from schedulers.code_review_scheduler import CodeReviewScheduler, sync_schedule
 from schedulers.scheduler_controller import SchedulerController
@@ -74,7 +78,8 @@ def due_loop(interval=5):
 
 
 if __name__ == '__main__':
-    PID_PATH.parent.mkdir(parents=True, exist_ok=True); PID_PATH.write_text(str(os.getpid()), encoding='utf-8')
+    PID_PATH.parent.mkdir(parents=True, exist_ok=True)
+    PID_PATH.write_text(str(os.getpid()), encoding='utf-8')
     # 记录启动进程，便于确认后台调度器实例。
     logger.info("调度器已启动 script=%s pid=%s pid_file=%s", __file__, os.getpid(), PID_PATH)
     try:

@@ -176,8 +176,10 @@ class ScheduleRepository:
 
     def mark_code_review_finished(self, schedule_id, started, status, result):
         with closing(connect()) as db:
-            error = None if status == "succeeded" else str(result)
-            db.execute("INSERT INTO runs(schedule_id,started_at,finished_at,status,output,error) VALUES(?,?,?,?,?,?)", (schedule_id, started, __import__('time').time(), status, str(result), error))
+            import json
+            output = result if isinstance(result, str) else json.dumps(result, ensure_ascii=False, indent=2, default=str)
+            error = None if status == "succeeded" else json.dumps(result, ensure_ascii=False, indent=2, default=str)
+            db.execute("INSERT INTO runs(schedule_id,started_at,finished_at,status,output,error) VALUES(?,?,?,?,?,?)", (schedule_id, started, __import__('time').time(), status, output, error))
             db.execute("UPDATE schedules SET last_status=?,progress_current=progress_total,last_error=? WHERE id=?", (status, error, schedule_id))
             db.commit()
 
@@ -196,6 +198,17 @@ class ScheduleRepository:
             db.execute("INSERT OR REPLACE INTO tools(tool_id,name,type,entry,workdir,enabled) VALUES(?,?,?,?,?,1)", tool_values)
             db.execute("INSERT INTO schedules(id,name,tool_id,schedule_type,schedule_expr,args_json,timeout,retry,enabled,next_run,task_type,dispatcher,progress_total) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,tool_id=excluded.tool_id,schedule_type=excluded.schedule_type,schedule_expr=excluded.schedule_expr,args_json=excluded.args_json", schedule_values)
             db.commit()
+
+    def migrate_code_review_entries(self, entry: str, workdir: str) -> int:
+        """Point legacy code-review registrations at the current implementation."""
+        with closing(connect()) as db:
+            db.execute("UPDATE tools SET entry=?,workdir=? WHERE tool_id=?", (entry, workdir, "code-review-agent"))
+            cur = db.execute(
+                "UPDATE schedules SET scheduler_type='code_review_scheduler' "
+                "WHERE tool_id='code-review-agent'"
+            )
+            db.commit()
+            return cur.rowcount
 
     def get_schedule(self, schedule_id):
         with closing(connect()) as db:

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#375646" flood-opacity=".12"/></filter>
+    <style>
+      .font{font-family:"Segoe UI","Microsoft YaHei",Arial,sans-serif}.title{font-size:22px;font-weight:700;fill:#1f2933}.body{font-size:14px;fill:#52645f}.small{font-size:12px;fill:#6b7c76}.label{font-size:13px;font-weight:700;fill:#33443f}
+    </style>
+  </defs>
+  <rect width="1440" height="900" fill="#eef3f0"/>
+  <text x="72" y="58" class="font" font-size="14" font-weight="700" fill="#0f766e" letter-spacing="2">WORKBENCH UI CONCEPT · 01</text>
+  <text x="72" y="96" class="font" font-size="32" font-weight="700" fill="#1f2933">统一左上角返回键</text>
+  <text x="72" y="125" class="font body">把所有子页面的返回操作收敛到顶部标题栏，位置固定、语义清晰、键盘可达。</text>
+  <!-- Browser frame -->
+  <g filter="url(#shadow)">
+    <rect x="72" y="170" width="1296" height="650" rx="16" fill="#fff"/>
+    <rect x="72" y="170" width="1296" height="42" rx="16" fill="#f5f8f6"/>
+    <circle cx="100" cy="191" r="6" fill="#d5e0da"/><circle cx="122" cy="191" r="6" fill="#d5e0da"/><circle cx="144" cy="191" r="6" fill="#d5e0da"/>
+    <rect x="72" y="212" width="220" height="608" fill="#e7eeea"/>
+    <text x="100" y="252" class="font" font-size="18" font-weight="700" fill="#1f2933">本地工作台</text>
+    <g class="font body"><text x="100" y="300">总览</text><text x="100" y="344">定时任务</text><text x="100" y="388">任务</text><text x="100" y="432">日程</text><text x="100" y="476">文档</text><text x="100" y="520">管理</text></g>
+    <rect x="88" y="540" width="188" height="42" rx="8" fill="#d5e7de"/><text x="100" y="566" class="font" font-size="14" fill="#0f766e">设置</text>
+    <!-- header -->
+    <rect x="292" y="212" width="1076" height="86" fill="#fff"/>
+    <line x1="292" y1="298" x2="1368" y2="298" stroke="#dbe5df"/>
+    <!-- back button -->
+    <rect x="320" y="237" width="32" height="32" rx="6" fill="#fff"/>
+    <path d="M329 253h15m-15 0 7-7m-7 7 7 7" fill="none" stroke="#0f766e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="382" y="258" class="font title">任务详情</text>
+    <!-- content -->
+    <rect x="320" y="332" width="1016" height="180" rx="12" fill="#fff" stroke="#dbe5df"/>
+    <text x="348" y="374" class="font" font-size="18" font-weight="700" fill="#1f2933">Codex 任务 #1048</text>
+    <rect x="348" y="398" width="76" height="26" rx="13" fill="#dff3e7"/><text x="362" y="416" class="font small" fill="#176b45">运行中</text>
+    <text x="348" y="460" class="font body">固定返回入口，用户无需在内容区寻找“返回任务列表”。</text>
+    <rect x="320" y="548" width="1016" height="188" rx="12" fill="#f5f8f6"/>
+    <text x="348" y="590" class="font label">交互规范</text>
+    <g class="font body"><text x="348" y="624">• 固定在标题栏最左侧，标题紧随其后</text><text x="348" y="654">• 44px 高点击区域，支持鼠标、触摸与键盘 Tab</text><text x="348" y="684">• hover 使用浅绿色底；focus 使用 2px 青绿色描边</text><text x="348" y="714">• 返回历史页；无历史时回到工作台总览</text></g>
+  </g>
+  <!-- annotations -->
+  <path d="M362 252h191" stroke="#0f766e" stroke-width="1.5" stroke-dasharray="5 5"/><circle cx="362" cy="252" r="4" fill="#0f766e"/>
+  <rect x="560" y="222" width="260" height="62" rx="10" fill="#0f766e"/><text x="580" y="248" class="font" font-size="13" font-weight="700" fill="#fff">统一入口</text><text x="580" y="269" class="font" font-size="12" fill="#dff3e7">所有子页面共用同一位置与样式</text>
+  <text x="72" y="862" class="font small">建议组件名：.page-back · 纯图标返回 · aria-label：返回上一页 · 点击区域：32 × 32 px</text>
+</svg>

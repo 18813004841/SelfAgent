@@ -132,9 +132,36 @@ header {
   height: 72px;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
-  padding: 24px 36px;
+  padding: 14px 36px;
   font-size: 20px;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.page-back {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 600 13px inherit;
+  cursor: pointer;
+}
+.page-back:hover { background: var(--color-sidebar-hover); color: var(--color-primary); }
+.page-back:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.page-back span:first-child {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-primary);
+  text-shadow: 0 0 0.01px currentColor;
 }
 #content {
   padding: 32px 36px 48px;
@@ -142,6 +169,7 @@ header {
   min-width: 0;
   overflow-x: hidden;
 }
+#content:has(.review-workspace) { max-width: none; }
 .card {
   background: var(--color-surface);
   padding: 22px;
@@ -511,3 +539,36 @@ body { line-height: 1.5; }
 
 .auth-card { max-width:420px; margin:12vh auto; }
 .agent-chat-answer { white-space: pre-wrap; }
+
+/* Code review: horizontal configuration and execution workspace. */
+.review-workspace { display:flex; flex-direction:column; gap:16px; }
+.review-header { height:auto; display:flex; align-items:center; justify-content:space-between; gap:24px; padding:24px 28px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:12px; }
+.review-header h1 { margin:6px 0 8px; font-size:22px; }
+.review-eyebrow { color:var(--color-text-subtle); font-size:12px; font-weight:700; }
+.review-header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; flex-shrink:0; }
+.review-workspace button { font:inherit; padding:8px 12px; border:1px solid var(--color-border-strong); border-radius:7px; background:var(--color-surface); color:var(--color-text); cursor:pointer; white-space:nowrap; }
+.review-workspace button:hover { background:var(--color-sidebar-hover); }
+.review-workspace button.primary { background:var(--color-primary); color:white; border-color:var(--color-primary); }
+.review-workspace button:disabled { opacity:.5; cursor:default; }
+.review-workspace button:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
+.review-header .review-success { display:block; max-width:680px; font-size:12px; font-weight:400; overflow-wrap:anywhere; }
+.review-main { display:grid; grid-template-columns:360px minmax(0,1fr); gap:16px; align-items:start; width:100%; }
+.review-config { min-width:0; padding:24px; background:var(--color-surface-muted); border:1px solid var(--color-border); border-radius:12px; }
+.review-config h2, .review-log-panel h2 { margin:0 0 22px; font-size:18px; }
+.review-config .review-field { margin-bottom:20px; }
+.review-config label { margin:0; }
+.review-config input, .review-config select, .review-config #review-branch, .review-config #review-project-path { width:100%; min-width:0; margin:0; }
+.review-config input[type="checkbox"] { width:auto; flex-shrink:0; }
+.review-config .review-control input { width:0; }
+.review-config .review-skill-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:6px; align-items:center; margin-bottom:8px; }
+.review-config .review-skill-row input { width:100%; min-width:0; }
+.review-config .review-skill-row button { padding:7px 9px; font-size:12px; }
+.review-config-actions { display:flex; gap:8px; margin-top:24px; padding-top:20px; border-top:1px solid var(--color-border); }
+.review-config-actions button { flex:1; }
+.review-log-panel { min-width:0; padding:24px; background:#172522; border-radius:12px; }
+.review-log-heading { display:flex; align-items:baseline; justify-content:space-between; gap:16px; color:#c6ddd0; }
+.review-log-heading h2 { color:#fff; }
+.review-log-heading span { font-size:12px; }
+.review-log-panel .task-log { height:640px; min-height:360px; max-height:75vh; padding:16px 0 0; border-top:1px solid #345048; background:transparent; color:#c6ddd0; border-radius:0; font:13px/1.7 Consolas,monospace; }
+@media (max-width:1100px) { .review-header { flex-wrap:wrap; } .review-main { grid-template-columns:300px minmax(0,1fr); } }
+@media (max-width:900px) { .review-main { grid-template-columns:1fr; } .review-header-actions { flex-shrink:1; justify-content:flex-start; } }
