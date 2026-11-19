@@ -538,6 +538,11 @@ body { line-height: 1.5; }
 @media (max-width:680px) { .settings-actions { align-items:stretch; flex-direction:column; } }
 
 .auth-card { max-width:420px; margin:12vh auto; }
+.profile-card { max-width:620px; }
+.profile-details { display:grid; gap:12px; margin:0 0 24px; }
+.profile-details div { display:grid; grid-template-columns:120px 1fr; gap:16px; padding-bottom:10px; border-bottom:1px solid var(--color-border); }
+.profile-details dt { color:var(--color-text-muted); }
+.profile-details dd { margin:0; font-weight:600; }
 .agent-chat-answer { white-space: pre-wrap; }
 
 /* Code review: horizontal configuration and execution workspace. */

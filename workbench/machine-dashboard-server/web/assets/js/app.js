@@ -14,6 +14,7 @@ const pageTitles = {
   "test-scheduler": "测试任务",
   login: "登录",
   users: "用户管理",
+  profile: "用户中心",
 };
 const pageModules = {
   overview: () => import("./pages/overview.js"),
@@ -31,6 +32,7 @@ const pageModules = {
   "test-scheduler": () => import("./pages/test-scheduler.js"),
   login: () => import("./pages/login.js"),
   users: () => import("./pages/users.js"),
+  profile: () => import("./pages/profile.js"),
 };
 let currentUser;
 const levels = {user:1, advanced:2, developer:3, admin:4};
@@ -96,7 +98,7 @@ async function boot() {
   const allowed = new Set(session.user.modules); document.querySelector("#sidebar").hidden=false;
   document.querySelectorAll("#sidebar [data-page]").forEach(b=>{ if(!allowed.has(b.dataset.page)) b.hidden=true; });
   if (session.user.is_admin) { const b=document.createElement("button"); b.dataset.page="users"; b.textContent="用户管理"; document.querySelector("#sidebar").insertBefore(b, document.querySelector("#collapse")); }
-  const out=document.createElement("button"); out.id="logout"; out.textContent=`${session.user.display_name || session.user.username} · 退出`; out.onclick=async()=>{await fetch("/api/auth/logout",{method:"POST"}); location.reload();}; document.querySelector("#sidebar").insertBefore(out, document.querySelector("#collapse"));
+  const profile=document.createElement("button"); profile.id="profile-entry"; profile.dataset.page="profile"; profile.textContent=`${session.user.display_name || session.user.username}`; document.querySelector("#sidebar").insertBefore(profile, document.querySelector("#collapse"));
   const first = [...document.querySelectorAll("#sidebar [data-page]")].find(b=>!b.hidden);
   if (!first) {
     document.querySelector("#title").textContent = "暂无可用功能";
