@@ -2,7 +2,9 @@
 setlocal
 cd /d "%~dp0"
 if not defined WORKBENCH_LOCAL_AGENT_PORT set "WORKBENCH_LOCAL_AGENT_PORT=18991"
-if not defined WORKBENCH_DASHBOARD_URL set "WORKBENCH_DASHBOARD_URL=http://10.0.76.228:18888"
+rem Do not bake a workstation/LAN address into the launcher. Set
+rem WORKBENCH_DASHBOARD_URL or pass the workbench URL to setup-client.ps1.
+if not defined WORKBENCH_DASHBOARD_URL set "WORKBENCH_DASHBOARD_URL=http://127.0.0.1:18888"
 if defined WORKBENCH_CLIENT_PYTHON goto launch
 set "WORKBENCH_CLIENT_PYTHON=%~dp0.venv\Scripts\python.exe"
 :launch

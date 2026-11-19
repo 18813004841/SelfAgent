@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT_DIR"
 
-WORKBENCH_DASHBOARD_URL="${WORKBENCH_DASHBOARD_URL:-http://10.0.76.228:18888}"
+# Do not bake a workstation/LAN address into the launcher. The setup command
+# or WORKBENCH_DASHBOARD_URL must provide the actual workbench origin.
+WORKBENCH_DASHBOARD_URL="${WORKBENCH_DASHBOARD_URL:-http://127.0.0.1:18888}"
 if [[ ! "$WORKBENCH_DASHBOARD_URL" =~ ^https?://[^/]+(:[0-9]+)?$ ]]; then
   echo "Dashboard URL 必须是工作台网址的来源，不含路径、凭据或查询参数。" >&2
   exit 2
