@@ -93,7 +93,12 @@ class CodexCliClient:
             messages = [str(e["item"]["text"]) for e in events
                         if isinstance(e.get("item"), dict) and e["item"].get("type") == "agent_message" and e["item"].get("text")]
             if code != 0:
-                raise CodexCliError(f"Codex 进程失败，退出码 {code}")
+                detail = "\n".join(
+                    str(e.get("message") or e.get("text") or e.get("error") or "")
+                    for e in events[-5:]
+                ).strip()
+                suffix = f"：{detail[-1200:]}" if detail else ""
+                raise CodexCliError(f"Codex 进程失败，退出码 {code}{suffix}")
             if not messages:
                 raise CodexCliError("Codex 未返回审查结果")
             return CodexCliResult(events, messages, code, proc.pid)
