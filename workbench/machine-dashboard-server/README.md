@@ -16,6 +16,8 @@
 sh start.sh
 ```
 
+macOS 用户可双击 `start-macos.command` 启动服务；首次使用前请安装 Python 3.11 或更新版本。也可在终端执行 `./start.sh`，并通过 `MACHINE_DASHBOARD_HOST`、`MACHINE_DASHBOARD_PORT` 覆盖监听地址和端口。
+
 本机访问可用 `http://127.0.0.1:18888`；局域网用户使用服务端实际局域网地址，例如 `http://192.168.1.10:18888`。直接运行 `src/server.py` 默认监听 `0.0.0.0`，如需本机-only 部署可设置 `MACHINE_DASHBOARD_HOST=127.0.0.1`。
 
 可通过 `MACHINE_DASHBOARD_PORT` 修改端口。
