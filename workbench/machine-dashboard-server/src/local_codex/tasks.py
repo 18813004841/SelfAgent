@@ -1,6 +1,7 @@
 """提交本地 Codex 任务并收集 JSONL 执行事件。"""
 from __future__ import annotations
-import json, os, shutil, subprocess, threading, uuid
+import json, os, threading, uuid
+from integrations.codex_cli import CodexCliClient, CodexCliError
 from core.repositories import LocalCodexTaskRepository
 
 class LocalCodexTasks:
@@ -16,31 +17,12 @@ class LocalCodexTasks:
     def _run(self, task_id):
         task = self._tasks[task_id]
         try:
-            # Windows 的 PATH 通常只解析 codex.ps1；CreateProcess 无法直接执行
-            # PowerShell 脚本，因此优先使用 npm 生成的 codex.cmd 包装器。
-            command = "codex.cmd" if os.name == "nt" else "codex"
-            executable = shutil.which(command) or shutil.which("codex")
-            if not executable:
-                raise FileNotFoundError("找不到 codex 命令，请确认 Codex CLI 已安装并在 PATH 中")
             cwd = task["cwd"] if os.path.isdir(task["cwd"]) else os.getcwd()
-            # 不把长提示词放入 Windows 命令行参数，避免 WinError 206；Codex
-            # 在没有位置参数时从 stdin 接收任务内容。
-            if task.get("session_id"):
-                # resume 的工作目录由 Popen 的 cwd 决定；该子命令不接受 -C。
-                command_args = [executable, "exec", "resume", task["session_id"], "--json", "--skip-git-repo-check", "-"]
-            else:
-                command_args = [executable, "exec", "--json", "--skip-git-repo-check", "-C", cwd, "-"]
-            proc = subprocess.Popen(command_args, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
-            task["pid"] = proc.pid
-            proc.stdin.write(task["prompt"])
-            proc.stdin.close()
-            for line in proc.stdout:
-                line = line.rstrip()
-                if line:
-                    try: event = json.loads(line)
-                    except json.JSONDecodeError: event = {"type": "output", "text": line}
-                    task["events"].append(event)
-            task["returncode"] = proc.wait()
+            def on_event(event): task["events"].append(event)
+            result = CodexCliClient(timeout=900).execute(task["prompt"], cwd=cwd,
+                session_id=task.get("session_id"), on_event=on_event)
+            task["pid"] = result.pid
+            task["returncode"] = result.returncode
             if not task["events"]:
                 task["events"].append({"type": "error", "message": f"Codex 没有返回事件，退出代码：{task['returncode']}"})
             task["status"] = "completed" if task["returncode"] == 0 else "failed"
