@@ -124,6 +124,11 @@ def connect():
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS server_maintenance_session (
+      id INTEGER PRIMARY KEY CHECK (id=1), session_id TEXT,
+      messages_json TEXT NOT NULL DEFAULT '[]', status TEXT NOT NULL DEFAULT 'idle',
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     """)
     # 为任务进度和取消操作增加字段；已有安装启动时自动获得新字段。
     migrate_roles = "role" not in {r[1] for r in db.execute("PRAGMA table_info(users)")}

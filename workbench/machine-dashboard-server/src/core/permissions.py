@@ -1,13 +1,13 @@
 MODULES = {
     "overview": "总览", "scheduler": "定时任务", "tasks": "任务", "calendar": "日程",
     "docs": "文档", "manage": "管理", "settings": "设置", "code-review": "代码检查",
-    "central-server": "中央服务器", "openai-agent": "OpenAiAgent", "local-codex": "本地 Codex",
+    "central-server": "中央服务器", "openai-agent": "OpenAiAgent", "local-codex": "本地 Codex", "server-maintenance": "服务器开发维护",
 }
 ROLES = {"user": "普通用户", "advanced": "高级用户", "developer": "开发者", "admin": "管理员"}
 ROLE_LEVEL = {"user": 1, "advanced": 2, "developer": 3, "admin": 4}
 ROLE_MODULES = {
-    "user": set(MODULES) - {"central-server", "openai-agent"},
-    "advanced": set(MODULES) - {"central-server", "openai-agent"},
+    "user": set(MODULES) - {"central-server", "openai-agent", "server-maintenance"},
+    "advanced": set(MODULES) - {"central-server", "openai-agent", "server-maintenance"},
     "developer": set(MODULES),
     "admin": set(MODULES),
 }
@@ -18,7 +18,7 @@ API_MODULES = {
     "/api/machines": "overview", "/api/processes": "overview", "/api/health": "overview",
     "/api/scheduler": "scheduler", "/api/scheduler-tasks": "scheduler", "/api/schedules": "scheduler",
     "/api/tools": "manage", "/api/central-server": "central-server", "/api/central-client": "central-server",
-    "/api/openai-agent": "openai-agent", "/api/local-codex": "local-codex", "/api/settings": "settings",
+    "/api/openai-agent": "openai-agent", "/api/local-codex": "local-codex", "/api/server-maintenance": "server-maintenance", "/api/settings": "settings",
     "/api/code-review": "code-review", "/api/scheduler-tasks/code-review": "code-review",
 }
 def module_for_path(path):

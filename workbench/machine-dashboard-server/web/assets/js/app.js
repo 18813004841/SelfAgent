@@ -3,6 +3,7 @@ const pageTitles = {
   scheduler: "定时任务",
   "code-review": "代码检查",
   tasks: "任务",
+  "server-maintenance": "服务器开发维护",
   calendar: "日程",
   docs: "文档",
   manage: "管理",
@@ -21,6 +22,7 @@ const pageModules = {
   scheduler: () => import("./pages/scheduler.js"),
   "code-review": () => import("./pages/code-review.js"),
   tasks: () => import("./pages/tasks.js"),
+  "server-maintenance": () => import("./pages/server-maintenance.js"),
   calendar: () => import("./pages/calendar.js"),
   docs: () => import("./pages/docs.js"),
   settings: () => import("./pages/settings.js"),
@@ -41,7 +43,7 @@ function applyPermissions(root = document) {
   const level = levels[currentUser.role] || 1;
   root.querySelectorAll("[data-page]").forEach(el => {
     const page = el.dataset.page;
-    if ((page === "users" && level < 4) || (["central-server", "openai-agent"].includes(page) && level < 3)) el.hidden = true;
+    if ((page === "users" && level < 4) || (["central-server", "openai-agent", "server-maintenance"].includes(page) && level < 3)) el.hidden = true;
   });
   if (level < 2) {
     root.querySelectorAll("#scheduler-start, #scheduler-stop, #schedule-add, #schedule-create, #review-save, #review-run, #review-stop, #review-clear-history, #review-choose, #review-skill-add, .review-skill-row button, [data-delete], .schedule-delete").forEach(el => { el.hidden = true; });
