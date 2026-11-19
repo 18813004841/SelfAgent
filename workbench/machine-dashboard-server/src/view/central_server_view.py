@@ -6,6 +6,16 @@ from .logging import get_logger
 DEBUG_LOG_DIR = "central-server"
 logger = get_logger('central_server', DEBUG_LOG_DIR)
 
+
+def _send_package_missing(request, package_name: str):
+    """Return a client-visible error when an optional download artifact is absent."""
+    request.send_json(404, {
+        "ok": False,
+        "error": f"{package_name} has not been built",
+        "code": "package_not_built",
+        "package": package_name,
+    })
+
 @router.route("GET", "/api/central-server/status", "/api/central-server/connections", "/api/central-client/status", "/api/central-client/version", "/api/central-client/download", "/api/local-agent/version", "/api/local-agent/download")
 def handle(ctx):
     logger.debug("handling %s %s", ctx.method, ctx.path)
@@ -53,7 +63,8 @@ def handle(ctx):
     elif ctx.path == "/api/central-client/download":
         package = Path(__file__).resolve().parents[4] / "Tools" / "machine-control" / "packages" / "central-client.zip"
         if not package.is_file():
-            raise FileNotFoundError("central-client.zip has not been built")
+            _send_package_missing(ctx.request, "central-client.zip")
+            return True
         data = package.read_bytes()
         ctx.request.send_response(200)
         ctx.request.send_header("Content-Type", "application/zip")
@@ -71,7 +82,8 @@ def handle(ctx):
     elif ctx.path == "/api/local-agent/download":
         package = Path(__file__).resolve().parents[2].parent / "machine-dashboard-client" / "dist" / "workbench-machine-dashboard-client.zip"
         if not package.is_file():
-            raise FileNotFoundError("workbench-machine-dashboard-client.zip has not been built")
+            _send_package_missing(ctx.request, "workbench-machine-dashboard-client.zip")
+            return True
         data = package.read_bytes()
         ctx.request.send_response(200); ctx.request.send_header("Content-Type", "application/zip")
         ctx.request.send_header("Content-Disposition", 'attachment; filename="workbench-machine-dashboard-client.zip"')
