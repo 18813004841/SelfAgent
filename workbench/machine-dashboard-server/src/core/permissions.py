@@ -24,6 +24,9 @@ API_MODULES = {
 def module_for_path(path):
     if path.startswith("/pages/"):
         page = path[len("/pages/"):].split(".", 1)[0]
+        # 用户中心属于登录后的基础账号功能，不依赖业务模块权限。
+        if page == "profile":
+            return None
         # Codex task detail is part of the local-codex feature.  It is a
         # separate page fragment, but must use the same module permission as
         # the task list; otherwise opening a task is rejected with 403.
