@@ -22,6 +22,8 @@ $env:WORKBENCH_DASHBOARD_URL = "http://工作台服务器地址:18888"
 
 macOS 用户可双击 `start-local-agent.command` 一键启动；首次运行会自动创建 `.venv` 和用户配置。也可在终端执行 `./start-local-agent.sh`，或先设置 `WORKBENCH_DASHBOARD_URL` 后执行。需要安装 Python 3.11 或更新版本；如系统阻止脚本运行，请在“系统设置 → 隐私与安全性”中允许打开。
 
+从 Safari 下载后首次运行若出现“来自互联网”或“没有正确的访问权限”，请先按包内 `MACOS-INSTALL.md` 执行一次 `xattr -dr com.apple.quarantine .` 和 `chmod +x`。这是 macOS 下载隔离机制，无法由 Windows 在 ZIP 中预先清除。
+
 同一台电脑只能运行一个 `18991` Agent。若服务器地址改变，先停止旧 Agent，再执行初始化脚本或设置 `WORKBENCH_DASHBOARD_URL` 后重新启动；否则页面会显示来源不可信或端口已占用。
 
 可使用 `powershell -ExecutionPolicy Bypass -File .\stop-local-agent.ps1` 停止本机 Agent。脚本会核对 PID 对应的命令行和端口，无法确认归属时拒绝操作。
