@@ -23,7 +23,11 @@ def main() -> None:
     with ZipFile(output, "w", ZIP_DEFLATED) as archive:
         for name in FILES:
             path = root / name
-            if path.is_file(): archive.write(path, f"machine-dashboard-client/{name}")
+            if path.is_file():
+                archive.write(path, f"machine-dashboard-client/{name}")
+                if path.suffix in {".sh", ".command"}:
+                    info = archive.getinfo(f"machine-dashboard-client/{name}")
+                    info.external_attr = (0o100755 << 16) | 0o755
         for path in (root / "src").glob("*.py"):
             archive.write(path, f"machine-dashboard-client/src/{path.name}")
         for name in SCRIPTS:
