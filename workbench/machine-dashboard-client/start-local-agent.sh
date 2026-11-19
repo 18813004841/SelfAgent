@@ -4,10 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT_DIR"
 
-if [[ -z "${WORKBENCH_DASHBOARD_URL:-}" ]]; then
-  echo "请输入工作台地址，例如 http://192.168.1.10:18888"
-  read -r -p "Dashboard URL: " WORKBENCH_DASHBOARD_URL
-fi
+WORKBENCH_DASHBOARD_URL="${WORKBENCH_DASHBOARD_URL:-http://10.0.76.228:18888}"
 if [[ ! "$WORKBENCH_DASHBOARD_URL" =~ ^https?://[^/]+(:[0-9]+)?$ ]]; then
   echo "Dashboard URL 必须是工作台网址的来源，不含路径、凭据或查询参数。" >&2
   exit 2

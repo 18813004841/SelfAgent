@@ -5,7 +5,8 @@ set -euo pipefail
 CENTRAL_URL=${CENTRAL_URL:-http://10.0.27.95:18765}
 MACHINE_ID=${MACHINE_ID:-ios-mac-build-01}
 TOKEN=${TOKEN:-dev-token}
-cd "$(dirname "$0")"`nexport PYTHONPATH="$(pwd):$(pwd)/../shared"
+cd "$(dirname "$0")"
+export PYTHONPATH="$(pwd):$(pwd)/../shared"
 echo "================================================================"
 echo "Machine Control Worker - macOS"
 echo "machine_id     : $MACHINE_ID"

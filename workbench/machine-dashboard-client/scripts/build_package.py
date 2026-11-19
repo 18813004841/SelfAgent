@@ -27,6 +27,11 @@ def main() -> None:
                 archive.write(path, f"machine-dashboard-client/{name}")
                 if path.suffix in {".sh", ".command"}:
                     info = archive.getinfo(f"machine-dashboard-client/{name}")
+                    # Mark launcher entries as Unix files so macOS preserves
+                    # the executable bit when Finder/Archive Utility extracts
+                    # the package.  external_attr alone is ignored by some
+                    # extractors when create_system is not Unix.
+                    info.create_system = 3
                     info.external_attr = (0o100755 << 16) | 0o755
         for path in (root / "src").glob("*.py"):
             archive.write(path, f"machine-dashboard-client/src/{path.name}")
