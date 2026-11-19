@@ -3,8 +3,10 @@ const pageTitles = {
   scheduler: "定时任务",
   "code-review": "代码检查",
   tasks: "任务",
-  "server-maintenance": "服务器开发维护",
-  calendar: "日程",
+  "server-maintenance": "服务器开发维护（待开发）",
+  frontend: "前端模块",
+  "package-error-analysis": "打包报错分析",
+  "package-error-analysis-task": "报错分析任务",
   docs: "文档",
   manage: "管理",
   "central-server": "中央服务器管理",
@@ -23,7 +25,9 @@ const pageModules = {
   "code-review": () => import("./pages/code-review.js"),
   tasks: () => import("./pages/tasks.js"),
   "server-maintenance": () => import("./pages/server-maintenance.js"),
-  calendar: () => import("./pages/calendar.js"),
+  frontend: () => import("./pages/frontend.js"),
+  "package-error-analysis": () => import("./pages/package-error-analysis.js"),
+  "package-error-analysis-task": () => import("./pages/package-error-analysis-task.js"),
   docs: () => import("./pages/docs.js"),
   settings: () => import("./pages/settings.js"),
   manage: () => import("./pages/manage.js"),
@@ -38,12 +42,18 @@ const pageModules = {
 };
 let currentUser;
 const levels = {user:1, advanced:2, developer:3, admin:4};
+function lacksModule(page) {
+  if (!currentUser) return false;
+  if (page === "users") return !currentUser.is_admin;
+  if (!["central-server", "openai-agent", "server-maintenance"].includes(page)) return false;
+  if (Array.isArray(currentUser.modules)) return !currentUser.modules.includes(page);
+  return (levels[currentUser.role] || 1) < 3;
+}
 function applyPermissions(root = document) {
   if (!currentUser) return;
   const level = levels[currentUser.role] || 1;
   root.querySelectorAll("[data-page]").forEach(el => {
-    const page = el.dataset.page;
-    if ((page === "users" && level < 4) || (["central-server", "openai-agent", "server-maintenance"].includes(page) && level < 3)) el.hidden = true;
+    if (lacksModule(el.dataset.page)) el.remove();
   });
   if (level < 2) {
     root.querySelectorAll("#scheduler-start, #scheduler-stop, #schedule-add, #schedule-create, #review-save, #review-run, #review-stop, #review-clear-history, #review-choose, #review-skill-add, .review-skill-row button, [data-delete], .schedule-delete").forEach(el => { el.hidden = true; });
@@ -118,9 +128,10 @@ document.querySelector("#page-back").onclick = () => {
   load(previous, { fromHistory: true }).finally(() => { restoringHistory = false; updateBackButton(); });
 };
 window.addEventListener("popstate", () => {});
+window.addEventListener("workbench:navigate", (event) => load(event.detail));
 document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-page]");
-  if (button) load(button.dataset.page);
+  if (button && !lacksModule(button.dataset.page)) load(button.dataset.page);
 });
 document.querySelector("#collapse").onclick = () => {
   const sidebar = document.querySelector(".sidebar");
@@ -132,3 +143,6 @@ document.querySelector("#collapse").onclick = () => {
     : "‹";
 };
 boot().catch(()=>load("login"));
+
+
+

@@ -6,6 +6,7 @@ import signal
 import subprocess
 import threading
 import time
+from pathlib import Path
 from typing import Any, Dict, List
 
 DEFAULT_ALLOWED_COMMANDS = {
@@ -121,4 +122,26 @@ def execute_task(kind: str, payload: Dict[str, Any], allowed: set[str] | None = 
                  cancel_event: threading.Event | None = None) -> Dict[str, Any]:
     if kind == "shell":
         return run_shell(payload, allowed, cancel_event)
+    if kind == "read_build_log":
+        return read_build_log(payload)
     return {"ok": False, "error": f"unsupported task kind: {kind}"}
+
+
+def read_build_log(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Read a Unity log below the supplied worktree without allowing path escape."""
+    worktree = Path(str(payload.get("worktree_path", "")).strip()).expanduser()
+    relative = str(payload.get("relative_path", "Game/BuildFolder/BuildTemporary/Unity.log"))
+    if not worktree.is_dir() or Path(relative).is_absolute():
+        return {"ok": False, "error": "invalid worktree or relative log path"}
+    try:
+        root = worktree.resolve(strict=True)
+        target = (root / relative).resolve(strict=True)
+    except OSError as exc:
+        return {"ok": False, "error": str(exc)}
+    if not target.is_file() or (target != root and root not in target.parents):
+        return {"ok": False, "error": "log path is outside worktree or does not exist"}
+    try:
+        text = target.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:
+        return {"ok": False, "error": str(exc)}
+    return {"ok": True, "path": str(target), "text": text[-500000:]}

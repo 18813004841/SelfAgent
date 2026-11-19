@@ -1,7 +1,7 @@
 MODULES = {
-    "overview": "总览", "scheduler": "定时任务", "tasks": "任务", "calendar": "日程",
+    "overview": "总览", "scheduler": "定时任务", "tasks": "任务", "frontend": "前端模块",
     "docs": "文档", "manage": "管理", "settings": "设置", "code-review": "代码检查",
-    "central-server": "中央服务器", "openai-agent": "OpenAiAgent", "local-codex": "本地 Codex", "server-maintenance": "服务器开发维护",
+    "central-server": "中央服务器", "openai-agent": "OpenAiAgent", "local-codex": "本地 Codex", "server-maintenance": "服务器开发维护（待开发）",
 }
 ROLES = {"user": "普通用户", "advanced": "高级用户", "developer": "开发者", "admin": "管理员"}
 ROLE_LEVEL = {"user": 1, "advanced": 2, "developer": 3, "admin": 4}
@@ -20,6 +20,7 @@ API_MODULES = {
     "/api/tools": "manage", "/api/central-server": "central-server", "/api/central-client": "central-server",
     "/api/openai-agent": "openai-agent", "/api/local-codex": "local-codex", "/api/server-maintenance": "server-maintenance", "/api/settings": "settings",
     "/api/code-review": "code-review", "/api/scheduler-tasks/code-review": "code-review",
+    "/api/package-error-analysis": "frontend",
 }
 def module_for_path(path):
     if path.startswith("/pages/"):
@@ -32,6 +33,8 @@ def module_for_path(path):
         # the task list; otherwise opening a task is rejected with 403.
         if page == "local-codex-task":
             return "local-codex"
+        if page in {"package-error-analysis", "package-error-analysis-task"}:
+            return "frontend"
         return page
     if path.startswith("/pages/users"):
         return "manage"

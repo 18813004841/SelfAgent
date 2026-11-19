@@ -129,6 +129,12 @@ def connect():
       messages_json TEXT NOT NULL DEFAULT '[]', status TEXT NOT NULL DEFAULT 'idle',
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS package_error_analyses (
+      id TEXT PRIMARY KEY, status TEXT NOT NULL, input_text TEXT NOT NULL,
+      events_json TEXT NOT NULL DEFAULT '[]', result_json TEXT NOT NULL DEFAULT '{}',
+      error TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     """)
     # 为任务进度和取消操作增加字段；已有安装启动时自动获得新字段。
     migrate_roles = "role" not in {r[1] for r in db.execute("PRAGMA table_info(users)")}

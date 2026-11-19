@@ -11,6 +11,7 @@ async function initManage() {
     status = document.getElementById("central-server-status"),
     centerMsg = document.getElementById("central-server-msg");
   async function refreshCenter() {
+    if (!document.querySelector("[data-page='central-server']")) return;
     try {
       const d = await fetch("/api/central-server/status", {
         cache: "no-store",
@@ -42,6 +43,7 @@ async function initManage() {
   }
   await refreshCenter();
   async function refreshClient() {
+    if (!document.querySelector("[data-page='central-server']")) return;
     try {
       const d = await fetch("/api/central-client/status", {
         cache: "no-store",
@@ -61,6 +63,7 @@ async function initManage() {
     agentPort = document.getElementById("openai-agent-port"),
     agentMsg = document.getElementById("openai-agent-msg");
   async function refreshAgent() {
+    if (!document.querySelector("[data-page='openai-agent']")) return;
     try {
       const d = await fetch("/api/openai-agent/status", {
         cache: "no-store",

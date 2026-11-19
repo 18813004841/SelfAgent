@@ -25,6 +25,9 @@
 * {
   box-sizing: border-box;
 }
+[hidden] {
+  display: none !important;
+}
 body {
   margin: 0;
   display: flex;
@@ -244,6 +247,9 @@ button.primary { min-height: 40px; font-weight: 600; }
   cursor: pointer;
   color: inherit;
   font: inherit;
+}
+.manage-entry[hidden] {
+  display: none !important;
 }
 .manage-entry:hover {
   border-color: var(--color-primary);
@@ -577,3 +583,15 @@ body { line-height: 1.5; }
 .review-log-panel .task-log { height:640px; min-height:360px; max-height:75vh; padding:16px 0 0; border-top:1px solid #345048; background:transparent; color:#c6ddd0; border-radius:0; font:13px/1.7 Consolas,monospace; }
 @media (max-width:1100px) { .review-header { flex-wrap:wrap; } .review-main { grid-template-columns:300px minmax(0,1fr); } }
 @media (max-width:900px) { .review-main { grid-template-columns:1fr; } .review-header-actions { flex-shrink:1; justify-content:flex-start; } }
+.frontend-page,.package-page,.analysis-detail { max-width: 1180px; }
+.frontend-hero,.package-header { padding: 28px 32px; border-radius: 18px; background: linear-gradient(135deg,#ecf8f2,#f7fbf8); border:1px solid #d8e9df; margin-bottom:22px; display:flex; justify-content:space-between; align-items:center; }
+.frontend-eyebrow { color:#0f766e; font-size:11px; font-weight:800; letter-spacing:.14em; }
+.frontend-hero h1,.package-header h1,.detail-header h1 { margin:6px 0 8px; font-size:28px; }
+.frontend-hero p,.package-header p { margin:0; color:var(--color-text-muted); }
+.frontend-hero-mark { width:68px;height:68px;border-radius:20px;background:#0f766e;color:white;display:grid;place-items:center;font-size:35px;box-shadow:0 10px 22px #0f766e33; }
+.module-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+.module-tile,.analysis-task-card { border:1px solid var(--color-border); background:var(--color-surface); border-radius:14px; padding:18px; display:flex; align-items:center; gap:14px; text-align:left; box-shadow:var(--shadow-card); transition:.18s; }
+.module-tile { min-height:112px; cursor:pointer; width:100%; }.module-tile:hover,.analysis-task-card:hover { transform:translateY(-2px); border-color:#77b59b; box-shadow:var(--shadow-popover); }
+.module-icon,.task-symbol { width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:#ff8a1f;color:white;font-size:26px;font-weight:800;flex:0 0 auto; }.muted-icon { background:#dcebe3;color:#5e8170; }.module-copy,.task-card-main { display:grid; gap:4px; flex:1; }.module-copy strong,.task-card-main strong { font-size:16px; }.module-copy small,.task-card-main small { color:var(--color-text-subtle); }.module-arrow { color:#0f766e;font-size:24px; }.module-placeholder { cursor:default; opacity:.72; }
+.inline-back { border:0;background:transparent;color:var(--color-primary);cursor:pointer;padding:0;font-weight:600; }.package-header { display:block; }.package-header .inline-back { margin-bottom:20px; }.package-title-row,.detail-header { display:flex; align-items:center; justify-content:space-between; gap:18px; }.analysis-task-list { display:grid; gap:12px; }.analysis-task-card { width:100%; cursor:pointer; }.task-symbol { width:40px;height:40px;font-size:20px; }.analysis-status { padding:5px 10px;border-radius:999px;background:#e5f5eb;color:#18753a;font-size:12px; }.analysis-status.done { background:#eef0f2;color:#68747c; }.analysis-empty { padding:70px 20px;text-align:center;border:1px dashed var(--color-border-strong);border-radius:14px;color:var(--color-text-subtle); }.empty-icon { font-size:42px;color:#80aa96; }.analysis-workspace { display:grid;grid-template-columns:minmax(320px, .9fr) minmax(420px,1.1fr);gap:18px; }.analysis-input h2,.analysis-output h2 { margin-bottom:8px; }.analysis-input textarea { resize:vertical; margin:16px 0; }.analysis-actions { display:flex;align-items:center;gap:10px;flex-wrap:wrap; }.analysis-output { padding:22px;background:#172522;border-radius:14px;color:#d8eee1;min-height:440px; }.output-heading { display:flex;justify-content:space-between;align-items:center; }.output-heading h2 { color:#fff; }.analysis-log { white-space:pre-wrap;line-height:1.7;font:13px/1.7 Consolas,monospace;min-height:330px;border-top:1px solid #345048;padding-top:16px;color:#c6ddd0; }.detail-header { margin-bottom:22px; }.detail-header .inline-back { margin-right:auto; }.detail-header h1 { margin:4px 0 0; }
+@media(max-width:850px){.analysis-workspace{grid-template-columns:1fr}.frontend-hero,.package-title-row{align-items:flex-start;gap:18px}.frontend-hero-mark{display:none}}
