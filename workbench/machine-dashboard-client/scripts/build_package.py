@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
-FILES = ["README.md", "AGENTS.md", "WORKBENCH_CLIENT_RULES.md", "pyproject.toml", "VERSION", "setup-client.ps1", "update-client.ps1", "start-local-agent.bat", "stop-local-agent.ps1"]
+FILES = ["README.md", "AGENTS.md", "WORKBENCH_CLIENT_RULES.md", "pyproject.toml", "VERSION", "setup-client.ps1", "update-client.ps1", "start-local-agent.bat", "start-local-agent.sh", "start-local-agent.command", "stop-local-agent.ps1"]
 SCRIPTS = ["start_local_codex.bat"]
 
 def main() -> None:

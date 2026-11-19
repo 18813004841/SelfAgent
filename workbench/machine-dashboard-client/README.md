@@ -20,6 +20,8 @@ $env:WORKBENCH_DASHBOARD_URL = "http://工作台服务器地址:18888"
 
 `WORKBENCH_DASHBOARD_URL` 必须与浏览器地址栏中的协议、主机、端口一致。未启动 Agent 时，页面应提示本机服务不可用，不回退到服务器路径。当前前端固定连接端口 18991；只修改 Agent 端口不会同步修改前端。
 
+macOS 用户可双击 `start-local-agent.command` 一键启动；首次运行会自动创建 `.venv` 和用户配置。也可在终端执行 `./start-local-agent.sh`，或先设置 `WORKBENCH_DASHBOARD_URL` 后执行。需要安装 Python 3.11 或更新版本；如系统阻止脚本运行，请在“系统设置 → 隐私与安全性”中允许打开。
+
 同一台电脑只能运行一个 `18991` Agent。若服务器地址改变，先停止旧 Agent，再执行初始化脚本或设置 `WORKBENCH_DASHBOARD_URL` 后重新启动；否则页面会显示来源不可信或端口已占用。
 
 可使用 `powershell -ExecutionPolicy Bypass -File .\stop-local-agent.ps1` 停止本机 Agent。脚本会核对 PID 对应的命令行和端口，无法确认归属时拒绝操作。
