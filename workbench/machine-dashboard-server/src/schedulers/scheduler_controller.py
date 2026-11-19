@@ -47,7 +47,7 @@ class SchedulerController:
         now = datetime.now()
         initial = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
         if initial <= now: initial += timedelta(days=1)
-        return self.repository.create({"id": task_id, "name": name, "tool_id": task_id, "schedule_type": "daily" if run_type == 1 else "once", "schedule_expr": run_time, "args_json": "{}", "timeout": 300, "retry": 0, "enabled": 1, "next_run": initial.timestamp(), "task_type": "scheduled", "dispatcher": "scheduler", "progress_total": 1, "scheduler_type": scheduler_type, "run_type": run_type, "run_time": run_time, "param_json": json.dumps(param, ensure_ascii=False)})
+        return self.repository.create({"id": task_id, "name": name, "tool_id": scheduler.tool_id, "schedule_type": "daily" if run_type == 1 else "once", "schedule_expr": run_time, "args_json": "{}", "timeout": 300, "retry": 0, "enabled": 1, "next_run": initial.timestamp(), "task_type": "scheduled", "dispatcher": "scheduler", "progress_total": 1, "scheduler_type": scheduler_type, "run_type": run_type, "run_time": run_time, "param_json": json.dumps(param, ensure_ascii=False)})
 
     def update(self, task_id: str, **fields: Any) -> bool:
         allowed = {k: fields[k] for k in ("name", "enabled", "run_type", "run_time", "param") if k in fields}

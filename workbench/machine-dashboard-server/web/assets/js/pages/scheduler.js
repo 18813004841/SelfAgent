@@ -144,7 +144,7 @@ async function initScheduler() {
         param: {},
       }),
     }).then((r) => r.json());
-    m.textContent = b.ok ? "创建成功" : "创建失败";
+    m.textContent = b.ok ? "创建成功" : (b.error || "创建失败");
     if (b.ok) {
       document.getElementById("schedule-create").hidden = true;
       await refresh();
