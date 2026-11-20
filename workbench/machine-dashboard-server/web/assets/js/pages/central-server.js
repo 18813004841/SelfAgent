@@ -41,7 +41,16 @@ export async function mount() {
   }
   async function refreshIps() { try { const d = await api("/api/central-server/connections", { cache: "no-store" }).then(r => r.json()); ip.textContent = d.ips?.length ? d.ips.join("、") : "暂无连接"; } catch { ip.textContent = "暂无连接"; } }
   await refresh(); await refreshIps(); interval(() => { refresh(); refreshIps(); }, 3000);
-  document.getElementById("central-server-start").onclick = async () => { sm.textContent = "正在启动..."; await api("/api/central-server/start", { method: "POST" }); await refresh(); };
+  document.getElementById("central-server-start").onclick = async () => {
+    sm.textContent = "正在启动...";
+    try {
+      const response = await api("/api/central-server/start", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw Error(data.error || `启动失败（HTTP ${response.status}）`);
+      sm.textContent = `启动请求已发送（PID ${data.pid || "-"}）`;
+    } catch (error) { sm.textContent = `启动失败：${error.message}`; }
+    await refresh();
+  };
   document.getElementById("central-server-stop").onclick = async () => { sm.textContent = "正在关闭..."; await api("/api/central-server/stop", { method: "POST" }); await refresh(); };
   document.getElementById("central-server-cleanup").onclick = async () => { const d = await api("/api/central-server/cleanup", { method: "POST" }).then(r => r.json()); sm.textContent = "已清理端口 " + d.port; await refresh(); };
   document.getElementById("central-client-start").onclick = async () => { cm.textContent = "正在本机启动..."; try { localStorage.setItem("central-client-server", serverInput.value.trim()); await localApi("/api/central-client/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ central_server_url: serverInput.value.trim() }) }); cm.textContent = "已向本机发送启动请求"; } catch (e) { cm.textContent = e.message; } await refresh(); };

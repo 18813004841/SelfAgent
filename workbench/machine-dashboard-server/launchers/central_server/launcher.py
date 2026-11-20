@@ -31,8 +31,30 @@ class CentralServerLauncher(ManagedProcess):
         command = [interpreter, "-m", "control_center.server", "--host", host, "--port", str(self.port), "--token", os.environ.get("MACHINE_CONTROL_TOKEN", "dev-token"), "--store", str(store)]
         env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(self.root / "server"), str(self.root / "shared")])}
         flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
-        proc = subprocess.Popen(command, cwd=self.root / "server", env=env, creationflags=flags)
+        # Keep the child attached to this launcher.  In particular, do not use
+        # the Finder ``open`` command here: on macOS that command returns the
+        # short-lived ``open`` PID, so the workbench immediately reports the
+        # server as stopped even though the Terminal window is still opening.
+        proc = subprocess.Popen(
+            command,
+            cwd=self.root / "server",
+            env=env,
+            creationflags=flags,
+            # Inherit the workbench process streams so an immediate startup
+            # failure (for example, "address already in use") remains
+            # diagnosable from the normal workbench log/console.
+        )
         self._process = proc
+        # A successful Popen only means that Python was forked.  Detect the
+        # common immediate-exit cases (missing imports, invalid store path, or
+        # an occupied port) before telling the UI that startup succeeded.
+        try:
+            returncode = proc.wait(timeout=0.35)
+        except subprocess.TimeoutExpired:
+            returncode = None
+        if returncode is not None:
+            self._process = None
+            raise RuntimeError(f"中央服务器启动后立即退出，退出码={returncode}；请检查端口 {self.port} 或服务器日志")
         if self.pid_file:
             self.pid_file.parent.mkdir(parents=True, exist_ok=True)
             self.pid_file.write_text(str(proc.pid), encoding="utf-8")
