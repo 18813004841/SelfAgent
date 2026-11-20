@@ -455,16 +455,28 @@ def serve(paths: ClientPaths, host: str, port: int, dashboard_url: str) -> None:
         server = ExclusiveLocalServer((host, port), make_handler(agent))
     except OSError as exc:
         raise SystemExit(f"Local Agent cannot bind {host}:{port}; stop the existing agent before restarting: {exc}") from exc
-    paths.pid.parent.mkdir(parents=True, exist_ok=True)
-    paths.pid.write_text(str(os.getpid()), encoding="utf-8")
+    pid_written = False
+    try:
+        paths.pid.parent.mkdir(parents=True, exist_ok=True)
+        paths.pid.write_text(str(os.getpid()), encoding="utf-8")
+        pid_written = True
+    except OSError as exc:
+        # The PID file is only used by the optional stop helper.  A stale
+        # file or a locked profile on Windows must not prevent the agent
+        # itself from serving the loopback API.
+        print(f"Warning: unable to write Local Agent PID file: {exc}", file=sys.stderr)
     try:
         server.serve_forever()
     finally:
         agent.processes.stop_client()
         agent.processes.stop_codex()
         server.server_close()
-        if paths.pid.is_file():
-            paths.pid.unlink()
+        if pid_written:
+            try:
+                if paths.pid.is_file():
+                    paths.pid.unlink()
+            except OSError:
+                pass
 
 
 def main() -> None:
