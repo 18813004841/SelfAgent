@@ -7,7 +7,8 @@ const pageTitles = {
   frontend: "前端模块",
   "package-error-analysis": "打包报错分析",
   "package-error-analysis-task": "报错分析任务",
-  docs: "文档",
+  store: "商城",
+  "skin-store": "皮肤商城",
   manage: "管理",
   "central-server": "中央服务器管理",
   "openai-agent": "OpenAiAgent 管理",
@@ -28,7 +29,8 @@ const pageModules = {
   frontend: () => import("./pages/frontend.js"),
   "package-error-analysis": () => import("./pages/package-error-analysis.js"),
   "package-error-analysis-task": () => import("./pages/package-error-analysis-task.js"),
-  docs: () => import("./pages/docs.js"),
+  store: () => import("./pages/store.js"),
+  "skin-store": () => import("./pages/skin-store.js"),
   settings: () => import("./pages/settings.js"),
   manage: () => import("./pages/manage.js"),
   "central-server": () => import("./pages/central-server.js"),
@@ -41,6 +43,7 @@ const pageModules = {
   profile: () => import("./pages/profile.js"),
 };
 let currentUser;
+import { applySkin } from "./shared/skin.js";
 const levels = {user:1, advanced:2, developer:3, admin:4};
 function lacksModule(page) {
   if (!currentUser) return false;
@@ -90,6 +93,8 @@ export async function load(page, options = {}) {
     const module = pageModules[name] ? await pageModules[name]() : undefined;
     if (version !== navigation) return;
     content.innerHTML = html;
+    const pageRoot = content.firstElementChild;
+    if (pageRoot && !pageRoot.dataset.uiId) pageRoot.dataset.uiId = `${name}.page`;
     applyPermissions(content);
     document.querySelector("#title").textContent = pageTitles[name];
     activeModule = module;
@@ -103,6 +108,7 @@ export async function load(page, options = {}) {
   }
 }
 async function boot() {
+  applySkin();
   const session = await fetch("/api/auth/session", {cache:"no-store"}).then(r=>r.json());
   if (!session.user) { document.querySelector("#sidebar").hidden=true; pageHistory.length = 0; await load("login"); return; }
   currentUser = session.user;

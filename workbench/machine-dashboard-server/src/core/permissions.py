@@ -1,6 +1,6 @@
 MODULES = {
     "overview": "总览", "scheduler": "定时任务", "tasks": "任务", "frontend": "前端模块",
-    "docs": "文档", "manage": "管理", "settings": "设置", "code-review": "代码检查",
+    "store": "商城", "manage": "管理", "settings": "设置", "code-review": "代码检查",
     "central-server": "中央服务器", "openai-agent": "OpenAiAgent", "local-codex": "本地 Codex", "server-maintenance": "服务器开发维护（待开发）",
 }
 ROLES = {"user": "普通用户", "advanced": "高级用户", "developer": "开发者", "admin": "管理员"}
@@ -28,6 +28,8 @@ def module_for_path(path):
         # 用户中心属于登录后的基础账号功能，不依赖业务模块权限。
         if page == "profile":
             return None
+        if page in {"store", "skin-store"}:
+            return "store"
         # Codex task detail is part of the local-codex feature.  It is a
         # separate page fragment, but must use the same module permission as
         # the task list; otherwise opening a task is rejected with 403.
