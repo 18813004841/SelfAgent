@@ -1,7 +1,25 @@
 <div class="analysis-detail">
-  <div class="detail-header"><button class="inline-back" data-page="package-error-analysis">← 返回任务列表</button><div><div class="frontend-eyebrow">ERROR ANALYSIS TASK</div><h1 id="analysis-detail-title">报错分析任务</h1></div><span id="analysis-detail-status" class="analysis-status">进行中</span></div>
+  <div class="detail-header"><button class="inline-back" data-page="package-error-analysis">← 返回任务列表</button><div><div class="frontend-eyebrow">ERROR ANALYSIS TASK</div><h1 id="analysis-detail-title">报错分析任务</h1></div><span id="analysis-detail-status" class="analysis-status">待提交</span></div>
   <div class="analysis-workspace">
-    <section class="analysis-input card"><h2>错误信息</h2><p class="muted">粘贴打包日志或描述你遇到的问题，提交后即可在右侧查看分析结果。</p><textarea id="analysis-input" rows="13" placeholder="例如：Gradle assembleRelease 失败，Execution failed for task ':app:mergeReleaseResources'..."></textarea><div class="analysis-actions"><button class="primary" id="run-analysis">开始分析</button><button class="button-link" id="finish-analysis">结束任务</button><span id="analysis-message" class="muted"></span></div></section>
-    <section class="analysis-output"><div class="output-heading"><h2>输出结果</h2><span id="analysis-output-state">等待输入</span></div><pre id="analysis-log" class="analysis-log">等待提交错误信息…</pre></section>
+    <section class="analysis-left card">
+      <div class="section-kicker">ANALYSIS INPUT</div><h2>错误信息</h2><p class="muted">粘贴打包日志或描述问题，提交后查看实时分析过程。</p>
+      <textarea id="analysis-input" rows="8" placeholder="例如：Gradle assembleRelease 失败，Execution failed for task ':app:mergeReleaseResources'..."></textarea>
+      <div class="analysis-actions"><button class="primary" id="run-analysis">开始分析 <span>↗</span></button><button class="button-link" id="finish-analysis">结束任务</button><span id="analysis-message" class="muted"></span></div>
+      <div class="analysis-output-divider"></div>
+      <div class="section-kicker">LIVE OUTPUT</div><div class="output-heading"><h2>输出结果</h2><span id="analysis-output-state">等待输入</span></div>
+      <pre id="analysis-log" class="analysis-log">提交后将显示日志定位、失败阶段和分析结果。</pre>
+    </section>
+    <aside class="analysis-progress card"><div class="section-kicker">REAL PIPELINE</div><div class="progress-title"><div><h2>分析流程</h2><p class="muted">根据任务事件实时更新</p></div><span id="progress-percent">0%</span></div>
+      <div class="progress-track"><div class="progress-line"></div><div id="progress-fill" class="progress-fill"></div><div class="progress-nodes">
+        <div class="progress-node" data-step="created"><span class="node-dot">1</span><div><strong>创建分析任务</strong><small>等待用户提交</small></div></div>
+        <div class="progress-node" data-step="parse"><span class="node-dot">2</span><div><strong>解析输入</strong><small>解析 Jenkins / 飞书输入</small></div></div>
+        <div class="progress-node optional" data-step="jenkins"><span class="node-dot">3</span><div><strong>补全 Jenkins 参数</strong><small>读取构建参数（可选）</small></div></div>
+        <div class="progress-node optional" data-step="worker"><span class="node-dot">4</span><div><strong>查询在线 Worker</strong><small>匹配目标机器（可选）</small></div></div>
+        <div class="progress-node" data-step="remote"><span class="node-dot">5</span><div><strong>获取构建日志</strong><small>读取 Worker 日志或准备回退</small><div class="progress-branch"><span>在线 Worker</span><span>网盘回退</span></div></div></div>
+        <div class="progress-node optional" data-step="mounted"><span class="node-dot">6</span><div><strong>读取网盘日志</strong><small>仅 Worker 失败时采用</small></div></div>
+        <div class="progress-node" data-step="detect"><span class="node-dot">7</span><div><strong>识别失败阶段</strong><small>提取失败 step 与核心证据</small></div></div>
+        <div class="progress-node" data-step="result"><span class="node-dot">8</span><div><strong>生成分析建议</strong><small>输出原因与可执行修复方案</small></div></div>
+      </div></div><div class="progress-foot"><span class="pulse"></span><span id="progress-caption">准备开始 · 0 个阶段已完成</span></div>
+    </aside>
   </div>
 </div>
