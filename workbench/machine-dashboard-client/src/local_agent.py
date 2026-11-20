@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
 import os
 import re
@@ -73,6 +74,37 @@ class LocalAgent:
         temporary = self.paths.config.with_suffix(".tmp")
         temporary.write_text(json.dumps(self.settings, ensure_ascii=False, indent=2), encoding="utf-8")
         temporary.replace(self.paths.config)
+
+    def pair_dashboard_origin(self, origin: str) -> bool:
+        """Trust a new private-network workbench origin after the user opens it.
+
+        The browser origin is not accepted blindly: it must be HTTP(S), use
+        the workbench port, and resolve to a loopback/private IPv4/IPv6
+        address. This lets a server move to a new LAN IP without opening the
+        loopback agent to arbitrary public websites.
+        """
+        candidate = urlparse(origin)
+        current = urlparse(self.dashboard_url)
+        if candidate.scheme not in {"http", "https"} or not candidate.hostname:
+            return False
+        if candidate.username or candidate.password or candidate.path not in {"", "/"} or candidate.query or candidate.fragment:
+            return False
+        if candidate.port != (current.port or 18888):
+            return False
+        hostname = candidate.hostname
+        if hostname in {"localhost", "127.0.0.1", "::1"}:
+            allowed = True
+        else:
+            try:
+                allowed = ipaddress.ip_address(hostname).is_private
+            except ValueError:
+                allowed = False
+        if not allowed:
+            return False
+        self.dashboard_url = origin.rstrip("/")
+        self.settings["dashboard_url"] = self.dashboard_url
+        self.save()
+        return True
 
     def storage(self) -> Path:
         value = Path(self.settings.get("storage_dir") or self.paths.root / "client" / "storage").expanduser()
@@ -219,11 +251,19 @@ def make_handler(agent: LocalAgent):
             # accepts an arbitrary remote origin.
             configured = urlparse(agent.dashboard_url)
             requested = urlparse(origin)
-            return (
+            same_loopback_origin = (
                 requested.scheme == configured.scheme
                 and requested.hostname in {"127.0.0.1", "localhost", "::1"}
                 and requested.port == configured.port
             )
+            if same_loopback_origin:
+                return True
+            # A workbench may move to another private LAN address. Pair it
+            # automatically on the first request from that browser origin.
+            # The request still has to target this loopback agent, so a
+            # public site cannot use this path as a general-purpose proxy.
+            with agent._lock:
+                return agent.pair_dashboard_origin(origin)
 
         def _json_body(self, raw: bytes) -> dict:
             if not raw:

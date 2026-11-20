@@ -47,9 +47,12 @@ def main() -> None:
             assert status == 204 and preflight.get("Access-Control-Allow-Private-Network") == "true", preflight
             status, loopback = request(port, "/api/settings/storage", headers={"Origin": "http://127.0.0.1:18888"})
             assert status == 200 and loopback["ok"] is True, loopback
-            # A server-side address must never gain access unless it is the
-            # exact configured browser origin.
-            status, denied = request(port, "/api/settings/storage", headers={"Origin": "http://192.168.1.10:18888"})
+            # A new private-network workbench origin is paired automatically.
+            status, paired = request(port, "/api/settings/storage", headers={"Origin": "http://192.168.1.10:18888"})
+            assert status == 200 and paired["ok"] is True, paired
+            assert json.loads((root / "config" / "settings.json").read_text(encoding="utf-8"))["dashboard_url"] == "http://192.168.1.10:18888"
+            # Public origins must still be rejected.
+            status, denied = request(port, "/api/settings/storage", headers={"Origin": "http://evil.example:18888"})
             assert status == 403, denied
             status, body = request(port, "/api/settings/storage", json.dumps({"storage_dir": str(root / "storage")}).encode(), {"Content-Type": "application/json", "Origin": "http://127.0.0.1:18888"})
             assert status == 200 and body["scope"] == "client-local", body

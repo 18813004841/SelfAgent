@@ -18,7 +18,7 @@ $env:WORKBENCH_DASHBOARD_URL = "http://工作台服务器地址:18888"
 
 启动器固定使用本目录 `.venv/Scripts/python.exe`；可用 `WORKBENCH_CLIENT_PYTHON` 指定另一绝对解释器路径，不依赖终端激活环境。升级 Python 时先另建环境并运行隔离验证，再切换该变量。无需安装依赖；维护本项目的唯一依赖声明为 `pyproject.toml`。
 
-`WORKBENCH_DASHBOARD_URL` 必须与浏览器地址栏中的协议、主机、端口一致。未启动 Agent 时，页面应提示本机服务不可用，不回退到服务器路径。当前前端固定连接端口 18991；只修改 Agent 端口不会同步修改前端。
+`WORKBENCH_DASHBOARD_URL` 首次启动时可用于设置工作台来源。Local Agent 只允许工作台端口（默认 `18888`）的回环或局域网来源；当服务器更换为新的局域网 IP 后，用户直接打开新工作台页面即可自动更新本机信任来源。公网来源仍会被拒绝。未启动 Agent 时，页面应提示本机服务不可用，不回退到服务器路径。当前前端固定连接端口 18991；只修改 Agent 端口不会同步修改前端。
 
 macOS 用户可双击 `start-local-agent.command` 一键启动；首次运行会自动创建 `.venv` 和用户配置。也可在终端执行 `./start-local-agent.sh`，或先设置 `WORKBENCH_DASHBOARD_URL` 后执行。需要安装 Python 3.11 或更新版本；如系统阻止脚本运行，请在“系统设置 → 隐私与安全性”中允许打开。
 
