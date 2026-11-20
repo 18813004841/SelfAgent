@@ -2,9 +2,14 @@
 setlocal
 cd /d "%~dp0"
 if not defined WORKBENCH_LOCAL_AGENT_PORT set "WORKBENCH_LOCAL_AGENT_PORT=18991"
-rem Do not bake a workstation/LAN address into the launcher. Set
-rem WORKBENCH_DASHBOARD_URL or pass the workbench URL to setup-client.ps1.
+rem Prefer an explicit origin; otherwise use this machine's active IPv4.
+if not defined WORKBENCH_DASHBOARD_URL for /f "tokens=2 delims=:" %%I in ('ipconfig ^| findstr /R /C:"IPv4 Address"') do if not defined WORKBENCH_DASHBOARD_URL set "WORKBENCH_DASHBOARD_URL=http://%%I:18888"
 if not defined WORKBENCH_DASHBOARD_URL set "WORKBENCH_DASHBOARD_URL=http://127.0.0.1:18888"
+
+rem Restart an existing Local Agent, but never kill an unrelated listener.
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$port=[int]$env:WORKBENCH_LOCAL_AGENT_PORT; $connections=@(Get-NetTCPConnection -State Listen -LocalAddress 127.0.0.1 -LocalPort $port -ErrorAction SilentlyContinue); foreach($c in $connections){ $p=Get-CimInstance Win32_Process -Filter ('ProcessId='+$c.OwningProcess) -ErrorAction SilentlyContinue; if(-not $p -or [string]$p.CommandLine -notmatch 'src[\\/]local_agent' -or [string]$p.CommandLine -notmatch ('--port\\s+'+$port)){ Write-Error ('端口 127.0.0.1:'+ $port +' 已被其他进程占用，未执行清理。'); exit 1 }; Stop-Process -Id $c.OwningProcess -Force }; exit 0"
+if errorlevel 1 exit /b 1
 if defined WORKBENCH_CLIENT_PYTHON goto launch
 set "WORKBENCH_CLIENT_PYTHON=%~dp0.venv\Scripts\python.exe"
 :launch

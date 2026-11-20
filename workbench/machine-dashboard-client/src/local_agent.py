@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -28,10 +29,17 @@ if LOG_MAX_BYTES < 1 or not 1 <= LOG_BACKUPS <= 100:
     raise ValueError("日志大小必须为正数，历史文件数必须在 1 到 100 之间")
 
 
+def normalize_dashboard_url(value: str) -> str:
+    """Recover from Markdown links pasted from the workbench message."""
+    value = (value or "").strip()
+    match = re.fullmatch(r"\[([^\]]+)\]\((https?://[^)]+)\)", value)
+    return match.group(2) if match else value
+
+
 class LocalAgent:
     def __init__(self, paths: ClientPaths, dashboard_url: str) -> None:
         self.paths = paths
-        self.dashboard_url = dashboard_url.rstrip("/")
+        self.dashboard_url = normalize_dashboard_url(dashboard_url).rstrip("/")
         self.tasks = CodexTaskStore(paths.data / "codex-tasks.sqlite")
         self.processes = LocalProcesses(paths)
         self._lock = threading.Lock()
@@ -389,6 +397,7 @@ def make_handler(agent: LocalAgent):
 
 
 def serve(paths: ClientPaths, host: str, port: int, dashboard_url: str) -> None:
+    dashboard_url = normalize_dashboard_url(dashboard_url)
     if host not in {"127.0.0.1", "localhost", "::1"}:
         raise SystemExit("local agent must bind to loopback")
     class ExclusiveLocalServer(ThreadingHTTPServer):
