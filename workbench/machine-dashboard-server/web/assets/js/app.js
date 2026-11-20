@@ -77,6 +77,11 @@ export async function load(page, options = {}) {
   const name = parts[0];
   const query = parts[1] || "";
   if (!(name in pageTitles)) return;
+  document.querySelectorAll("#sidebar [data-page]").forEach(button => {
+    const active = button.dataset.page === name;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-current", active ? "page" : "false");
+  });
   if (!options.fromHistory && !restoringHistory) {
     const current = pageHistory[pageHistory.length - 1];
     if (current !== name) pageHistory.push(name);
