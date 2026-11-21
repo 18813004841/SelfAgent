@@ -67,6 +67,12 @@ except Exception:
 - JavaScript 公共逻辑放入 `web/assets/js/shared`，页面专属逻辑放入 `pages`；轮询必须有变化检测和停止条件。
 - HTML 页面沿用现有公共样式、导航和错误提示模式，新增按钮必须处理禁用和重复点击。
 
+- Jenkins 管理配置保存在工作台用户级 SQLite；在线状态由服务端探测，中央连接状态复用控制中心 Worker 心跳。
+
+- Jenkins 用户注册仅限工作台管理员操作，注册密码仅用于当前请求，不记录或持久化。
+
+- Jenkins 权限管理仅允许工作台管理员；凭据从服务器用户级 server-settings.json 的 jenkins_management 或服务进程环境读取，权限写入应检测并发变化并保留其他主体。
+
 ## 待确认事项
 
 - 是否需要为每个功能统一增加独立的 `logs/<feature>/` 目录，还是继续由现有 View/操作日志工厂决定目录。
@@ -77,6 +83,7 @@ except Exception:
 
 | 日期 | 变更 | 依据 |
 | --- | --- | --- |
+| 2026-11-21 | 管理页面的 Jenkins 子页面沿用管理模块权限；未配置 Jenkins 地址时不假设外部服务入口 | `src/core/permissions.py`、`web/pages/jenkins.html` |
 | 2026-11-12 | 建立工作台项目级维护规则，明确 Logger 复用、按功能分区、前后端联动和验证要求 | `src/core/Log/logger.py`、`src/core/Log/log_helper.py`、`src/view/logging.py`、`src/core/settings.py` 当前实现 |
 
 - View 日志路径统一由 `core.settings.Settings.output_dir` 决定；View 模块传入的历史目录参数不再决定实际写入位置。

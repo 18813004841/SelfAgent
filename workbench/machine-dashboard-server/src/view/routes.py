@@ -6,3 +6,5 @@ from . import server_maintenance_view
 from . import tool_schedule_view
 from . import package_error_analysis_view
 
+
+from . import jenkins_view

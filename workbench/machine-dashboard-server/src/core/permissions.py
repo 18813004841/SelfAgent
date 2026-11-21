@@ -17,7 +17,7 @@ ALL_MODULES = tuple(MODULES)
 API_MODULES = {
     "/api/machines": "overview", "/api/processes": "overview", "/api/health": "overview",
     "/api/scheduler": "scheduler", "/api/scheduler-tasks": "scheduler", "/api/schedules": "scheduler",
-    "/api/tools": "manage", "/api/central-server": "central-server", "/api/central-client": "central-server",
+    "/api/jenkins": "manage", "/api/tools": "manage", "/api/central-server": "central-server", "/api/central-client": "central-server",
     "/api/openai-agent": "openai-agent", "/api/local-codex": "local-codex", "/api/server-maintenance": "server-maintenance", "/api/settings": "settings",
     "/api/code-review": "code-review", "/api/scheduler-tasks/code-review": "code-review",
     "/api/package-error-analysis": "frontend",
@@ -28,6 +28,8 @@ def module_for_path(path):
         # 用户中心属于登录后的基础账号功能，不依赖业务模块权限。
         if page == "profile":
             return None
+        if page == "jenkins":
+            return "manage"
         if page in {"store", "skin-store"}:
             return "store"
         # Codex task detail is part of the local-codex feature.  It is a

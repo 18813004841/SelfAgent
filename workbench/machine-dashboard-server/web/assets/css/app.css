@@ -252,10 +252,14 @@ button.primary { min-height: 40px; font-weight: 600; }
 .manage-entry {
   display: block;
   width: 100%;
+  margin-top: 16px;
   text-align: left;
   cursor: pointer;
   color: inherit;
   font: inherit;
+}
+.manage-actions {
+  margin-top: 16px;
 }
 .manage-entry[hidden] {
   display: none !important;
@@ -622,10 +626,10 @@ body { line-height: 1.5; }
 :root[data-skin="mist"]{--color-sidebar-active-bg:#e4eaf3;--color-sidebar-active-text:#233d63;--color-sidebar-active-border:#b8c7dc;--shadow-sidebar-active:inset 2px 2px 5px rgba(123,139,163,.22),inset -2px -2px 5px rgba(255,255,255,.9),0 0 0 1px #b8c7dc}
 :root[data-skin="mist"] body{background:radial-gradient(circle at 80% 0%,#f8faff 0,#e9edf4 48%,#e3e8f0 100%)}:root[data-skin="mist"] .sidebar,:root[data-skin="mist"] header,:root[data-skin="mist"] #content .card,:root[data-skin="mist"] .frontend-hero,:root[data-skin="mist"] .package-header,:root[data-skin="mist"] .module-tile{background:linear-gradient(145deg,#f5f7fb,#e6ebf3);border-color:rgba(255,255,255,.86);box-shadow:var(--shadow-card)}:root[data-skin="mist"] button,:root[data-skin="mist"] input,:root[data-skin="mist"] select,:root[data-skin="mist"] textarea{border-color:#d5deea;box-shadow:inset 2px 2px 5px rgba(142,155,177,.16),inset -2px -2px 5px rgba(255,255,255,.9)}:root[data-skin="mist"] button:not(.primary):not(.collapse),:root[data-skin="mist"] select{background:linear-gradient(145deg,#f9fbff,#e4eaf3);border:1px solid #ccd7e6;border-radius:10px;color:#304a6f;box-shadow:5px 5px 10px rgba(124,140,164,.28),-4px -4px 9px rgba(255,255,255,.95)}:root[data-skin="mist"] button:not(.collapse):active,:root[data-skin="mist"] select:active{box-shadow:inset 2px 2px 5px rgba(124,140,164,.25),inset -2px -2px 5px rgba(255,255,255,.95)}:root[data-skin="mist"] button.primary{background:#587295;border-color:#587295;color:#fff;box-shadow:5px 5px 10px rgba(74,96,126,.3),-4px -4px 8px rgba(255,255,255,.8)}:root[data-skin="mist"] .sidebar button.active{background:linear-gradient(145deg,#f9fbff,#e1e7f0);border-color:#c1cede;box-shadow:6px 6px 12px rgba(119,136,162,.3),-5px -5px 10px rgba(255,255,255,.95);transform:translateY(-1px)}:root[data-skin="mist"] .frontend-hero{background:linear-gradient(135deg,#eef2f8,#e3e9f2);border-radius:22px}:root[data-skin="mist"] .frontend-hero-mark{background:#6b83a3;box-shadow:8px 8px 16px rgba(89,108,140,.3),-5px -5px 12px #fff}:root[data-skin="mist"] .module-icon:not(.muted-icon){background:#6b83a3}:root[data-skin="mist"] .module-arrow{color:#587295}
 :root[data-skin="default"]{--color-sidebar-active-bg:#d5e7de;--color-sidebar-active-text:#0f766e;--color-sidebar-active-border:#b5d1c2;--shadow-sidebar-active:inset 0 1px 0 rgba(255,255,255,.7),0 3px 8px rgba(55,86,70,.1)}
-/* Mist sidebar tab states: inactive is recessed, active is raised. */
-:root[data-skin="mist"] .sidebar button:not(.collapse){background:linear-gradient(145deg,#e4eaf2,#f6f8fc);border:1px solid #d1dbe8;box-shadow:inset 3px 3px 7px rgba(126,143,167,.22),inset -3px -3px 7px rgba(255,255,255,.95)}
-:root[data-skin="mist"] .sidebar button:not(.collapse):hover{background:linear-gradient(145deg,#e9eef6,#f9fbff)}
-:root[data-skin="mist"] .sidebar button.active{background:linear-gradient(145deg,#f9fbff,#e1e7f0);border-color:#c1cede;box-shadow:6px 6px 12px rgba(119,136,162,.3),-5px -5px 10px rgba(255,255,255,.95);transform:translateY(-1px)}
+/* Mist sidebar navigation states. */
+:root[data-skin="mist"] .sidebar button:not(.collapse):not(.active){background:transparent;border:1px solid transparent;box-shadow:none;color:#40516e}
+:root[data-skin="mist"] .sidebar button:not(.collapse):not(.active):hover{background:rgba(215,225,239,.65);color:#233d63}
+:root[data-skin="mist"] .sidebar button:not(.collapse).active{background:#dce6f3;border:1px solid #c6d5e8;color:#233d63;box-shadow:inset 3px 0 #587295;font-weight:600;transform:none}
 /* Ink collection: rice paper, landscape washes, bamboo ornaments and seal red. */
 /* Ink wash: pine-green navigation, paper surfaces and restrained cinnabar accents. */
 :root[data-skin="ink"] {
@@ -947,3 +951,27 @@ body { line-height: 1.5; }
   :root:is([data-skin="vintage"],[data-skin="cosmos"],[data-skin="playful"],[data-skin="glass"],[data-skin="gold"]) .frontend-hero,
   :root:is([data-skin="vintage"],[data-skin="cosmos"],[data-skin="playful"],[data-skin="glass"],[data-skin="gold"]) .package-header { background-image:var(--skin-hero); }
 }
+
+.jenkins-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border, #ddd); }
+.jenkins-link { display: flex; flex: 1; align-self: stretch; align-items: center; flex-wrap: wrap; gap: 12px; min-width: 220px; color: inherit; text-decoration: none; }
+.jenkins-link strong { color: var(--link-color, #333399); text-decoration: underline; }
+.jenkins-link:hover { background: rgba(100, 120, 150, 0.08); }
+.jenkins-link:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+#jenkins-form { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; }
+#jenkins-form label { display: flex; flex-direction: column; gap: 4px; }
+#jenkins-register-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+#jenkins-register-form fieldset { flex-basis: 100%; }
+#jenkins-register-form > label { display: flex; flex-direction: column; gap: 4px; }
+#jenkins-register-targets { display: flex; flex-wrap: wrap; gap: 12px; }
+.jenkins-matrix-scroll { width: 100%; overflow-x: auto; margin-top: 12px; }
+.jenkins-matrix { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 13px; }
+.jenkins-matrix caption { text-align: left; font-weight: 600; padding: 8px 0; }
+.jenkins-matrix th, .jenkins-matrix td { border: 1px solid var(--color-border, #d2d7df); padding: 5px; text-align: center; }
+.jenkins-matrix thead th { background: var(--color-surface-muted, #f1f2f5); }
+.jenkins-matrix .jenkins-matrix-server { min-width: 150px; max-width: 220px; text-align: left; }
+.jenkins-matrix-status { display: block; margin-top: 4px; font-size: 12px; font-weight: normal; overflow-wrap: anywhere; }
+.jenkins-matrix .jenkins-matrix-permission { height: 118px; min-width: 32px; padding: 7px 4px; writing-mode: vertical-rl; white-space: nowrap; font-weight: normal; }
+.jenkins-matrix-cell { min-width: 32px; }
+.jenkins-matrix-cell input { margin: 0; cursor: pointer; }
+.jenkins-matrix-cell input:disabled { cursor: not-allowed; }
+.jenkins-matrix-actions { min-width: 70px; }

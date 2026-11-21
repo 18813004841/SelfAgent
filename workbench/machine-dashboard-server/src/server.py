@@ -220,6 +220,8 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/auth/logout": logout(self._token()); self.send_response(200); self.send_header("Set-Cookie", "workbench_session=; Max-Age=0; Path=/"); self.send_header("Content-Type", "application/json; charset=utf-8"); data=b'{"ok":true}'; self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
             user = self._auth(path)
             if user is False: return
+            if (path == "/api/jenkins/register" or path.startswith("/api/jenkins/permissions/")) and not user["is_admin"]:
+                self.send_json(403, {"ok": False, "error": "仅管理员可管理 Jenkins 用户"}); return
             if path.startswith("/api/scheduler") or path.startswith("/api/schedules") or path.startswith("/api/scheduler-tasks") or path.startswith("/api/code-review"):
                 if not role_at_least(user, "advanced"):
                     self.send_json(403, {"ok": False, "code": "forbidden", "error": "需要高级用户及以上权限"}); return

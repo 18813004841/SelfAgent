@@ -84,6 +84,9 @@ def connect():
     if version == 0:
         backup_database()
     db.executescript("""
+    CREATE TABLE IF NOT EXISTS jenkins_servers (
+      ip TEXT PRIMARY KEY, scheme TEXT NOT NULL, port INTEGER NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL, display_name TEXT NOT NULL, is_admin INTEGER NOT NULL DEFAULT 0,

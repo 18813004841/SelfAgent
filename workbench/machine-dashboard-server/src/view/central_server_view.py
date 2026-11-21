@@ -45,21 +45,9 @@ def handle(ctx):
         client = storage / "central-client"
         ctx.request.send_json(200, {"ok": True, "service": "central-client", "running": item.get("status") == "running", "pid": item.get("pid"), "storage_dir": str(storage), "client_dir": str(client), "client_dir_exists": client.is_dir(), "client_entry_exists": (client / "control_worker" / "client.py").is_file()})
     elif ctx.path == "/api/central-server/connections":
-        import json, os, time, urllib.request
-        base = f"http://127.0.0.1:{server.CENTER_PORT}"
-        try:
-            request = urllib.request.Request(base + "/api/workers", headers={"Authorization": f"Bearer {os.environ.get('MACHINE_CONTROL_TOKEN', 'dev-token')}"})
-            with urllib.request.urlopen(request, timeout=0.8) as response:
-                workers = json.loads(response.read().decode("utf-8")).get("workers", [])
-            ips = []
-            for worker in workers:
-                last_seen = worker.get("last_seen_at", 0) or 0
-                if worker.get("status") != "online" or (time.time() * 1000 - last_seen) >= 45000: continue
-                for ip in worker.get("meta", {}).get("local_ips", []):
-                    if ip and ip not in ips and not ip.startswith("127."): ips.append(ip)
-            ctx.request.send_json(200, {"ok": True, "ips": ips, "workers": workers})
-        except Exception:
-            ctx.request.send_json(200, {"ok": True, "ips": [], "workers": [], "available": False})
+        from core.central_connections import get_connections
+        result = get_connections(server.CENTER_PORT)
+        ctx.request.send_json(200, {"ok": True, **result})
     elif ctx.path == "/api/central-client/download":
         package = Path(__file__).resolve().parents[4] / "Tools" / "machine-control" / "packages" / "central-client.zip"
         if not package.is_file():
