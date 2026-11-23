@@ -1,6 +1,6 @@
 <h1>Jenkins 管理</h1>
 <p class="muted">管理 Jenkins 地址，查看服务与中央服务器连接状态。</p>
-<section class="card">
+<section class="card" data-jenkins-manage hidden>
   <h2 id="jenkins-form-title">添加 Jenkins</h2>
   <form id="jenkins-form">
     <label>IP 地址 <input id="jenkins-ip" required placeholder="例如 192.168.1.10"></label>
@@ -11,14 +11,14 @@
   </form>
   <p id="jenkins-message" role="status" aria-live="polite"></p>
 </section>
-<section class="card">
+<section class="card" data-jenkins-manage hidden>
   <h2>Jenkins 列表</h2>
   <p id="jenkins-list-status" role="status">加载中...</p>
   <div id="jenkins-list"></div>
 </section>
 <section class="card" id="jenkins-users" hidden>
   <h2>用户管理</h2>
-  <div role="tablist" aria-label="用户管理"><button type="button" role="tab" id="jenkins-register-tab" aria-selected="true" aria-controls="jenkins-register-panel">注册账号</button> <button type="button" role="tab" id="jenkins-permissions-tab" aria-selected="false" aria-controls="jenkins-permissions-panel">权限管理</button></div>
+  <div role="tablist" aria-label="用户管理"><button type="button" role="tab" id="jenkins-register-tab" aria-selected="true" aria-controls="jenkins-register-panel">注册账号</button> <button type="button" role="tab" id="jenkins-permissions-tab" hidden aria-selected="false" aria-controls="jenkins-permissions-panel">权限管理</button></div>
   <div role="tabpanel" id="jenkins-register-panel" aria-labelledby="jenkins-register-tab">
     <p class="muted">对所选 Jenkins 使用自助注册；需要验证码或未开放注册时请到对应 Jenkins 操作。</p>
     <form id="jenkins-register-form">

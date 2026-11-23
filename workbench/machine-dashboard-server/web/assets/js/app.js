@@ -122,6 +122,7 @@ async function boot() {
   new MutationObserver(() => applyPermissions()).observe(document.querySelector("#content"), {childList:true, subtree:true});
   const allowed = new Set(session.user.modules); document.querySelector("#sidebar").hidden=false;
   document.querySelectorAll("#sidebar [data-page]").forEach(b=>{ if(!allowed.has(b.dataset.page)) b.hidden=true; });
+  if (!allowed.has("manage")) { const b=document.createElement("button"); b.dataset.page="jenkins"; b.textContent="Jenkins 注册"; document.querySelector("#sidebar").insertBefore(b, document.querySelector("#collapse")); }
   if (session.user.is_admin) { const b=document.createElement("button"); b.dataset.page="users"; b.textContent="用户管理"; document.querySelector("#sidebar").insertBefore(b, document.querySelector("#collapse")); }
   const profile=document.createElement("button"); profile.id="profile-entry"; profile.dataset.page="profile"; profile.textContent=`${session.user.display_name || session.user.username}`; document.querySelector("#sidebar").insertBefore(profile, document.querySelector("#collapse"));
   const first = [...document.querySelectorAll("#sidebar [data-page]")].find(b=>!b.hidden);

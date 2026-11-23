@@ -23,6 +23,8 @@ API_MODULES = {
     "/api/package-error-analysis": "frontend",
 }
 def module_for_path(path):
+    if path in {"/pages/jenkins.html", "/api/jenkins", "/api/jenkins/register"}:
+        return None
     if path.startswith("/pages/"):
         page = path[len("/pages/"):].split(".", 1)[0]
         # 用户中心属于登录后的基础账号功能，不依赖业务模块权限。

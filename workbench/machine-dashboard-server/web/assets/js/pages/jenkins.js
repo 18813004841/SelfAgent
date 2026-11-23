@@ -15,8 +15,13 @@ export async function mount() {
     registerResults = document.querySelector("#jenkins-register-results"), registerSubmit = document.querySelector("#jenkins-register-submit");
   let registerBusy = false;
   async function initUsers() {
-    try { const session = await request("/api/auth/session", {cache:"no-store"}); users.hidden = !session.user?.is_admin; }
-    catch { users.hidden = true; }
+    try {
+      const session = await request("/api/auth/session", {cache:"no-store"});
+      users.hidden = false;
+      document.querySelector("#jenkins-permissions-tab").hidden = !session.user?.is_admin;
+      document.querySelectorAll("[data-jenkins-manage]").forEach(section => { section.hidden = !session.user?.modules?.includes("manage"); });
+      if (session.user?.is_admin) mountPermissions(scope);
+    } catch { users.hidden = true; }
   }
   function renderTargets(items) {
     const selected = new Set([...targets.querySelectorAll("input:checked")].map(input => input.value));
@@ -98,7 +103,6 @@ export async function mount() {
     } catch (error) { message.textContent = `保存失败：${error.message}`; }
     finally { busy = false; save.disabled = false; }
   };
-  mountPermissions(scope);
   await initUsers();
   scope.setInterval(refresh, 15000);
   await refresh();

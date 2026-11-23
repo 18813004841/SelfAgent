@@ -71,7 +71,7 @@ except Exception:
 
 - KOA 单任务构建查询沿用工作台登录与 manage 权限，只允许访问已登记的 Jenkins，以匿名 GET 读取最后完成构建；不转发用户会话或管理凭据，也不轮询。
 
-- Jenkins 用户注册仅限工作台管理员操作，注册密码仅用于当前请求，不记录或持久化。
+- Jenkins 用户注册对所有已登录的工作台用户开放；注册密码仅用于当前请求，不记录或持久化。Jenkins 地址管理仍需 manage 模块权限。
 
 - Jenkins 权限管理仅允许工作台管理员；凭据从服务器用户级 server-settings.json 的 jenkins_management 或服务进程环境读取，权限写入支持方案或明确的逐项选择，须检测授权配置并发变化、校验目标实例的可用项并保留其他主体。每台 Jenkins 的 qa、admin 方案存储于工作台用户级 SQLite，角色授权以全局与项目角色为单位分配；旧版名称可能同时代表用户和组，页面须明确提示，非 Jenkins 内置用户库不允许通过此入口保存角色。
 
@@ -85,7 +85,7 @@ except Exception:
 
 | 日期 | 变更 | 依据 |
 | --- | --- | --- |
-| 2026-11-21 | 管理页面的 Jenkins 子页面沿用管理模块权限；未配置 Jenkins 地址时不假设外部服务入口 | `src/core/permissions.py`、`web/pages/jenkins.html` |
+| 2026-11-21 | Jenkins 注册页面与注册接口对已登录用户开放；Jenkins 地址管理沿用管理模块权限，权限管理仅管理员可用 | `src/core/permissions.py`、`web/pages/jenkins.html` |
 | 2026-11-12 | 建立工作台项目级维护规则，明确 Logger 复用、按功能分区、前后端联动和验证要求 | `src/core/Log/logger.py`、`src/core/Log/log_helper.py`、`src/view/logging.py`、`src/core/settings.py` 当前实现 |
 
 - View 日志路径统一由 `core.settings.Settings.output_dir` 决定；View 模块传入的历史目录参数不再决定实际写入位置。
