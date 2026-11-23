@@ -34,9 +34,10 @@
     <ul id="jenkins-register-results"></ul>
   </div>
   <div role="tabpanel" id="jenkins-permissions-panel" aria-labelledby="jenkins-permissions-tab" hidden>
-    <p class="muted">查看和修改用户在各 Jenkins 全局矩阵中直接授予的权限；用户组和项目权限可能另行生效。</p>
+    <p class="muted">每台 Jenkins 单独管理用户权限和 qa、admin 方案。用户组及其他授权仍可能影响实际权限。</p>
     <form id="jenkins-permissions-search"><label>用户名 <input id="jenkins-permissions-username" required></label> <button class="primary" type="submit">搜索</button></form>
     <p id="jenkins-permissions-message" role="status" aria-live="polite"></p>
+    <div class="jenkins-permissions-toolbar"><button type="button" id="jenkins-profile-refresh">刷新 Jenkins 列表和方案</button><span id="jenkins-profile-message" role="status" aria-live="polite"></span></div>
     <div id="jenkins-permissions-results"></div>
   </div>
 </section>

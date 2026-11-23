@@ -963,6 +963,18 @@ body { line-height: 1.5; }
 #jenkins-register-form fieldset { flex-basis: 100%; }
 #jenkins-register-form > label { display: flex; flex-direction: column; gap: 4px; }
 #jenkins-register-targets { display: flex; flex-wrap: wrap; gap: 12px; }
+.jenkins-profile-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.jenkins-profile-table caption { text-align: left; font-weight: 600; padding: 8px 0; }
+.jenkins-profile-table th, .jenkins-profile-table td { border: 1px solid var(--color-border, #d2d7df); padding: 8px; text-align: center; }
+.jenkins-profile-table th:first-child { text-align: left; }
+.jenkins-profile-table thead th { background: var(--color-surface-muted, #f1f2f5); }
+.jenkins-profile-config { width: max-content; min-width: 100%; }
+.jenkins-profile-config thead th[scope="colgroup"] { text-align: center; }
+.jenkins-profile-config .jenkins-profile-parameter { height: auto; min-width: 32px; padding: 7px 4px; writing-mode: vertical-rl; white-space: nowrap; font-weight: normal; }
+.jenkins-profile-settings { margin-top: 20px; }
+.jenkins-profile-settings > summary { cursor: pointer; font-weight: 600; }
+.jenkins-permission-server { margin-top: 20px; }
+.jenkins-permission-server h4 { margin: 0; }
 .jenkins-matrix-scroll { width: 100%; overflow-x: auto; margin-top: 12px; }
 .jenkins-matrix { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 13px; }
 .jenkins-matrix caption { text-align: left; font-weight: 600; padding: 8px 0; }
@@ -975,3 +987,27 @@ body { line-height: 1.5; }
 .jenkins-matrix-cell input { margin: 0; cursor: pointer; }
 .jenkins-matrix-cell input:disabled { cursor: not-allowed; }
 .jenkins-matrix-actions { min-width: 70px; }
+
+/* Jenkins permission cards */
+.jenkins-permissions-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 14px 0; }
+.jenkins-access-card { border: 1px solid var(--color-border, #d2d7df); border-radius: 10px; background: var(--color-surface, #fff); margin: 12px 0; overflow: hidden; }
+.jenkins-access-summary { cursor: pointer; padding: 14px 16px; color: var(--color-text, #172b4d); }
+.jenkins-access-summary strong { margin-right: 16px; }
+.jenkins-access-summary-note { font-size: 12px; font-weight: normal; color: var(--color-text-muted, #53657e); }
+.jenkins-access-content { border-top: 1px solid var(--color-border, #d2d7df); padding: 0 16px 16px; }
+.jenkins-access-nav { display: flex; gap: 4px; border-bottom: 1px solid var(--color-border, #d2d7df); }
+.jenkins-access-tab { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; padding: 12px 16px; box-shadow: none; }
+.jenkins-access-tab.is-active { border-bottom-color: #486d9b; color: #284e80; font-weight: 700; }
+.jenkins-access-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 14px 0 4px; }
+.jenkins-access-label { font-weight: 600; }
+.jenkins-access-choices { display: inline-flex; gap: 0; }
+.jenkins-access-choice { border-radius: 0; box-shadow: none; }
+.jenkins-access-choice:first-child { border-radius: 6px 0 0 6px; }
+.jenkins-access-choice:last-child { border-radius: 0 6px 6px 0; }
+.jenkins-access-choice.is-active { background: #537198; color: #fff; }
+.jenkins-access-save { margin-left: auto; }
+.jenkins-access-help, .jenkins-access-notice { color: var(--color-text-muted, #53657e); font-size: 12px; }
+.jenkins-access-notice { margin: 8px 0 0; min-height: 1em; }
+.jenkins-access-warning { font-size: 12px; overflow-wrap: anywhere; }
+.jenkins-access-remove { margin-top: 4px; }
+@media (max-width: 600px) { .jenkins-access-save { margin-left: 0; } .jenkins-access-summary-note { display: block; margin: 4px 0 0 20px; } }

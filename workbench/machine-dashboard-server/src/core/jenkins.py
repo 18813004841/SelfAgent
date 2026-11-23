@@ -124,9 +124,12 @@ def save(body):
                     old_ip = str(ipaddress.ip_address(str(old_ip).strip()))
                 except ValueError:
                     raise ValueError('原 IP 地址无效') from None
+                previous = db.execute('SELECT ip, scheme, port FROM jenkins_servers WHERE ip=?', (old_ip,)).fetchone()
                 cursor = db.execute('UPDATE jenkins_servers SET ip=?, scheme=?, port=? WHERE ip=?', (ip, scheme, port, old_ip))
                 if cursor.rowcount == 0:
                     raise ValueError('Jenkins 条目不存在')
+                if previous and (old_ip != ip or previous['scheme'] != scheme or previous['port'] != port):
+                    db.execute('DELETE FROM jenkins_permission_profiles WHERE ip=?', (old_ip,))
     except sqlite3.IntegrityError:
         raise ValueError('该 IP 已存在') from None
 
@@ -139,3 +142,4 @@ def delete(body):
     with closing(storage.connect()) as db, db:
         if db.execute('DELETE FROM jenkins_servers WHERE ip=?', (ip,)).rowcount == 0:
             raise ValueError('Jenkins 条目不存在')
+        db.execute('DELETE FROM jenkins_permission_profiles WHERE ip=?', (ip,))

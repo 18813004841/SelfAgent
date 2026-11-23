@@ -73,7 +73,7 @@ except Exception:
 
 - Jenkins 用户注册仅限工作台管理员操作，注册密码仅用于当前请求，不记录或持久化。
 
-- Jenkins 权限管理仅允许工作台管理员；凭据从服务器用户级 server-settings.json 的 jenkins_management 或服务进程环境读取，权限写入应检测并发变化并保留其他主体。
+- Jenkins 权限管理仅允许工作台管理员；凭据从服务器用户级 server-settings.json 的 jenkins_management 或服务进程环境读取，权限写入支持方案或明确的逐项选择，须检测授权配置并发变化、校验目标实例的可用项并保留其他主体。每台 Jenkins 的 qa、admin 方案存储于工作台用户级 SQLite，角色授权以全局与项目角色为单位分配；旧版名称可能同时代表用户和组，页面须明确提示，非 Jenkins 内置用户库不允许通过此入口保存角色。
 
 ## 待确认事项
 

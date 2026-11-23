@@ -50,12 +50,18 @@ def register_view(ctx):
     ctx.request.send_json(200, {'ok': True, 'results': results})
     return True
 
-@router.route('POST', '/api/jenkins/permissions/search', '/api/jenkins/permissions/save')
+@router.route('POST', '/api/jenkins/permissions/search', '/api/jenkins/permissions/save', '/api/jenkins/permissions/profiles', '/api/jenkins/permissions/catalog')
 def permissions_view(ctx):
     from core import jenkins_permissions
     if ctx.path.endswith('/search'):
         result = jenkins_permissions.search(ctx.body)
         ctx.request.send_json(200, {'ok': True, 'results': result})
+    elif ctx.path.endswith('/catalog'):
+        result = jenkins_permissions.catalog()
+        ctx.request.send_json(200, {'ok': True, 'results': result})
+    elif ctx.path.endswith('/profiles'):
+        result = jenkins_permissions.profiles(ctx.body)
+        ctx.request.send_json(200, {'ok': True, 'result': result})
     else:
         result = jenkins_permissions.save(ctx.body)
         ctx.request.send_json(200, {'ok': True, 'result': result})
