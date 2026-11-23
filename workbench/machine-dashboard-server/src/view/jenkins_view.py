@@ -6,6 +6,18 @@ from core import jenkins
 
 logger = get_logger('jenkins', 'jenkins')
 
+@router.route('POST', '/api/jenkins/last-completed')
+def last_completed_view(ctx):
+    logger.info('jenkins.last_completed.begin')
+    try:
+        result = jenkins.last_completed(ctx.body)
+    except Exception:
+        logger.warning('jenkins.last_completed.failed')
+        raise
+    logger.info('jenkins.last_completed.end')
+    ctx.request.send_json(200, {'ok': True, 'build': result})
+    return True
+
 @router.route('GET', '/api/jenkins')
 def list_view(ctx):
     server = sys.modules.get('server') or sys.modules['__main__']

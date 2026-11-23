@@ -28,7 +28,7 @@ def module_for_path(path):
         # 用户中心属于登录后的基础账号功能，不依赖业务模块权限。
         if page == "profile":
             return None
-        if page == "jenkins":
+        if page in {"jenkins", "jenkins-koa"}:
             return "manage"
         if page in {"store", "skin-store"}:
             return "store"

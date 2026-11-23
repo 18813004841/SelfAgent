@@ -69,6 +69,8 @@ except Exception:
 
 - Jenkins 管理配置保存在工作台用户级 SQLite；在线状态由服务端探测，中央连接状态复用控制中心 Worker 心跳。
 
+- KOA 单任务构建查询沿用工作台登录与 manage 权限，只允许访问已登记的 Jenkins，以匿名 GET 读取最后完成构建；不转发用户会话或管理凭据，也不轮询。
+
 - Jenkins 用户注册仅限工作台管理员操作，注册密码仅用于当前请求，不记录或持久化。
 
 - Jenkins 权限管理仅允许工作台管理员；凭据从服务器用户级 server-settings.json 的 jenkins_management 或服务进程环境读取，权限写入应检测并发变化并保留其他主体。

@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>KOA · Jenkins 构建</title><link rel="stylesheet" href="/assets/css/app.css"></head>
+<body>
+<main class="card">
+  <h1>KOA · Jenkins 构建</h1>
+  <p>查询已登记 Jenkins 的一个任务的最后一次完成构建。此查询使用匿名访问，不会触发构建。</p>
+  <form id="koa-form">
+    <label>Jenkins IP <input id="koa-ip" required autocomplete="off"></label>
+    <label>任务路径 <input id="koa-job" required autocomplete="off" placeholder="文件夹/任务名"></label>
+    <button type="submit" id="koa-submit">查询</button>
+  </form>
+  <p id="koa-status" role="status" aria-live="polite"></p>
+</main>
+<script type="module" src="/assets/js/pages/jenkins-koa.js"></script>
+</body></html>
