@@ -1,0 +1,15 @@
+{
+  "name": "codex-workbench",
+  "version": "0.0.4",
+  "description": "独立的KOA工作台界面",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "KOA工作台",
+    "shortDescription": "打开KOA工作台界面",
+    "longDescription": "提供可自行修改的本地工作台界面。",
+    "developerName": "SelfAgent",
+    "category": "Productivity",
+    "composerIcon": "./assets/koa.png",
+    "logo": "./assets/koa.png"
+  }
+}

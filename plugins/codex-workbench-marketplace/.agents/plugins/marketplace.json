@@ -1,0 +1,20 @@
+{
+  "name": "selfagent-workbench",
+  "interface": {
+    "displayName": "SelfAgent Plugins"
+  },
+  "plugins": [
+    {
+      "name": "codex-workbench",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-workbench"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
