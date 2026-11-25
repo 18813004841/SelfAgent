@@ -74,7 +74,7 @@ if [[ ! -f "$CONFIG" ]]; then
   CONFIG="$CONFIG" STORAGE="$STORAGE" DASHBOARD="$WORKBENCH_DASHBOARD_URL" python3 - <<'PY'
 import json, os
 path = os.environ["CONFIG"]
-data = {"storage_dir": os.environ["STORAGE"], "dashboard_url": os.environ["DASHBOARD"], "local_codex_url": "ws://127.0.0.1:4500", "central_server_url": "", "central_token": "", "machine_id": os.uname().nodename}
+data = {"storage_dir": os.environ["STORAGE"], "dashboard_url": os.environ["DASHBOARD"], "local_codex_url": "ws://127.0.0.1:4500", "central_token": "", "machine_id": os.uname().nodename}
 with open(path, "w", encoding="utf-8") as handle:
     json.dump(data, handle, ensure_ascii=False, indent=2)
     handle.write("\n")

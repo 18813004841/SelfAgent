@@ -36,6 +36,8 @@ def main() -> None:
     port = 18993
     with tempfile.TemporaryDirectory(prefix="wb-client-") as temporary:
         root = Path(temporary)
+        (root / "config").mkdir()
+        (root / "config" / "settings.json").write_text(json.dumps({"central_server_url": "http://old:18765"}), encoding="utf-8")
         client_root = Path(__file__).resolve().parents[1]
         if not (client_root / "src" / "local_agent.py").is_file():
             client_root = Path(__file__).resolve().parents[1] / "workbench" / "machine-dashboard-client"
@@ -43,6 +45,7 @@ def main() -> None:
         proc = subprocess.Popen([sys.executable, "-m", "src.local_agent", "--port", str(port), "--dashboard-url", "http://10.0.76.228:18888", "--data-dir", str(root)], cwd=client_root, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             wait_ready(port)
+            assert "central_server_url" not in json.loads((root / "config" / "settings.json").read_text(encoding="utf-8"))
             status, preflight = options(port, {"Origin": "http://127.0.0.1:18888", "Access-Control-Request-Method": "POST", "Access-Control-Request-Private-Network": "true"})
             assert status == 204 and preflight.get("Access-Control-Allow-Private-Network") == "true", preflight
             status, loopback = request(port, "/api/settings/storage", headers={"Origin": "http://127.0.0.1:18888"})
@@ -69,11 +72,27 @@ def main() -> None:
             assert status == 200 and Path(restored["settings"]["storage_dir"]).resolve() == (root / "storage").resolve(), restored
             status, body = request(port, "/api/central-client/status", headers={"Origin": "http://evil.example"})
             assert status == 403, body
-            good = zip_bytes({"central-client/control_worker/client.py": "print('client')\n", "central-client/VERSION": "1.0.0\n"})
+            status, missing = request(port, "/api/central-client/open", b"{}", {"Content-Type": "application/json", "Origin": "http://127.0.0.1:18888"})
+            assert status == 400 and "尚未安装" in missing["error"], missing
+            good = zip_bytes({"central-client/control_worker/client.py": "import json, pathlib, sys, time\npathlib.Path('worker-args.json').write_text(json.dumps(sys.argv))\ntime.sleep(30)\n", "central-client/VERSION": "1.0.0\n"})
             status, body = request(port, "/api/central-client/install", good, {"Content-Type": "application/zip", "Origin": "http://127.0.0.1:18888"})
             assert status == 200 and Path(body["client_dir"], "control_worker", "client.py").is_file(), body
             status, installed = request(port, "/api/central-client/status", headers={"Origin": "http://127.0.0.1:18888"})
             assert status == 200 and installed["version"] == "1.0.0", installed
+            headers = {"Content-Type": "application/json", "Origin": "http://127.0.0.1:18888"}
+            args_file = root / "storage" / "central-client" / "worker-args.json"
+            for address in ("http://192.168.1.10:18765", "http://192.168.1.11:18766"):
+                args_file.unlink(missing_ok=True)
+                status, started = request(port, "/api/central-client/start", json.dumps({"central_server_url": address}).encode(), headers)
+                assert status == 200, started
+                for _ in range(40):
+                    if args_file.is_file(): break
+                    time.sleep(0.05)
+                args = json.loads(args_file.read_text())
+                assert args[args.index("--server") + 1] == address, args
+                assert "central_server_url" not in json.loads(config_path.read_text(encoding="utf-8"))
+                status, stopped = request(port, "/api/central-client/stop", b"{}", headers)
+                assert status == 200, stopped
             missing_version = zip_bytes({"central-client/control_worker/client.py": "print('new')\n"})
             status, rejected_version = request(port, "/api/central-client/install", missing_version, {"Content-Type": "application/zip", "Origin": "http://127.0.0.1:18888"})
             assert status == 400 and "VERSION" in rejected_version["error"], rejected_version

@@ -59,6 +59,7 @@ except Exception:
 
 ## 代码约定
 
+- 中央客户端启动时由已登录页面读取服务端提供的连接信息并传给 Local Agent；客户机不持久化中央服务器地址。跨机器地址可由 MACHINE_CONTROL_PUBLIC_URL 指定，未指定时使用工作台访问主机名和中央服务端口。
 - 认证与模块权限统一在服务端 HTTP 入口校验；用户、权限和会话数据沿用 `core.storage` 的用户级 SQLite，页面隐藏不能替代 API 鉴权。
 
 - Python 导入使用现有包结构，避免通过修改 `sys.path` 绕过真实依赖。

@@ -1,7 +1,8 @@
 from pathlib import Path
 from . import router
-from pathlib import Path
 from .logging import get_logger
+import os
+from urllib.parse import urlsplit
 
 DEBUG_LOG_DIR = "central-server"
 logger = get_logger('central_server', DEBUG_LOG_DIR)
@@ -29,7 +30,12 @@ def handle(ctx):
         logger.info("central_server.status.result pid=%s pid_path=%s running=%s", pid, server.CENTER_PID_PATH, running)
         if not running:
             server.CENTER_PID_PATH.unlink(missing_ok=True)
-        ctx.request.send_json(200, {"ok": True, "service": "central-server", "running": running, "pid": pid, "port": server.CENTER_PORT})
+        public_url = os.environ.get("MACHINE_CONTROL_PUBLIC_URL", "").strip().rstrip("/")
+        if public_url:
+            parsed = urlsplit(public_url)
+            if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password or parsed.path or parsed.query or parsed.fragment:
+                raise ValueError("MACHINE_CONTROL_PUBLIC_URL 必须是 HTTP(S) 服务地址")
+        ctx.request.send_json(200, {"ok": True, "service": "central-server", "running": running, "pid": pid, "port": server.CENTER_PORT, "public_url": public_url})
     elif ctx.path == "/api/central-client/status":
         ctx.request.send_json(409, {"ok": False, "error": "中央客户端由浏览这台电脑的本地接入服务管理", "code": "client_local_only"})
     elif ctx.path == "/api/central-client/version":

@@ -13,6 +13,7 @@ class LocalProcesses:
     def __init__(self, paths: ClientPaths) -> None:
         self.paths = paths
         self._client = None
+        self._client_server = ""
         self._codex = None
         self._codex_log = None
 
@@ -31,18 +32,18 @@ class LocalProcesses:
             "client_dir_exists": client.is_dir(),
             "client_entry_exists": (client / "control_worker" / "client.py").is_file(),
             "version": version,
-            "central_server_url": agent.settings.get("central_server_url", ""),
+            "central_server_url": self._client_server if running else "",
             "machine_id": agent.settings.get("machine_id") or socket.gethostname(),
         }
 
-    def start_client(self, agent) -> Handle:
+    def start_client(self, agent, server: str) -> Handle:
         if self._client and self._client.poll() is None:
             return Handle(self._client.pid)
         client = agent.storage() / "central-client"
         entry = client / "control_worker" / "client.py"
         if not entry.is_file():
             raise ValueError("本机尚未安装中央服务器客户端，请先下载并安装")
-        server = str(agent.settings.get("central_server_url") or "").strip()
+        server = str(server or "").strip()
         if not server:
             raise ValueError("请填写本机可访问的中央服务器地址")
         token = str(agent.settings.get("central_token") or os.environ.get("MACHINE_CONTROL_TOKEN") or "dev-token")
@@ -50,11 +51,13 @@ class LocalProcesses:
         command = [sys.executable, "-m", "control_worker.client", "--server", server, "--machine-id", machine, "--token", token, "--capability", "shell", "--capability", "unity", "--capability", "adb"]
         flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
         self._client = subprocess.Popen(command, cwd=client, env={**os.environ, "PYTHONPATH": str(client)}, creationflags=flags)
+        self._client_server = server
         return Handle(self._client.pid)
 
     def stop_client(self) -> None:
         self._stop(self._client)
         self._client = None
+        self._client_server = ""
 
     def codex_status(self) -> dict:
         running = self._codex is not None and self._codex.poll() is None

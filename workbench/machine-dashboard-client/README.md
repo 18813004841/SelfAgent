@@ -1,6 +1,6 @@
 # 工作台客户机 Local Agent
 
-当前版本为 `1.0.0`。包内 `VERSION` 记录版本，工作台设置页显示本机版本与服务端版本，并提供对应版本下载入口。升级时在旧客户端目录执行 `update-client.ps1 -PackagePath <新版ZIP> -DashboardUrl <工作台地址> -Start`；升级器会停止旧 Local Agent、保留旧目录为 `.previous`，失败时恢复旧目录。用户配置和数据目录位于 `%LOCALAPPDATA%\LocalWorkbench`，不会随包覆盖。
+当前版本为 `1.0.1`。包内 `VERSION` 记录版本，工作台设置页显示本机版本与服务端版本，并提供对应版本下载入口。升级时在旧客户端目录执行 `update-client.ps1 -PackagePath <新版ZIP> -DashboardUrl <工作台地址> -Start`；升级器会停止旧 Local Agent、保留旧目录为 `.previous`，失败时恢复旧目录。用户配置和数据目录位于 `%LOCALAPPDATA%\LocalWorkbench`，不会随包覆盖。
 
 本项目运行在浏览工作台的客户机上，只监听 `127.0.0.1:18991`。中央客户端、本地 Codex、设置页的本地目录由它管理；中央服务、调度和其他业务留在服务端。它是工作台项目内的独立运行单元。
 
@@ -36,7 +36,7 @@ macOS 用户可双击 `start-local-agent.command` 一键启动；首次运行会
 .venv\Scripts\python.exe -m src.local_agent --dashboard-url http://工作台服务器地址:18888
 ```
 
-本地 Codex 任务支持 `timeout_seconds`（1 到 86400 秒）以及 `POST /api/local-codex/task/cancel` 取消；提交和查询接口分别是 `POST/GET /api/local-codex/task`，任务终态会写回客户机自己的 SQLite 数据库。\n\n本地 Codex 还需要客户机自行安装 Codex CLI；中央客户端需要先在页面下载并安装 machine-control 客户端包。中央连接参数必须填写客户机可达的服务器地址。
+本地 Codex 任务支持 `timeout_seconds`（1 到 86400 秒）以及 `POST /api/local-codex/task/cancel` 取消；提交和查询接口分别是 `POST/GET /api/local-codex/task`，任务终态会写回客户机自己的 SQLite 数据库。本地 Codex 还需要客户机自行安装 Codex CLI；中央客户端需要先在页面下载并安装 machine-control 客户端包。每次启动时，已登录的工作台页面获取服务端连接信息并传给 Local Agent；地址不保存在客户机配置中。旧配置中的 `central_server_url` 会在 Local Agent 启动时移除。服务端可设置 `MACHINE_CONTROL_PUBLIC_URL` 指定客户机可达地址；否则使用访问工作台的主机名与中央服务实际端口。地址变更后需重启 Worker；服务端无法访问时启动失败，不回退旧地址。
 
 ## 数据与回滚
 

@@ -1,6 +1,6 @@
 [project]
 name = "selfagent-workbench-client"
-version = "1.0.0"
+version = "1.0.1"
 description = "Loopback local agent for the SelfAgent workbench"
 requires-python = ">=3.11"
 dependencies = []

@@ -24,7 +24,7 @@ $storage = Join-Path $env:LOCALAPPDATA "LocalWorkbench\client\storage"
 New-Item -ItemType Directory -Force $configRoot, $storage | Out-Null
 $config = Join-Path $configRoot "settings.json"
 if (-not (Test-Path $config)) {
-  $json = @{ storage_dir = $storage; dashboard_url = $env:WORKBENCH_DASHBOARD_URL; local_codex_url = "ws://127.0.0.1:4500"; central_server_url = ""; central_token = ""; machine_id = $env:COMPUTERNAME } | ConvertTo-Json
+  $json = @{ storage_dir = $storage; dashboard_url = $env:WORKBENCH_DASHBOARD_URL; local_codex_url = "ws://127.0.0.1:4500"; central_token = ""; machine_id = $env:COMPUTERNAME } | ConvertTo-Json
   [IO.File]::WriteAllText($config, $json, [Text.UTF8Encoding]::new($false))
 } else {
   try {

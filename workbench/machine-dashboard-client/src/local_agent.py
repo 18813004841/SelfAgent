@@ -54,6 +54,9 @@ class LocalAgent:
             if not isinstance(value, dict):
                 raise ValueError("客户机 settings.json 必须是 JSON 对象")
             changed = False
+            if "central_server_url" in value:
+                del value["central_server_url"]
+                changed = True
             if not value.get("dashboard_url"):
                 value["dashboard_url"] = self.dashboard_url
                 changed = True
@@ -64,7 +67,7 @@ class LocalAgent:
                 self.settings = value
                 self.save()
             return value
-        defaults = {"storage_dir": str(self.paths.root / "client" / "storage"), "dashboard_url": self.dashboard_url, "local_codex_url": "ws://127.0.0.1:4500", "central_server_url": "", "central_token": "", "machine_id": socket.gethostname()}
+        defaults = {"storage_dir": str(self.paths.root / "client" / "storage"), "dashboard_url": self.dashboard_url, "local_codex_url": "ws://127.0.0.1:4500", "central_token": "", "machine_id": socket.gethostname()}
         self.settings = defaults
         self.save()
         return defaults
@@ -326,16 +329,27 @@ def make_handler(agent: LocalAgent):
                     self._send(200, {"ok": True, "storage_dir": str(target)})
                 elif path == "/api/central-client/status" and method == "GET":
                     self._send(200, {"ok": True, **agent.processes.client_status(agent)})
+                elif path == "/api/central-client/open" and method == "POST":
+                    target = agent.storage() / "central-client"
+                    if not target.is_dir():
+                        raise ValueError("本机尚未安装中央客户端，请先安装客户端")
+                    if os.name == "nt":
+                        os.startfile(target)  # noqa: S606 - explicit local user action
+                    elif sys.platform == "darwin":
+                        subprocess.Popen(["open", str(target)])
+                    else:
+                        subprocess.Popen(["xdg-open", str(target)])
+                    self._send(200, {"ok": True, "client_dir": str(target)})
                 elif path == "/api/central-client/install" and method == "POST":
                     target = agent.download_client() if not raw else agent.install_client(raw)
                     self._send(200, {"ok": True, "client_dir": str(target)})
                 elif path == "/api/central-client/start" and method == "POST":
                     body = self._json_body(raw)
-                    for key in ("central_server_url", "central_token", "machine_id"):
+                    for key in ("central_token", "machine_id"):
                         if body.get(key):
                             agent.settings[key] = str(body[key])
                     agent.save()
-                    handle = agent.processes.start_client(agent)
+                    handle = agent.processes.start_client(agent, body.get("central_server_url", ""))
                     self._send(200, {"ok": True, "pid": handle.pid})
                 elif path == "/api/central-client/stop" and method == "POST":
                     agent.processes.stop_client()

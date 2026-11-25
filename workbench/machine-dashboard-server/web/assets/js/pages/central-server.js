@@ -8,7 +8,13 @@ const escapeHtml = text => String(text).replace(/[&<>"']/g, c => ({"&":"&amp;","
 export async function mount() {
   scope = createPageScope();
   const $ = id => document.getElementById(id);
-  const serverInput = $("central-client-server"); serverInput.value = `${location.protocol}//${location.hostname}:18765`;
+  localStorage.removeItem("central-client-server");
+  async function getCentralAddress() {
+    const response = await api("/api/central-server/status", {cache:"no-store"});
+    const server = await response.json();
+    if (!response.ok || !server.ok) throw new Error(server.error || "无法获取中央服务器连接信息");
+    return server.public_url || `http://${location.hostname}:${server.port}`;
+  }
   const sessionKey = "central-ai-sessions";
   let sessions = JSON.parse(localStorage.getItem(sessionKey) || "[]").filter(s => s && s.id && Array.isArray(s.messages));
   let active = sessions[0] || null;
@@ -43,10 +49,10 @@ export async function mount() {
     // not prevent the server-side worker list from being loaded.
     try {
       const client=await localApi("/api/central-client/status");
-      $("central-client-status").textContent=client.running?"运行中":"已停止"; $("central-client-address").textContent=serverInput.value||"未配置";
+      $("central-client-status").textContent=client.running?"运行中":"已停止"; $("central-client-address").textContent=client.central_server_url||server.public_url||`http://${location.hostname}:${server.port}`;
       $("central-client-files").textContent=client.client_entry_exists?"已找到本机客户端文件":"本机未找到客户端文件"; $("central-client-dir").textContent=client.client_dir||"";
     } catch (localError) {
-      $("central-client-status").textContent="本地接入服务未启动"; $("central-client-address").textContent=serverInput.value||"未配置";
+      $("central-client-status").textContent="本地接入服务未启动"; $("central-client-address").textContent=server.public_url||`http://${location.hostname}:${server.port}`;
       $("central-client-files").textContent="请运行 local_agent（不影响中央服务器查询）";
     }
     const connectionResponse=await api("/api/central-server/connections",{cache:"no-store"}); const snapshot=await connectionResponse.json();
@@ -54,8 +60,10 @@ export async function mount() {
   }catch(e){$("central-server-status").textContent="状态获取失败"; $("central-server-msg").textContent=e.message;} }
   $("central-server-start").onclick=async()=>{ $("central-server-msg").textContent="正在启动..."; try{const d=await api("/api/central-server/start",{method:"POST"}).then(r=>r.json()); if(!d.ok)throw Error(d.error); $("central-server-msg").textContent="中央服务器启动请求已发送";}catch(e){$("central-server-msg").textContent=`启动失败：${e.message}`;} await refresh();};
   $("central-server-stop").onclick=async()=>{ $("central-server-msg").textContent="正在关闭..."; await api("/api/central-server/stop",{method:"POST"}); await refresh(); };
-  $("central-client-start").onclick=async()=>{ $("central-client-msg").textContent="正在启动..."; try{localStorage.setItem("central-client-server",serverInput.value.trim()); await localApi("/api/central-client/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({central_server_url:serverInput.value.trim()})}); $("central-client-msg").textContent="本机客户端启动请求已发送";}catch(e){$("central-client-msg").textContent=e.message;} await refresh();};
+  $("central-client-start").onclick=async()=>{ const button=$("central-client-start"); button.disabled=true; $("central-client-msg").textContent="正在启动..."; try{const address=await getCentralAddress(); await localApi("/api/central-client/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({central_server_url:address})}); $("central-client-msg").textContent="本机客户端启动请求已发送";}catch(e){$("central-client-msg").textContent=e.message;} finally{button.disabled=false;} await refresh();};
   $("central-client-stop").onclick=async()=>{try{await localApi("/api/central-client/stop",{method:"POST"});$("central-client-msg").textContent="本机客户端已关闭";}catch(e){$("central-client-msg").textContent=e.message;}await refresh();};
+  $("central-client-open").onclick=async()=>{const button=$("central-client-open"); button.disabled=true; try{await localApi("/api/central-client/open",{method:"POST"}); $("central-client-update").textContent="已请求打开客户端目录";}catch(e){$("central-client-update").textContent=e.message === "not found" ? "本机 Local Agent 版本过旧，请在设置页下载更新并重启本机服务" : e.message;}finally{button.disabled=false;}};
+  $("central-client-download").onclick=async()=>{const button=$("central-client-download"); button.disabled=true; $("central-client-update").textContent="正在下载客户端…"; try{const response=await api("/api/central-client/download",{cache:"no-store"}); if(!response.ok){let message=`下载失败（HTTP ${response.status}）`; try{const data=await response.json(); message=data.error||message;}catch{} throw new Error(message);} const blob=await response.blob(); const url=URL.createObjectURL(blob); const link=document.createElement("a"); link.href=url; link.download="central-client.zip"; document.body.appendChild(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),60000); $("central-client-update").textContent="客户端下载已开始";}catch(e){$("central-client-update").textContent=e.message;}finally{button.disabled=false;}};
   $("central-ai-new").onclick=()=>{const id=`session-${Date.now()}`;active={id,title:"新的机器管理会话",state:"进行中",time:"刚刚",messages:[]};sessions.unshift(active);saveSessions();renderSessions();renderMessages();$("central-ai-title").textContent=active.title;$("central-ai-input").disabled=false;$("central-ai-close").disabled=false;$("central-ai-input").focus();};
   $("central-ai-close").onclick=()=>{if(!active)return; const index=sessions.findIndex(s=>s.id===active.id); if(index>=0)sessions.splice(index,1); active=sessions[0]||null; saveSessions(); $("central-ai-title").textContent=active?.title||"暂无活动会话"; renderMessages(); $("central-ai-input").disabled=!active || pendingSessions.has(active.id); $("central-ai-close").disabled=!active; renderSessions();};
     $("central-ai-form").onsubmit = async e => {
