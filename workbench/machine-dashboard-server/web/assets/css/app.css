@@ -1046,3 +1046,5 @@ body:has(#content > .central-page) #content { flex: 1; min-height: 0; display: f
 }
 .session-empty{padding:28px 10px;text-align:center;color:var(--color-text-subtle);font-size:12px}
 .assistant-trace{display:block;margin:4px 0;padding:4px 6px;color:#52647a;background:#eef3f9;border-left:3px solid #6b86a8;font-family:ui-monospace,monospace;font-size:11px;white-space:pre-wrap;word-break:break-word}
+
+#central-workers { max-height: 320px; overflow-y: auto; }

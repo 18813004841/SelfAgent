@@ -40,7 +40,7 @@ export async function mount() {
     });
   }
   function renderMessages(){ const box=$("central-ai-messages"); if(!active){box.innerHTML='<div class="session-empty">请新建会话开始咨询。</div>';return;} box.innerHTML=active.messages.map(m=>`<div class="chat-bubble ${m.role==='user'?'user':'assistant'}">${m.html}</div>`).join('') || '<div class="chat-bubble assistant">你好，我可以帮助你查询已连接机器的状态、资源和日志。</div>'; }
-  function renderWorkers(workers=[]){ latestWorkers=workers; $("central-worker-count").textContent=`(${workers.filter(w=>w.status==="online").length})`; $("central-workers").innerHTML=workers.length?workers.slice(0,4).map(w=>`<div class="worker-item"><span>▣</span><div class="machine"><b>${escapeHtml(w.hostname||w.machine_id)}</b><small>${escapeHtml((w.meta?.local_ips||[])[0]||"未上报 IP")}</small></div><span class="online">● ${w.status==="online"?"在线":"离线"}</span></div>`).join(""): `<div class="worker-item"><small>暂无已连接客户端</small></div>`; }
+  function renderWorkers(workers=[]){ latestWorkers=workers; $("central-worker-count").textContent=`(${workers.filter(w=>w.status==="online").length})`; $("central-workers").innerHTML=workers.length?workers.map(w=>`<div class="worker-item"><span>▣</span><div class="machine"><b>${escapeHtml(w.hostname||w.machine_id)}</b><small>${escapeHtml((w.meta?.local_ips||[])[0]||"未上报 IP")}</small></div><span class="online">● ${w.status==="online"?"在线":"离线"}</span></div>`).join(""): `<div class="worker-item"><small>暂无已连接客户端</small></div>`; }
   async function refresh(){ try{
     const response=await api("/api/central-server/status",{cache:"no-store"}),server=await response.json();
     if(!response.ok || server.ok === false) throw Error(server.error||`状态查询失败（HTTP ${response.status}）`);

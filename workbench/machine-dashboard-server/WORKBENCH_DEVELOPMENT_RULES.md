@@ -10,6 +10,7 @@
 - `web/`：HTML、CSS、JavaScript 和页面静态资源
 - `launchers/`：外部进程或客户端启动器
 - `plugins/`：可选扩展
+- `skills/`：工作台内置工作流技能；加载和分发方式待接入时确定
 - `logs/`：运行产物目录，不提交日志内容
 - [项目执行规则](AGENTS.md)：供维护助手和后续开发直接遵循
 
@@ -92,6 +93,7 @@ except Exception:
 
 | 日期 | 变更 | 依据 |
 | --- | --- | --- |
+| 2026-11-25 | 预留工作台内置工作流技能目录，与仓库开发流程技能及用户运行数据区分 | `skills/README.md` |
 | 2026-11-21 | Jenkins 注册页面与注册接口对已登录用户开放；Jenkins 地址管理沿用管理模块权限，权限管理仅管理员可用 | `src/core/permissions.py`、`web/pages/jenkins.html` |
 | 2026-11-12 | 建立工作台项目级维护规则，明确 Logger 复用、按功能分区、前后端联动和验证要求 | `src/core/Log/logger.py`、`src/core/Log/log_helper.py`、`src/view/logging.py`、`src/core/settings.py` 当前实现 |
 
