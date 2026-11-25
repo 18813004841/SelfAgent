@@ -68,6 +68,16 @@ class CodexCliClient:
             args += ["-c", f"{key}={value}"]
         proc: subprocess.Popen[str] | None = None
         events: list[dict[str, Any]] = []
+        def stop_process() -> None:
+            if proc is None or proc.poll() is not None:
+                return
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+                               capture_output=True, timeout=10, check=False,
+                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            if proc.poll() is None:
+                proc.kill()
+            proc.wait(timeout=10)
         try:
             proc = subprocess.Popen(args, cwd=str(project), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                     stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
@@ -91,10 +101,10 @@ class CodexCliClient:
             started = time.monotonic()
             while proc.poll() is None:
                 if cancel and cancel():
-                    proc.terminate()
+                    stop_process()
                     raise CodexCliError("Codex 检查已取消")
                 if time.monotonic() - started > self.timeout:
-                    proc.terminate()
+                    stop_process()
                     raise CodexCliError("Codex 检查超时")
                 time.sleep(0.05)
             reader.join(timeout=2)
@@ -117,5 +127,4 @@ class CodexCliClient:
             raise CodexCliError(str(exc)) from exc
         finally:
             if proc is not None and proc.poll() is None:
-                proc.kill()
-                proc.wait(timeout=5)
+                stop_process()

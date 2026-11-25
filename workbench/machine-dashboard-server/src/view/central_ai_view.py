@@ -9,13 +9,37 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 import urllib.request
+from functools import wraps
 from typing import Any
 
 from . import router
 from .logging import get_logger
 
 logger = get_logger("central_ai", "central-server")
+_active_sessions: set[str] = set()
+_active_sessions_lock = threading.Lock()
+
+
+def _guard_session(fn):
+    @wraps(fn)
+    def guarded(ctx):
+        session_id = str(ctx.body.get("session_id") or "").strip()
+        owned = set()
+        with _active_sessions_lock:
+            if session_id and session_id in _active_sessions:
+                raise RuntimeError("该会话的上一条消息仍在执行，请等待完成后再发送")
+            if session_id:
+                _active_sessions.add(session_id)
+                owned.add(session_id)
+        ctx.central_ai_owned_sessions = owned
+        try:
+            return fn(ctx)
+        finally:
+            with _active_sessions_lock:
+                _active_sessions.difference_update(owned)
+    return guarded
 
 
 def _request(path: str, method: str = "GET", payload: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -86,6 +110,7 @@ def _get_workers() -> list[dict[str, Any]]:
 
 
 @router.route("POST", "/api/central-ai/chat", "/api/central-ai/chat-stream")
+@_guard_session
 def handle(ctx):
     message = str(ctx.body.get("message", "")).strip()
     if not message:
@@ -146,6 +171,10 @@ def handle(ctx):
         nonlocal started_session
         if event.get("type") == "thread.started":
             started_session = event.get("thread_id")
+            if started_session:
+                with _active_sessions_lock:
+                    _active_sessions.add(started_session)
+                    ctx.central_ai_owned_sessions.add(started_session)
         emit({"type": "event", "event": event})
 
     result = None
@@ -153,13 +182,19 @@ def handle(ctx):
     for model in models:
         try:
             logger.info("central_ai.codex.begin model=%s", model)
-            result = CodexCliClient(model=model, timeout=180).execute(
+            result = CodexCliClient(model=model, timeout=900).execute(
                 prompt, cwd=control_root, session_id=str(ctx.body.get("session_id") or "") or None,
                 config_overrides=config, ignore_user_config=True,
                 on_event=on_event if streaming else None, cancel=lambda: disconnected)
             break
         except CodexCliError as exc:
             last_error = exc
+            if "already has an active writer" in str(exc).lower():
+                message = "该 Codex 会话正在被其他进程使用，请等待原任务结束后重试。"
+                if streaming:
+                    emit({"type": "error", "error": message})
+                    return True
+                raise RuntimeError(message) from exc
             if "capacity" not in str(exc).lower() or started_session:
                 if streaming:
                     emit({"type": "error", "error": str(exc)})
