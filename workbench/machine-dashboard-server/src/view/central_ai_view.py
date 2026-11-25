@@ -85,7 +85,7 @@ def _get_workers() -> list[dict[str, Any]]:
     return result.get("workers", [])
 
 
-@router.route("POST", "/api/central-ai/chat")
+@router.route("POST", "/api/central-ai/chat", "/api/central-ai/chat-stream")
 def handle(ctx):
     message = str(ctx.body.get("message", "")).strip()
     if not message:
@@ -121,6 +121,33 @@ def handle(ctx):
     logger.info("central_ai.mcp.config mode=toml_fields command=%s server=%s", mcp_python_path, center_url)
     requested_model = str(ctx.body.get("model") or os.getenv("CODEX_MODEL", "gpt-5.6-sol"))
     models = list(dict.fromkeys([requested_model, "gpt-5.6-terra", "gpt-5.5"]))
+    streaming = ctx.path.endswith("/chat-stream")
+    disconnected = False
+    started_session = None
+    if streaming:
+        ctx.request.send_response(200)
+        ctx.request.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+        ctx.request.send_header("Cache-Control", "no-store, no-transform")
+        ctx.request.send_header("Connection", "close")
+        ctx.request.end_headers()
+        ctx.request.close_connection = True
+
+    def emit(payload):
+        nonlocal disconnected
+        if not streaming or disconnected:
+            return
+        try:
+            ctx.request.wfile.write((json.dumps(payload, ensure_ascii=False) + "\n").encode("utf-8"))
+            ctx.request.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            disconnected = True
+
+    def on_event(event):
+        nonlocal started_session
+        if event.get("type") == "thread.started":
+            started_session = event.get("thread_id")
+        emit({"type": "event", "event": event})
+
     result = None
     last_error = None
     for model in models:
@@ -128,22 +155,41 @@ def handle(ctx):
             logger.info("central_ai.codex.begin model=%s", model)
             result = CodexCliClient(model=model, timeout=180).execute(
                 prompt, cwd=control_root, session_id=str(ctx.body.get("session_id") or "") or None,
-                config_overrides=config, ignore_user_config=True)
+                config_overrides=config, ignore_user_config=True,
+                on_event=on_event if streaming else None, cancel=lambda: disconnected)
             break
         except CodexCliError as exc:
             last_error = exc
-            if "capacity" not in str(exc).lower():
+            if "capacity" not in str(exc).lower() or started_session:
+                if streaming:
+                    emit({"type": "error", "error": str(exc)})
+                    return True
                 raise
             logger.warning("central_ai.codex.capacity model=%s", model)
+        except Exception as exc:
+            if not streaming:
+                raise
+            logger.exception("central_ai.codex.failed")
+            emit({"type": "error", "error": str(exc)})
+            return True
     if result is None:
+        if streaming:
+            emit({"type": "error", "error": str(last_error or "模型暂时不可用")})
+            return True
         raise last_error or RuntimeError("模型暂时不可用")
     session_id = next((event.get("thread_id") for event in result.events
                        if event.get("type") == "thread.started" and event.get("thread_id")), None)
     if not session_id:
+        if streaming:
+            emit({"type": "error", "error": "Codex 未返回会话 ID，无法保存对话上下文"})
+            return True
         raise RuntimeError("Codex 未返回会话 ID，无法保存对话上下文")
     logger.info("central_ai.request.end events=%s reply_length=%s", len(result.events), len(result.text))
-    ctx.request.send_json(200, {"ok": True, "mode": "codex-mcp", "reply": result.text,
-                                "session_id": session_id, "events": result.events})
+    if streaming:
+        emit({"type": "complete", "reply": result.text, "session_id": session_id})
+    else:
+        ctx.request.send_json(200, {"ok": True, "mode": "codex-mcp", "reply": result.text,
+                                    "session_id": session_id, "events": result.events})
     return True
     tool, args = _intent(message)
     logger.info("central_ai.tool.select tool=%s", tool)

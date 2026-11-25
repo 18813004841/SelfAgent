@@ -14,7 +14,25 @@ export async function mount() {
   let active = sessions[0] || null;
   const pendingSessions = new Set();
   const saveSessions = () => localStorage.setItem(sessionKey, JSON.stringify(sessions.slice(0, 30)));
-  function renderSessions(){ $("central-ai-sessions").innerHTML=sessions.length?sessions.map(s=>`<div class="session-item ${s.id===active?.id?"active":""}" data-id="${s.id}"><strong>▱ ${escapeHtml(s.title)}</strong><small><span>● ${s.state}</span><em>${s.time}</em></small></div>`).join(""): `<div class="session-empty">暂无进行中的会话</div>`; document.querySelectorAll(".session-item").forEach(el=>el.onclick=()=>{active=sessions.find(s=>s.id===el.dataset.id)||active; $("central-ai-title").textContent=active.title; $("central-ai-input").disabled=pendingSessions.has(active.id); renderMessages(); renderSessions();}); }
+  function renderSessions(){
+    const list = $("central-ai-sessions");
+    list.innerHTML = sessions.length ? sessions.map(s => `<div class="session-item ${s.id===active?.id?"active":""}" data-id="${escapeHtml(s.id)}"><div class="session-item-title"><strong>▱ ${escapeHtml(s.title)}</strong><button type="button" class="session-rename" aria-label="重命名会话 ${escapeHtml(s.title)}" title="重命名会话">✎</button></div><small><span>● ${escapeHtml(s.state)}</span><em>${escapeHtml(s.time)}</em></small></div>`).join("") : `<div class="session-empty">暂无进行中的会话</div>`;
+    list.querySelectorAll(".session-item").forEach(el => {
+      const session = sessions.find(s => s.id === el.dataset.id);
+      el.onclick = () => { active = session; $("central-ai-title").textContent=active.title; $("central-ai-input").disabled=pendingSessions.has(active.id); renderMessages(); renderSessions(); };
+      el.querySelector(".session-rename").onclick = event => {
+        event.stopPropagation();
+        const name = window.prompt("输入会话名称", session.title);
+        if (name === null) return;
+        const title = name.trim();
+        if (!title) { window.alert("会话名称不能为空"); return; }
+        session.title = title;
+        saveSessions();
+        if (active === session) $("central-ai-title").textContent = title;
+        renderSessions();
+      };
+    });
+  }
   function renderMessages(){ const box=$("central-ai-messages"); if(!active){box.innerHTML='<div class="session-empty">请新建会话开始咨询。</div>';return;} box.innerHTML=active.messages.map(m=>`<div class="chat-bubble ${m.role==='user'?'user':'assistant'}">${m.html}</div>`).join('') || '<div class="chat-bubble assistant">你好，我可以帮助你查询已连接机器的状态、资源和日志。</div>'; }
   function renderWorkers(workers=[]){ latestWorkers=workers; $("central-worker-count").textContent=`(${workers.filter(w=>w.status==="online").length})`; $("central-workers").innerHTML=workers.length?workers.slice(0,4).map(w=>`<div class="worker-item"><span>▣</span><div class="machine"><b>${escapeHtml(w.hostname||w.machine_id)}</b><small>${escapeHtml((w.meta?.local_ips||[])[0]||"未上报 IP")}</small></div><span class="online">● ${w.status==="online"?"在线":"离线"}</span></div>`).join(""): `<div class="worker-item"><small>暂无已连接客户端</small></div>`; }
   async function refresh(){ try{
@@ -38,8 +56,8 @@ export async function mount() {
   $("central-server-stop").onclick=async()=>{ $("central-server-msg").textContent="正在关闭..."; await api("/api/central-server/stop",{method:"POST"}); await refresh(); };
   $("central-client-start").onclick=async()=>{ $("central-client-msg").textContent="正在启动..."; try{localStorage.setItem("central-client-server",serverInput.value.trim()); await localApi("/api/central-client/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({central_server_url:serverInput.value.trim()})}); $("central-client-msg").textContent="本机客户端启动请求已发送";}catch(e){$("central-client-msg").textContent=e.message;} await refresh();};
   $("central-client-stop").onclick=async()=>{try{await localApi("/api/central-client/stop",{method:"POST"});$("central-client-msg").textContent="本机客户端已关闭";}catch(e){$("central-client-msg").textContent=e.message;}await refresh();};
-  $("central-ai-new").onclick=()=>{const id=`session-${Date.now()}`;active={id,title:"新的机器管理会话",state:"进行中",time:"刚刚",messages:[]};sessions.unshift(active);saveSessions();renderSessions();renderMessages();$("central-ai-input").disabled=false;$("central-ai-close").disabled=false;$("central-ai-input").focus();};
-  $("central-ai-close").onclick=()=>{if(!active)return; const index=sessions.findIndex(s=>s.id===active.id); if(index>=0)sessions.splice(index,1); active=sessions[0]||null; saveSessions(); $("central-ai-title").textContent=active?.title||"暂无活动会话"; renderMessages(); $("central-ai-input").disabled=!active; $("central-ai-close").disabled=!active; renderSessions();};
+  $("central-ai-new").onclick=()=>{const id=`session-${Date.now()}`;active={id,title:"新的机器管理会话",state:"进行中",time:"刚刚",messages:[]};sessions.unshift(active);saveSessions();renderSessions();renderMessages();$("central-ai-title").textContent=active.title;$("central-ai-input").disabled=false;$("central-ai-close").disabled=false;$("central-ai-input").focus();};
+  $("central-ai-close").onclick=()=>{if(!active)return; const index=sessions.findIndex(s=>s.id===active.id); if(index>=0)sessions.splice(index,1); active=sessions[0]||null; saveSessions(); $("central-ai-title").textContent=active?.title||"暂无活动会话"; renderMessages(); $("central-ai-input").disabled=!active || pendingSessions.has(active.id); $("central-ai-close").disabled=!active; renderSessions();};
     $("central-ai-form").onsubmit = async e => {
     e.preventDefault();
     const input = $("central-ai-input"), message = input.value.trim();
@@ -54,33 +72,39 @@ export async function mount() {
     $("central-ai-messages").insertAdjacentHTML("beforeend", '<div class="chat-bubble assistant">分析中...</div>');
     $("central-ai-messages").scrollTop = $("central-ai-messages").scrollHeight;
     try {
-      const response = await api("/api/central-ai/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({message, session_id:session.codexSessionId || undefined, context:{workers:latestWorkers.map(w=>({machine_id:w.machine_id,hostname:w.hostname,status:w.status,last_seen_at:w.last_seen_at,meta:{local_ips:w.meta?.local_ips||[]}}))}})});
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw Error(data.error || ("请求失败（HTTP " + response.status + "）"));
-      if (!data.session_id) throw Error("服务未返回 Codex 会话 ID");
-      session.codexSessionId = data.session_id;
-      const workers = data.result && data.result.workers || [];
-      const detail = workers.map(w => '<li><strong>' + escapeHtml(w.hostname || w.machine_id) + '</strong>：' + (w.status === "online" ? "在线" : "离线") + '</li>').join("");
-      let task = "";
-      if (data.task) task = '<div class="task-card"><b>已提交中央服务器任务</b><p>目标：' + escapeHtml((data.worker && (data.worker.hostname || data.worker.machine_id)) || "") + '<br>任务 ID：' + escapeHtml(data.task.task_id || "") + '<br>状态：' + escapeHtml(data.task.status || "queued") + '</p></div>';
-      const trace = (data.events||[]).filter(e=>e && e.type !== 'thread.started').map(e=>{
-        const item=e.item||e;
-        const label=e.type||'codex.event';
-        const text=item.text||item.name||item.tool_name||item.message||'';
-        const detail=text||JSON.stringify(item);
-        return `<small class="assistant-trace"><b>${escapeHtml(label)}</b> ${escapeHtml(String(detail).slice(0,1200))}</small>`;
-      }).join('');
-      const assistantHtml = trace + escapeHtml(data.reply || "") + (detail ? '<ul>' + detail + '</ul>' : "") + task;
-      pendingMessage.html = assistantHtml;
-      if (active === session) renderMessages();
-      saveSessions();
-      // The assistant response is already a fresh connection snapshot. Render
-      // it immediately, then refresh from the connections endpoint as well.
-      if (data.result && Array.isArray(data.result.workers)) renderWorkers(data.result.workers);
+      const response = await api("/api/central-ai/chat-stream", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({message, session_id:session.codexSessionId || undefined, context:{workers:latestWorkers.map(w=>({machine_id:w.machine_id,hostname:w.hostname,status:w.status,last_seen_at:w.last_seen_at,meta:{local_ips:w.meta?.local_ips||[]}}))}})});
+      if (!response.ok) { const data = await response.json(); throw Error(data.error || ("请求失败（HTTP " + response.status + "）")); }
+      if (!response.body) throw Error("浏览器不支持读取流式响应");
+      let trace = "", completed = false, buffer = "";
+      const reader = response.body.getReader(), decoder = new TextDecoder();
+      const update = () => { saveSessions(); if (active === session) { renderMessages(); $("central-ai-messages").scrollTop = $("central-ai-messages").scrollHeight; } };
+      const consume = line => {
+        if (!line.trim()) return;
+        const data = JSON.parse(line);
+        if (data.type === "error") throw Error(data.error || "Codex 执行失败");
+        if (data.type === "event") {
+          const event = data.event || {};
+          if (event.type === "thread.started" && event.thread_id) { session.codexSessionId = event.thread_id; update(); return; }
+          const item = event.item || event, detail = item.text || item.name || item.tool_name || item.message || JSON.stringify(item);
+          trace += `<small class="assistant-trace"><b>${escapeHtml(event.type || 'codex.event')}</b> ${escapeHtml(String(detail).slice(0,1200))}</small>`;
+          pendingMessage.html = trace + "分析中..."; update();
+        } else if (data.type === "complete") {
+          if (!data.session_id) throw Error("服务未返回 Codex 会话 ID");
+          session.codexSessionId = data.session_id; completed = true;
+          pendingMessage.html = trace + escapeHtml(data.reply || ""); update();
+        }
+      };
+      while (true) {
+        const {value, done} = await reader.read();
+        buffer += decoder.decode(value || new Uint8Array(), {stream:!done});
+        const lines = buffer.split("\n"); buffer = lines.pop(); lines.forEach(consume);
+        if (done) { if (buffer.trim()) consume(buffer); break; }
+      }
+      if (!completed) throw Error("连接中断，未收到执行完成通知");
       await refresh();
     } catch (err) {
       const errorHtml = "请求失败：" + escapeHtml(err.message);
-      pendingMessage.html = errorHtml;
+      pendingMessage.html = (pendingMessage.html === "分析中..." ? "" : pendingMessage.html.replace(/分析中\.\.\.$/, "")) + errorHtml;
       if (active === session) renderMessages();
       saveSessions();
     } finally { pendingSessions.delete(session.id); input.disabled = !active || pendingSessions.has(active.id); $("central-ai-messages").scrollTop = $("central-ai-messages").scrollHeight; }
