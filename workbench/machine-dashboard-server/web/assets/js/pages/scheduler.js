@@ -38,8 +38,7 @@ async function initScheduler() {
       const rest = (schedules.schedules || []).filter(
         (item) =>
           (item.dispatcher || "scheduler") === "scheduler" &&
-          item.enabled !== 0 &&
-          item.tool_id !== "code-review-agent",
+          item.enabled !== 0,
       );
       const other = document.getElementById("other-schedules");
       if (other) {
