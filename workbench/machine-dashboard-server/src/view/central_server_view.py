@@ -26,6 +26,7 @@ def handle(ctx):
         try: pid = int(server.CENTER_PID_PATH.read_text(encoding="utf-8"))
         except Exception: pass
         running = server.center_server_running(pid)
+        logger.info("central_server.status.result pid=%s pid_path=%s running=%s", pid, server.CENTER_PID_PATH, running)
         if not running:
             server.CENTER_PID_PATH.unlink(missing_ok=True)
         ctx.request.send_json(200, {"ok": True, "service": "central-server", "running": running, "pid": pid, "port": server.CENTER_PORT})
@@ -46,7 +47,7 @@ def handle(ctx):
         ctx.request.send_json(200, {"ok": True, "service": "central-client", "running": item.get("status") == "running", "pid": item.get("pid"), "storage_dir": str(storage), "client_dir": str(client), "client_dir_exists": client.is_dir(), "client_entry_exists": (client / "control_worker" / "client.py").is_file()})
     elif ctx.path == "/api/central-server/connections":
         from core.central_connections import get_connections
-        result = get_connections(server.CENTER_PORT)
+        result = get_connections(server.CENTER_PORT, getattr(server, "MACHINE_CONTROL_SERVER_URL", None))
         ctx.request.send_json(200, {"ok": True, **result})
     elif ctx.path == "/api/central-client/download":
         package = Path(__file__).resolve().parents[4] / "Tools" / "machine-control" / "packages" / "central-client.zip"

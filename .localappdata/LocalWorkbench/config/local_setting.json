@@ -1,0 +1,7 @@
+{
+  "log_level": "INFO",
+  "debug_log": false,
+  "output_dir": "E:\\SelfAgent\\.localappdata\\LocalWorkbench\\output",
+  "log_path": "E:\\SelfAgent\\.localappdata\\LocalWorkbench\\output\\logs",
+  "view_log_dir": "view"
+}

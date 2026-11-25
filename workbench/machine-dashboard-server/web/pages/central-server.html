@@ -1,51 +1,16 @@
-<h1>中央服务器管理</h1>
-<p class="muted">管理中央服务器及其客户端进程。</p>
-<div class="card">
-  <h2>中央服务器客户端连接</h2>
-  <p>
-    连接状态：
-    <b id="central-client-connection-status"> 检查中... </b>
-  </p>
-  <p>
-    客户端 IP：
-    <span id="central-server-ips" class="connection-ips"> 检查中... </span>
-  </p>
-</div>
-<div class="card manage-actions">
-  <div class="service-bar">
-    <div class="service-item">
-      <h2>中央服务器</h2>
-      <p>
-        当前状态：
-        <b id="central-server-status"> 检查中... </b>
-        · 端口
-        <span id="central-server-port"> 18765 </span>
-      </p>
-      <button type="button" class="primary" id="central-server-start">启动中央服务器</button>
-      <button type="button" id="central-server-stop">关闭中央服务器</button>
-      <button type="button" id="central-server-cleanup">清理端口进程</button>
-      <p id="central-server-msg" class="muted"></p>
-    </div>
-    <div class="service-item">
-      <h2>中央服务器客户端（本机）</h2><label>本机连接的中央服务器 <input id="central-client-server" type="url" placeholder="http://服务器地址:18765" style="width:100%"></label>
-      <p>
-        当前状态：
-        <b id="central-client-status"> 检查中... </b>
-      </p>
-      <p>
-        本地文件：
-        <b id="central-client-files"> 检查中... </b>
-      </p>
-      <p class="muted" id="central-client-dir"></p>
-      <button type="button" class="primary" id="central-client-start">启动客户端</button>
-      <button type="button" id="central-client-stop">关闭客户端</button>
-      <button type="button" id="central-client-open" title="打开本地文件夹">📁</button>
-      <a class="button-link" id="central-client-download" href="#">
-        下载客户端
-      </a>
-      <span id="central-client-update" class="muted"></span>
-      <p id="central-client-msg" class="muted"></p>
-    </div>
-  </div>
+<div class="central-page">
+  <div class="central-page-heading"><div><h1>中央服务器管理</h1><p class="muted">管理中央服务器、本机客户端及远程机器。</p></div></div>
+  <section class="central-services" aria-label="服务进程">
+    <article class="central-service-card"><div class="service-icon">▣</div><div class="service-copy"><h2>中央服务器 <span class="status-dot"></span><b id="central-server-status">检查中...</b></h2><p>端口 <strong id="central-server-port">18765</strong></p></div><div class="service-actions"><button type="button" id="central-server-start">▶ 启动服务器</button><button type="button" class="primary" id="central-server-stop">■ 关闭服务器</button></div></article>
+    <article class="central-service-card"><div class="service-icon">▱</div><div class="service-copy"><h2>本机客户端 <span class="status-dot"></span><b id="central-client-status">检查中...</b></h2><p>连接地址 <strong id="central-client-address">未配置</strong></p></div><div class="service-actions"><button type="button" id="central-client-start">▶ 启动客户端</button><button type="button" class="primary" id="central-client-stop">■ 关闭客户端</button></div></article>
+  </section>
+  <p id="central-server-msg" class="central-message muted"></p><p id="central-client-msg" class="central-message muted"></p>
+<section class="central-client-tools card"><details open><summary>客户端安装与连接配置</summary><label>本机连接的中央服务器 <input id="central-client-server" type="url" placeholder="http://服务器地址:18765"></label><p>本地文件：<b id="central-client-files">检查中...</b></p><p class="muted" id="central-client-dir"></p><button type="button" id="central-client-open">📁 打开目录</button><a class="button-link" id="central-client-download" href="#">下载客户端</a><span id="central-client-update" class="muted"></span></details></section>
+  <section class="central-assistant card"><header class="assistant-header"><div class="assistant-mark">✦</div><div><h2>机器管理助手</h2><p>基于 AI 的机器运维助手，支持机器状态查询、故障排查、资源检查、远程操作等。</p></div></header><div class="assistant-layout">
+    <aside class="session-panel"><button class="primary new-session" id="central-ai-new">＋ 新建会话</button><h3>会话列表</h3><div id="central-ai-sessions" class="session-list"></div></aside>
+    <main class="chat-panel"><div class="chat-heading"><h2 id="central-ai-title">构建机故障排查</h2><button type="button" class="danger" id="central-ai-close">⊠ 结束会话</button></div><div id="central-ai-messages" class="chat-messages"></div><form id="central-ai-form" class="chat-composer"><span class="attach">⌕</span><input id="central-ai-input" autocomplete="off" placeholder="输入你的指令或问题，例如：检查机器状态、查看日志等..."/><button type="submit" class="primary">➤ 发送</button></form></main>
+    <aside class="context-panel"><div class="context-card"><h2>▱ 已连接客户端 <span id="central-worker-count">(0)</span></h2><div id="central-workers"></div></div><div class="context-card recent-card"><h2>◷ 最近操作 <a href="#">查看全部 ›</a></h2><div class="recent-item"><span>✓</span><div><b>查询磁盘空间</b><small>build-mac-01 · 耗时 0.8 s</small></div><time>今天 14:28</time></div><div class="recent-item"><span>✓</span><div><b>查询机器状态</b><small>build-mac-01 · 耗时 0.5 s</small></div><time>今天 14:21</time></div><div class="recent-item"><span>✓</span><div><b>检查网络连通性</b><small>test-mac-01 · 耗时 0.6 s</small></div><time>今天 13:57</time></div></div></aside>
+  </div></section>
+
 </div>
 

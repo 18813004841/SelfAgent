@@ -45,18 +45,27 @@ class CodexCliClient:
 
     def execute(self, prompt: str, *, cwd: str | Path, session_id: str | None = None,
                 cancel: Callable[[], bool] | None = None,
-                on_event: Callable[[dict[str, Any]], None] | None = None) -> CodexCliResult:
+                on_event: Callable[[dict[str, Any]], None] | None = None,
+                config_overrides: dict[str, str] | None = None,
+                ignore_user_config: bool = False) -> CodexCliResult:
         project = Path(cwd).resolve()
         command = self.resolve_executable()
         args = [command, "exec"]
+        if ignore_user_config:
+            args.append("--ignore-user-config")
         if session_id:
             args += ["resume", session_id]
         args += ["--json", "--skip-git-repo-check"]
         if not session_id:
             args += ["-C", str(project)]
-        args += ["-s", self.sandbox]
+        if session_id:
+            args += ["-c", f"sandbox_mode={json.dumps(self.sandbox)}"]
+        else:
+            args += ["-s", self.sandbox]
         if self.model:
             args += ["-m", self.model]
+        for key, value in (config_overrides or {}).items():
+            args += ["-c", f"{key}={value}"]
         proc: subprocess.Popen[str] | None = None
         events: list[dict[str, Any]] = []
         try:

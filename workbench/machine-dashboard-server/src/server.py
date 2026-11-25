@@ -52,6 +52,7 @@ PORT = int(os.environ.get("MACHINE_DASHBOARD_PORT", "18888"))
 HOST = os.environ.get("MACHINE_DASHBOARD_HOST", "0.0.0.0").strip().strip('"') or "0.0.0.0"
 MACHINE_CONTROL_ROOT = Path(__file__).resolve().parents[3] / "Tools" / "machine-control"
 CENTER_PORT = int(os.environ.get("MACHINE_CONTROL_PORT", "18765"))
+MACHINE_CONTROL_SERVER_URL = os.environ.get("MACHINE_CONTROL_SERVER_URL", f"http://127.0.0.1:{CENTER_PORT}").rstrip("/")
 PROCESS_MANAGER = ProcessManager()
 PROCESS_MANAGER.register(CentralServerLauncher(MACHINE_CONTROL_ROOT, CENTER_PORT, CENTER_PID_PATH, MACHINE_CONTROL_STORE_PATH))
 PROCESS_MANAGER.register(SchedulerLauncher(Path(__file__).resolve().parent / "scheduler.py", PID_PATH))
@@ -132,12 +133,22 @@ def local_machine():
             "status": "local", "login_state": "local", "current_ips": metrics["ips"]}
 
 def center_server_running(pid=None):
+    OPERATION_LOG.info("central_server.status.check pid=%s port=%s", pid, CENTER_PORT)
     if pid is not None and not process_exists(pid):
+        OPERATION_LOG.info("central_server.status.pid_not_alive pid=%s", pid)
         return False
     try:
-        with socket.create_connection(("127.0.0.1", CENTER_PORT), timeout=0.35):
-            return True
-    except OSError:
+        request = urllib.request.Request(
+            f"http://127.0.0.1:{CENTER_PORT}/health",
+            headers={"Authorization": f"Bearer {os.environ.get('MACHINE_CONTROL_TOKEN', 'dev-token')}"},
+        )
+        with urllib.request.urlopen(request, timeout=0.8) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        running = payload.get("ok") is True
+        OPERATION_LOG.info("central_server.status.health_response port=%s ok=%s running=%s", CENTER_PORT, payload.get("ok"), running)
+        return running
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        OPERATION_LOG.info("central_server.status.health_unreachable port=%s running=false error=%s", CENTER_PORT, type(exc).__name__)
         return False
 
 

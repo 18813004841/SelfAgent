@@ -1,0 +1,14 @@
+{
+  "workers": {},
+  "tasks": {},
+  "machines": {},
+  "connections": {
+    "127.0.0.1": {
+      "ip": "127.0.0.1",
+      "first_seen_at": 1795522580217,
+      "last_seen_at": 1795526686018,
+      "last_path": "/api/workers",
+      "user_agent": "Python-urllib/3.14"
+    }
+  }
+}
