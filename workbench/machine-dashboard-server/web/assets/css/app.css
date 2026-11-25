@@ -1048,3 +1048,27 @@ body:has(#content > .central-page) #content { flex: 1; min-height: 0; display: f
 .assistant-trace{display:block;margin:4px 0;padding:4px 6px;color:#52647a;background:#eef3f9;border-left:3px solid #6b86a8;font-family:ui-monospace,monospace;font-size:11px;white-space:pre-wrap;word-break:break-word}
 
 #central-workers { max-height: 320px; overflow-y: auto; }
+
+/* 打包分析图：坐标与 SVG 连线共用固定比例，随容器缩放。 */
+.analysis-flow { position:relative; width:100%; max-width:680px; aspect-ratio:600 / 540; margin:24px auto 12px; }
+.flow-links { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+.flow-links path[data-edge] { fill:none; stroke:#a8beb2; stroke-width:2; marker-end:url(#flow-arrow); vector-effect:non-scaling-stroke; }
+.flow-links marker path { fill:#a8beb2; }
+.flow-links .failure-link { stroke-dasharray:5 4; }
+.flow-links path.taken { stroke:#0f766e; stroke-width:3; }
+.flow-links path.failed { stroke:#b94b4b; }
+.flow-links text { fill:#708b7d; font-size:12px; }
+.analysis-progress .flow-node { position:absolute; z-index:1; width:30%; height:11.12%; min-height:0; padding:5px; display:flex; align-items:center; justify-content:center; text-align:center; border:1px solid #d1e3d9; border-radius:12px; background:#fff; color:#52645d; box-shadow:0 2px 6px #1b47370a; transform:translate(-50%,-50%); }
+.analysis-progress .flow-node > div { padding:0; }
+.analysis-progress .flow-node strong { display:block; color:#52645d; font-size:clamp(10px,1.05vw,13px); line-height:1.25; }
+.analysis-progress .flow-node small { display:block; color:#81978b; font-size:clamp(9px,.85vw,11px); line-height:1.2; margin-top:3px; }
+.flow-status { display:block; color:#81978b; font-size:10px; line-height:1.2; margin-top:3px; }
+.analysis-progress .flow-node.active { transform:translate(-50%,-50%); background:#e2f6ea; border-color:#64bd91; box-shadow:0 0 0 3px #d8f0e3; }
+.analysis-progress .flow-node.done { background:#e7f5ed; border-color:#98d0b1; }
+.analysis-progress .flow-node.skipped { opacity:.55; background:#f1f5f2; }
+.analysis-progress .flow-node.failed { background:#fff0f0; border-color:#d38383; }
+.analysis-progress .flow-node.failed strong,.analysis-progress .flow-node.failed .flow-status { color:#a13e3e; }
+.flow-parse { left:50%; top:6.48%; } .flow-archive { left:50%; top:25%; }
+.flow-worker { left:75%; top:45.37%; } .flow-analysis { left:33.33%; top:67.59%; }
+.flow-failure { left:75%; top:67.59%; } .flow-save { left:33.33%; top:87.96%; }
+@media(max-width:600px) { .analysis-flow { min-width:480px; } .analysis-progress { overflow-x:auto!important; } }

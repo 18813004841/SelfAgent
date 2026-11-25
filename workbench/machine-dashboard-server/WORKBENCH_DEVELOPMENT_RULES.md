@@ -93,6 +93,7 @@ except Exception:
 
 | 日期 | 变更 | 依据 |
 | --- | --- | --- |
+| 2026-11-25 | 打包报错分析使用 LangGraph 编排归档优先及 Worker 回退，任务状态仍保存在工作台 SQLite | `src/package_error_analysis/pipeline.py` |
 | 2026-11-25 | 预留工作台内置工作流技能目录，与仓库开发流程技能及用户运行数据区分 | `skills/README.md` |
 | 2026-11-21 | Jenkins 注册页面与注册接口对已登录用户开放；Jenkins 地址管理沿用管理模块权限，权限管理仅管理员可用 | `src/core/permissions.py`、`web/pages/jenkins.html` |
 | 2026-11-12 | 建立工作台项目级维护规则，明确 Logger 复用、按功能分区、前后端联动和验证要求 | `src/core/Log/logger.py`、`src/core/Log/log_helper.py`、`src/view/logging.py`、`src/core/settings.py` 当前实现 |

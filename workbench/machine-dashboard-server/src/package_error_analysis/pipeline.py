@@ -3,7 +3,7 @@ from __future__ import annotations
 import json, os, re, threading, time
 from urllib.request import Request, urlopen
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 from core.Log.log_helper import get_view_logger
 
 logger = get_view_logger("package_error_analysis")
@@ -100,6 +100,8 @@ def _find_mounted_log(info: dict[str, Any]) -> tuple[Path | None, str]:
     bundle = info.get("bundle", "")
     branch = info.get("branch", "master")
     platform = info.get("platform", "Android")
+    if not bundle or not re.fullmatch(r"[\w.\-]+", bundle):
+        return None, "mounted:missing-bundle"
     names = [f"{bundle}.unity.log", f"{bundle}.Global.unity.log"]
     for root_text in (os.environ.get("BUILD_PACKAGE_MAC_ROOT", "/Volumes/kg-hd/KoA"), os.environ.get("BUILD_PACKAGE_WINDOWS_ROOT", "/z/KoA")):
         root = Path(root_text)
@@ -120,9 +122,14 @@ def _analyse_log(log: str, info: dict[str, Any]) -> dict[str, Any]:
         ("Xcode", r"Xcode|xcodebuild"),
     ]
     hits = []
+    failure_signal = re.compile(r"\berror\b|\bfailed\b|\bfailure\b|\bexception\b|error CS\d+", re.I)
     for i, line in enumerate(lines):
+        if not failure_signal.search(line):
+            continue
         for step, pattern in patterns:
-            if re.search(pattern, line, re.I): hits.append((i, step, line.strip()))
+            if re.search(pattern, line, re.I):
+                hits.append((i, step, line.strip()))
+                break
     if not hits:
         return {"failure_reason": "日志中未找到可确认的底层失败信号", "failed_step": "未识别", "evidence": lines[-20:]}
     index, step, line = hits[0]
@@ -147,61 +154,173 @@ def _codex_summary(result: dict[str, Any], info: dict[str, Any]) -> dict[str, st
         logger.warning("package_analysis.codex.failed: %s", exc)
         return {}
 
+class AnalysisState(TypedDict, total=False):
+    task: dict[str, Any]
+    text: str
+    info: dict[str, Any]
+    log_text: str | None
+    result: dict[str, Any]
+
+
+def _parse_node(state: AnalysisState) -> dict[str, Any]:
+    task, text = state["task"], state["text"]
+    _event(task, "开始解析 Jenkins / 飞书输入")
+    info = parse_input(text)
+    try:
+        jenkins = {k: v for k, v in resolve_jenkins(info).items() if v}
+        info.update(jenkins)
+        if jenkins: _event(task, "Jenkins 构建参数补全完成", data={k: v for k, v in jenkins.items() if k != "raw"})
+    except Exception as exc:
+        _event(task, f"Jenkins 参数读取失败，继续使用已有输入：{exc}", "warning")
+    task["input"] = {k: v for k, v in info.items() if k != "raw"}
+    task["input_text"] = json.dumps(task["input"], ensure_ascii=False)
+    _event(task, "输入解析完成", data={k: v for k, v in info.items() if k != "raw"})
+    return {"info": info}
+
+
+def _archive_node(state: AnalysisState) -> dict[str, Any]:
+    task, info = state["task"], state["info"]
+    log_text = None
+    log_path, source = _find_mounted_log(info)
+    if log_path:
+        try:
+            log_text = log_path.read_text(encoding="utf-8", errors="replace")
+            if not log_text.strip():
+                log_text = None
+                _event(task, "网盘日志为空，转入打包机", "warning")
+            else:
+                _event(task, f"网盘日志查找完成：{source}")
+                _event(task, "使用网盘归档日志")
+        except OSError as exc:
+            _event(task, f"网盘日志读取失败，转入打包机：{exc}", "warning")
+    else:
+        _event(task, f"网盘日志查找完成：{source}，转入打包机", "warning")
+    return {"log_text": log_text}
+
+
+def _worker_node(state: AnalysisState) -> dict[str, Any]:
+    task, info = state["task"], state["info"]
+    log_text = None
+    target = info.get("target_ip")
+    center = os.environ.get("MACHINE_CONTROL_CENTER")
+    token = os.environ.get("MACHINE_CONTROL_TOKEN", "")
+    if target and center:
+        try:
+            workers = _json_request(center.rstrip("/") + "/api/workers", token).get("workers", [])
+            matched = [w for w in workers if w.get("status") == "online" and target in w.get("meta", {}).get("local_ips", [])]
+            _event(task, f"Worker 查询完成：{'已匹配' if matched else '未匹配'}")
+            if matched and info.get("worktree_path"):
+                payload = {"worktree_path": info["worktree_path"], "relative_path": "Game/BuildFolder/BuildTemporary/Unity.log"}
+                created = _json_request(center.rstrip("/") + "/api/tasks", token, "POST", {"machine_id": matched[0].get("worker_id") or matched[0].get("machine_id"), "kind": "read_build_log", "payload": payload})
+                remote_task_id = created.get("task", {}).get("task_id")
+                if remote_task_id:
+                    deadline = time.time() + 120
+                    while time.time() < deadline:
+                        remote = _json_request(center.rstrip("/") + f"/api/tasks/{remote_task_id}", token).get("task", {})
+                        if remote.get("status") in {"succeeded", "failed", "cancelled"}:
+                            if remote.get("status") == "succeeded" and remote.get("result", {}).get("ok"):
+                                remote_text = remote["result"].get("text", "")
+                                if remote_text.strip(): log_text = remote_text
+                            break
+                        time.sleep(1)
+                _event(task, "Worker 日志读取完成" if log_text is not None else "Worker 日志读取失败或为空", "running" if log_text is not None else "warning")
+            elif matched:
+                _event(task, "缺少 worktree_path，无法读取 Worker 日志", "warning")
+        except Exception as exc:
+            _event(task, f"Worker 查询或日志读取失败：{exc}", "warning")
+    else:
+        _event(task, "缺少 target_ip 或机器控制中心配置，无法查询 Worker", "warning")
+    if log_text is None:
+        raise RuntimeError("分析失败：未能从网盘或打包机获得日志；请检查 bundle、target_ip 和 worktree_path")
+    _event(task, "使用在线 Worker 日志（请核对构建版本）")
+    return {"log_text": log_text}
+
+
+def _analysis_node(state: AnalysisState) -> dict[str, Any]:
+    result = _analyse_log(state["log_text"], state["info"])
+    summary = _codex_summary(result, state["info"])
+    if summary.get("repair_suggestion"):
+        result["repair_suggestion"] = summary["repair_suggestion"]
+    enabled = os.environ.get("BUILD_PACKAGE_FAIL_CODEX", "").lower() in {"1", "true", "yes", "on"}
+    _event(state["task"], "模型建议：已生成" if summary.get("repair_suggestion") else ("模型建议：未生成，保留规则分析结果" if enabled else "模型建议：未启用，已跳过"))
+    return {"result": result}
+
+
+def _result_node(state: AnalysisState) -> dict[str, Any]:
+    task = state["task"]
+    task["result"] = state["result"]
+    _event(task, "失败 step 与核心证据分析完成", "completed")
+    return {}
+
+
+
+def _logged_node(name, label, node):
+    """Persist node lifecycle for the task UI and write concise operational logs."""
+    def execute(state):
+        task = state["task"]
+        started = time.monotonic()
+        _event(task, f"{label}：开始", data={"node": name, "phase": "start"})
+        logger.info("package_analysis.node.begin task_id=%s node=%s", task["id"], name)
+        try:
+            output = node(state)
+        except Exception as exc:
+            elapsed_ms = round((time.monotonic() - started) * 1000)
+            _event(task, f"{label}：结束，执行失败（{type(exc).__name__}，耗时 {elapsed_ms} ms）", "failed", data={"node": name, "phase": "failed"})
+            logger.error("package_analysis.node.failed task_id=%s node=%s elapsed_ms=%s error_type=%s", task["id"], name, elapsed_ms, type(exc).__name__)
+            raise
+        elapsed_ms = round((time.monotonic() - started) * 1000)
+        if name == "archive":
+            outcome = "已获取归档日志" if output.get("log_text") else "归档不可用，将尝试打包机"
+        elif name == "worker":
+            outcome = "已获取打包机日志"
+        elif name == "parse":
+            outcome = "输入参数已解析"
+        elif name == "analysis":
+            result = output["result"]
+            outcome = f"失败阶段：{result.get('failed_step', '未识别')}，证据 {len(result.get('evidence', []))} 条"
+        else:
+            outcome = "分析结果已保存"
+        if name == "save_result":
+            task["status"] = "completed"
+        _event(task, f"{label}：结束，{outcome}（耗时 {elapsed_ms} ms）", "completed", data={"node": name, "phase": "completed"})
+        logger.info("package_analysis.node.end task_id=%s node=%s elapsed_ms=%s", task["id"], name, elapsed_ms)
+        if name == "archive" and output.get("log_text"):
+            _event(task, "读取打包机日志：已跳过，已使用归档日志", data={"node": "worker", "phase": "skipped"})
+        return output
+    return execute
+
+def _build_graph():
+    # Lazy import keeps unrelated workbench features available if the optional
+    # runtime dependency is missing; the analysis task reports the failure.
+    try:
+        from langgraph.graph import END, START, StateGraph
+    except ImportError as exc:
+        raise RuntimeError("打包分析需要 LangGraph，请安装workbench/machine-dashboard-server/requirements.txt 中的 langgraph") from exc
+    graph = StateGraph(AnalysisState)
+    graph.add_node("parse", _logged_node("parse", "解析输入和补全参数", _parse_node))
+    graph.add_node("archive", _logged_node("archive", "读取归档日志", _archive_node))
+    graph.add_node("worker", _logged_node("worker", "读取打包机日志", _worker_node))
+    graph.add_node("analysis", _logged_node("analysis", "分析日志", _analysis_node))
+    graph.add_node("save_result", _logged_node("save_result", "保存分析结果", _result_node))
+    graph.add_edge(START, "parse")
+    graph.add_edge("parse", "archive")
+    graph.add_conditional_edges("archive", lambda state: "analysis" if state.get("log_text") else "worker", {"analysis": "analysis", "worker": "worker"})
+    graph.add_edge("worker", "analysis")
+    graph.add_edge("analysis", "save_result")
+    graph.add_edge("save_result", END)
+    return graph.compile()
+
+
 def _run(analysis_id: str, text: str) -> None:
     task = _load(analysis_id)
     try:
-        _event(task, "开始解析 Jenkins / 飞书输入")
-        info = parse_input(text)
-        try:
-            jenkins = {k: v for k, v in resolve_jenkins(info).items() if v}
-            info.update(jenkins)
-            if jenkins: _event(task, "Jenkins 构建参数补全完成", data={k: v for k, v in jenkins.items() if k != "raw"})
-        except Exception as exc:
-            _event(task, f"Jenkins 参数读取失败，继续使用已有输入：{exc}", "warning")
-        task["input"] = {k: v for k, v in info.items() if k != "raw"}
-        task["input_text"] = json.dumps(task["input"], ensure_ascii=False)
-        _event(task, "输入解析完成", data={k: v for k, v in info.items() if k != "raw"})
-        log_path = None
-        target = info.get("target_ip")
-        center = os.environ.get("MACHINE_CONTROL_CENTER")
-        token = os.environ.get("MACHINE_CONTROL_TOKEN", "")
-        remote_text = None
-        if target and center:
-            try:
-                workers = _json_request(center.rstrip("/") + "/api/workers", token).get("workers", [])
-                matched = [w for w in workers if w.get("status") == "online" and target in w.get("meta", {}).get("local_ips", [])]
-                _event(task, f"Worker 查询完成：{'已匹配' if matched else '未匹配'}")
-                if matched and info.get("worktree_path"):
-                    payload = {"worktree_path": info["worktree_path"], "relative_path": "Game/BuildFolder/BuildTemporary/Unity.log"}
-                    created = _json_request(center.rstrip("/") + "/api/tasks", token, "POST", {"machine_id": matched[0].get("worker_id") or matched[0].get("machine_id"), "kind": "read_build_log", "payload": payload})
-                    remote_task_id = created.get("task", {}).get("task_id")
-                    if remote_task_id:
-                        deadline = time.time() + 120
-                        while time.time() < deadline:
-                            remote = _json_request(center.rstrip("/") + f"/api/tasks/{remote_task_id}", token).get("task", {})
-                            if remote.get("status") in {"succeeded", "failed", "cancelled"}:
-                                if remote.get("status") == "succeeded" and remote.get("result", {}).get("ok"):
-                                    remote_text = remote["result"].get("text", "")
-                                break
-                            time.sleep(1)
-                    _event(task, "Worker 日志读取完成" if remote_text is not None else "Worker 日志读取失败，转入网盘", "running")
-            except Exception as exc: _event(task, f"Worker 查询失败，转入网盘：{exc}", "warning")
-        else: _event(task, "未配置在线 Worker 查询，转入网盘")
-        if remote_text is not None:
-            log_text = remote_text; _event(task, "使用在线 Worker 日志")
-        else:
-            log_path, source = _find_mounted_log(info)
-            _event(task, f"网盘日志查找完成：{source}")
-            if not log_path: raise RuntimeError("分析失败：无法获得打包日志")
-            log_text = log_path.read_text(encoding="utf-8", errors="replace")
-        result = _analyse_log(log_text, info)
-        result.update(_codex_summary(result, info))
-        task["result"] = result
-        _event(task, "失败 step 与核心证据分析完成", "completed")
-        task["status"] = "completed"
-        _save(task)
+        _build_graph().invoke({"task": task, "text": text})
     except Exception as exc:
-        task["error"] = str(exc); task["status"] = "failed"; _event(task, str(exc), "failed"); _save(task)
+        logger.error("package_analysis.run.failed task_id=%s error=%s", analysis_id, exc)
+        task["error"] = str(exc)
+        task["status"] = "failed"
+        _event(task, str(exc), "failed")
+        _save(task)
 
 def create_task(text: str) -> dict[str, Any]:
     task = {"id": f"analysis_{int(time.time()*1000)}", "status": "queued", "events": [], "input_text": text, "result": {}, "error": ""}

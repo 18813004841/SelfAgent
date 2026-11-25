@@ -4,22 +4,31 @@
     <section class="analysis-left card">
       <div class="section-kicker">ANALYSIS INPUT</div><h2>错误信息</h2><p class="muted">粘贴打包日志或描述问题，提交后查看实时分析过程。</p>
       <textarea id="analysis-input" rows="8" placeholder="例如：Gradle assembleRelease 失败，Execution failed for task ':app:mergeReleaseResources'..."></textarea>
-      <div class="analysis-actions"><button class="primary" id="run-analysis">开始分析 <span>↗</span></button><button class="button-link" id="finish-analysis">结束任务</button><span id="analysis-message" class="muted"></span></div>
+      <div class="analysis-actions"><button class="primary" id="run-analysis">开始分析 <span>↗</span></button><button class="button-link" id="finish-analysis">返回任务列表</button><span id="analysis-message" class="muted"></span></div>
       <div class="analysis-output-divider"></div>
       <div class="section-kicker">LIVE OUTPUT</div><div class="output-heading"><h2>输出结果</h2><span id="analysis-output-state">等待输入</span></div>
       <pre id="analysis-log" class="analysis-log">提交后将显示日志定位、失败阶段和分析结果。</pre>
     </section>
     <aside class="analysis-progress card"><div class="section-kicker">REAL PIPELINE</div><div class="progress-title"><div><h2>分析流程</h2><p class="muted">根据任务事件实时更新</p></div><span id="progress-percent">0%</span></div>
-      <div class="progress-track"><div class="progress-line"></div><div id="progress-fill" class="progress-fill"></div><div class="progress-nodes">
-        <div class="progress-node" data-step="created"><span class="node-dot">1</span><div><strong>创建分析任务</strong><small>等待用户提交</small></div></div>
-        <div class="progress-node" data-step="parse"><span class="node-dot">2</span><div><strong>解析输入</strong><small>解析 Jenkins / 飞书输入</small></div></div>
-        <div class="progress-node optional" data-step="jenkins"><span class="node-dot">3</span><div><strong>补全 Jenkins 参数</strong><small>读取构建参数（可选）</small></div></div>
-        <div class="progress-node optional" data-step="worker"><span class="node-dot">4</span><div><strong>查询在线 Worker</strong><small>匹配目标机器（可选）</small></div></div>
-        <div class="progress-node" data-step="remote"><span class="node-dot">5</span><div><strong>获取构建日志</strong><small>读取 Worker 日志或准备回退</small><div class="progress-branch"><span>在线 Worker</span><span>网盘回退</span></div></div></div>
-        <div class="progress-node optional" data-step="mounted"><span class="node-dot">6</span><div><strong>读取网盘日志</strong><small>仅 Worker 失败时采用</small></div></div>
-        <div class="progress-node" data-step="detect"><span class="node-dot">7</span><div><strong>识别失败阶段</strong><small>提取失败 step 与核心证据</small></div></div>
-        <div class="progress-node" data-step="result"><span class="node-dot">8</span><div><strong>生成分析建议</strong><small>输出原因与可执行修复方案</small></div></div>
-      </div></div><div class="progress-foot"><span class="pulse"></span><span id="progress-caption">准备开始 · 0 个阶段已完成</span></div>
+      <div class="analysis-flow" role="group" aria-label="打包报错分析流程图">
+        <svg class="flow-links" viewBox="0 0 600 540" preserveAspectRatio="none" aria-hidden="true">
+          <defs><marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" /></marker></defs>
+          <path data-edge="parse-archive" d="M300 65 V105" />
+          <path data-edge="archive-analysis" d="M260 165 V310 H200 V335" />
+          <path data-edge="archive-worker" d="M340 165 V190 H450 V215" />
+          <path data-edge="worker-analysis" d="M410 275 V310 H200 V335" />
+          <path data-edge="worker-failure" class="failure-link" d="M450 275 V335" />
+          <path data-edge="analysis-save" d="M200 395 V445" />
+          <text x="161" y="220">归档可用</text><text x="347" y="187">不可用时回退</text>
+          <text x="300" y="302">读取成功</text><text x="463" y="315">读取失败</text>
+        </svg>
+        <div class="progress-node flow-node flow-parse" data-step="parse"><div><strong>解析输入和补全参数</strong><small>可选读取 Jenkins 参数</small><span class="flow-status">等待</span></div></div>
+        <div class="progress-node flow-node flow-archive" data-step="archive"><div><strong>读取归档日志</strong><small>优先读取已挂载的网盘</small><span class="flow-status">等待</span></div></div>
+        <div class="progress-node flow-node flow-worker" data-step="worker"><div><strong>读取打包机日志</strong><small>通过 Worker 获取</small><span class="flow-status">等待</span></div></div>
+        <div class="progress-node flow-node flow-analysis" data-step="analysis"><div><strong>分析日志</strong><small>提取证据，可选模型建议</small><span class="flow-status">等待</span></div></div>
+        <div class="progress-node flow-node flow-save" data-step="save_result"><div><strong>保存分析结果</strong><small>保存结果与任务状态</small><span class="flow-status">等待</span></div></div>
+        <div class="flow-node flow-failure" id="flow-failure"><div><strong>记录任务失败</strong><small>图外异常处理（任一步）</small><span class="flow-status">等待</span></div></div>
+      </div><div class="progress-foot"><span class="pulse"></span><span id="progress-caption">准备开始 · 0 个阶段已完成</span></div>
     </aside>
   </div>
 </div>
