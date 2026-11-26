@@ -26,6 +26,7 @@ class Finding:
     confidence: float | None = None
     author: str | None = None
     commit_sha: str | None = None
+    author_email: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {k: v for k, v in self.__dict__.items() if v is not None}

@@ -107,7 +107,8 @@ class GitRepository:
         if not header:
             return None
         author = next((item[7:] for item in output.splitlines()[1:] if item.startswith("author ")), None)
-        return {"sha": header[0], "author": author or "未知"}
+        email = next((item[12:].strip().strip("<>") for item in output.splitlines()[1:] if item.startswith("author-mail ")), None)
+        return {"sha": header[0], "author": author or "未知", "email": email or ""}
 
     def current_sha(self) -> str: return self.run("rev-parse", "HEAD")
 

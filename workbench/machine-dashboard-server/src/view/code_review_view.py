@@ -13,7 +13,11 @@ def read_code_review_config(schedule_id=None):
     schedule_id = schedule_id or CodeReviewScheduler.schedule_id
     view_logger.info("读取代码检查完整配置 schedule_id=%s", schedule_id)
     logger.info("读取代码检查完整配置 schedule_id=%s", schedule_id)
-    return task_payload(schedule_id)
+    from schedulers.review_notification_settings import get_webhook
+    task = task_payload(schedule_id)
+    task["feishu_webhook"] = get_webhook()
+    task["feishu_webhook_configured"] = bool(task["feishu_webhook"])
+    return task
 
 
 def read_code_review_status(schedule_id=None):
@@ -26,7 +30,7 @@ def read_code_review_status(schedule_id=None):
 
 @router.route("GET", "/api/scheduler-tasks/code-review", "/api/scheduler-tasks/code-review/*")
 @router.route("POST", "/api/scheduler-tasks/code-review")
-@router.route("POST", "/api/scheduler-tasks/code-review/run", "/api/scheduler-tasks/code-review/stop", "/api/scheduler-tasks/code-review/config", "/api/scheduler-tasks/code-review/clear-history", "/api/scheduler-tasks/code-review/choose", "/api/scheduler-tasks/code-review/open", "/api/code-review/setup")
+@router.route("POST", "/api/scheduler-tasks/code-review/run", "/api/scheduler-tasks/code-review/stop", "/api/scheduler-tasks/code-review/config", "/api/scheduler-tasks/code-review/notification", "/api/scheduler-tasks/code-review/clear-history", "/api/scheduler-tasks/code-review/choose", "/api/scheduler-tasks/code-review/open", "/api/code-review/setup")
 def handle(ctx):
     """代码检查页面：读取、启动、停止、保存配置及目录操作。"""
     view_logger.log(LogLevel.DEBUG, "handling %s %s", ctx.method, ctx.path)
@@ -44,6 +48,10 @@ def handle(ctx):
             ctx.request.send_json(200, {"ok": True, "task": read_code_review_status(sid)})
         else:
             ctx.request.send_json(200, {"ok": True, "task": read_code_review_config(sid)})
+    elif ctx.path.endswith("/notification"):
+        from schedulers.review_notification_settings import save_webhook
+        save_webhook(ctx.body.get("webhook"))
+        ctx.request.send_json(200, {"ok": True, "configured": bool(ctx.body.get("webhook", "").strip())})
     elif ctx.path.endswith("/run"):
         task = start_task(str(ctx.body.get("project_path", "")), str(ctx.body.get("branch", "")), ctx.body.get("skill_paths", ["skills"]), bool(ctx.body.get("allow_extra_rules", False)), str(ctx.body.get("failure_threshold", "high")), str(ctx.body.get("schedule_id") or CodeReviewScheduler.schedule_id))
         ctx.request.send_json(200, {"ok": True, "task": task})

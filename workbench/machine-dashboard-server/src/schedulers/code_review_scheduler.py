@@ -15,6 +15,7 @@ from core.settings import get_settings
 from core.Log import AppLogger
 from .base import ScheduleContext, SchedulerBase
 from .config import code_review_config
+from .review_notification_settings import get_webhook
 from .run_log import append, read, reset, set_task
 
 TOOL_ROOT = Path(__file__).resolve().parents[2] / "tools" / "code-review-agent"
@@ -65,7 +66,12 @@ class CodeReviewScheduler(SchedulerBase):
         context.progress(1, 4, "已读取工程配置", project_path=project_path, branch=branch, skill_paths=config["skill_paths"], allow_extra_rules=config["allow_extra_rules"])
         adapter = _load_tool_adapter()
         logger.debug("execute.call_adapter run_id=%s", context.run_id)
-        return adapter.execute({"project_path": project_path, "branch": branch, "skill_paths": config["skill_paths"], "allow_extra_rules": config["allow_extra_rules"], "failure_threshold": config["failure_threshold"], "cancel": context.metadata["cancel"]}, context)
+        try:
+            webhook = get_webhook()
+        except ValueError:
+            logger.warning("review.feishu.config_unavailable")
+            webhook = ""
+        return adapter.execute({"project_path": project_path, "branch": branch, "skill_paths": config["skill_paths"], "allow_extra_rules": config["allow_extra_rules"], "failure_threshold": config["failure_threshold"], "feishu_webhook": webhook, "cancel": context.metadata["cancel"]}, context)
 
     def run_scheduled(self, schedule_id: str | None = None) -> Any:
         from .execution_guard import claim, release

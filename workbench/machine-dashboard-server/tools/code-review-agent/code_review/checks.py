@@ -33,9 +33,9 @@ def classify_skill_rules(rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "skill": rule.get("path"),
                 "clause": index,
                 "title": clause.splitlines()[0][:120],
-                "mode": "local_tool" if matched else "model_only",
+                "mode": "local_and_model" if matched else "model_only",
                 "tools": matched,
-                "reason": "匹配已注册本地检查器" if matched else "暂无本地检查器，交给模型定向审查",
+                "reason": "本地检查器部分覆盖，完整条款仍交给模型审查" if matched else "暂无本地检查器，交给模型定向审查",
             })
     return result
 
@@ -57,13 +57,13 @@ def split_skill_clauses(content: str) -> list[str]:
 
 
 def model_skill_rules(rules: list[dict[str, Any]], coverage: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Return only clauses that are not covered by a local checker."""
+    """Return clauses requiring model review, including partial local coverage."""
     by_skill: dict[str, list[dict[str, Any]]] = {}
     for rule in rules:
         by_skill.setdefault(str(rule.get("path")), []).append(rule)
     result = []
     for item in coverage:
-        if item.get("mode") != "model_only":
+        if item.get("mode") not in {"model_only", "local_and_model"}:
             continue
         source = next(iter(by_skill.get(str(item.get("skill")), [])), None)
         clauses = split_skill_clauses(str(source.get("content") or "")) if source else []
@@ -99,36 +99,30 @@ def validate_model_tool_plan(plan: dict[str, Any]) -> list[dict[str, Any]]:
 def _editor_only_branch(expression: str) -> bool:
     """Return whether a preprocessor expression is guarded by UNITY_EDITOR."""
     normalized = re.sub(r"\s+", "", expression or "")
-    return "UNITY_EDITOR" in normalized and "!UNITY_EDITOR" not in normalized
+    return bool(re.fullmatch(r"\(*UNITY_EDITOR\)*(?:&&[^|]+)?", normalized))
 
 
 def _inside_editor_macro(lines: list[str]) -> list[bool]:
     """Track Unity preprocessor branches so editor-only lines can be excluded."""
-    stack: list[dict[str, bool]] = []
+    stack: list[dict[str, Any]] = []
     result = []
     for line in lines:
         match = re.match(r"\s*#\s*(if|elif|else|endif)\b(.*)", line)
-        inside = bool(stack) and stack[-1]["active"] and stack[-1]["editor"]
+        inside = bool(stack) and stack[-1]["editor"]
         result.append(inside)
         if not match:
             continue
         kind, expression = match.group(1), match.group(2)
         if kind == "if":
-            parent_active = not stack or stack[-1]["active"]
-            editor = _editor_only_branch(expression)
-            stack.append({"active": parent_active, "editor": editor, "taken": parent_active, "parent_active": parent_active})
+            parent = bool(stack) and stack[-1]["editor"]
+            stack.append({"parent": parent, "editor": parent or _editor_only_branch(expression), "initial": re.sub(r"\s+", "", expression), "has_elif": False})
         elif kind == "elif" and stack:
             frame = stack[-1]
-            active = frame["parent_active"] and not frame["taken"] if "parent_active" in frame else False
-            frame["active"] = active
-            frame["editor"] = _editor_only_branch(expression)
-            frame["taken"] = frame.get("taken", False) or active
+            frame["editor"] = frame["parent"] or _editor_only_branch(expression)
+            frame["has_elif"] = True
         elif kind == "else" and stack:
             frame = stack[-1]
-            parent_active = frame.get("parent_active", True)
-            frame["active"] = parent_active and not frame.get("taken", False)
-            frame["editor"] = False
-            frame["taken"] = True
+            frame["editor"] = frame["parent"] or (not frame["has_elif"] and frame["initial"] in {"!UNITY_EDITOR", "(!UNITY_EDITOR)"})
         elif kind == "endif" and stack:
             stack.pop()
     return result
@@ -146,30 +140,8 @@ def unity_runtime_findings(root: Path, files: list[str], markers: list[str]) -> 
             continue
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
         editor_lines = _inside_editor_macro(lines)
-        in_block_comment = False
-        for line_no, line in enumerate(lines, 1):
-            # Comments must be excluded before marker matching. Keep physical
-            # line numbers unchanged so reported locations still point to the
-            # source file. This intentionally handles ordinary C# comments;
-            # strings are left intact because they can contain valid code text.
-            code = line
-            if in_block_comment:
-                end = code.find("*/")
-                if end < 0:
-                    continue
-                code = code[end + 2:]
-                in_block_comment = False
-            while True:
-                start = code.find("/*")
-                if start < 0:
-                    break
-                end = code.find("*/", start + 2)
-                if end < 0:
-                    code = code[:start]
-                    in_block_comment = True
-                    break
-                code = code[:start] + code[end + 2:]
-            code = re.sub(r"//.*$", "", code).strip()
+        for line_no, code in enumerate(_mask_non_code(lines), 1):
+            code = code.strip()
             if not code:
                 continue
             if editor_lines[line_no - 1]:
@@ -186,6 +158,82 @@ def unity_runtime_findings(root: Path, files: list[str], markers: list[str]) -> 
     return findings
 
 
+def _mask_non_code(lines: list[str]) -> list[str]:
+    """Mask comments and literals, preserving positions and opening quotes."""
+    result = []
+    in_block_comment = False
+    in_verbatim = False
+    token = re.compile(r'//.*|/\*|@"|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'')
+    for raw in lines:
+        masked = list(raw)
+        pos = 0
+        while pos < len(raw):
+            if in_block_comment:
+                end = raw.find("*/", pos)
+                stop = len(raw) if end < 0 else end + 2
+                masked[pos:stop] = " " * (stop - pos)
+                pos = stop
+                in_block_comment = end < 0
+                continue
+            if in_verbatim:
+                start = pos
+                while pos < len(raw):
+                    if raw[pos] == '"':
+                        if pos + 1 < len(raw) and raw[pos + 1] == '"':
+                            pos += 2
+                            continue
+                        pos += 1
+                        in_verbatim = False
+                        break
+                    pos += 1
+                masked[start:pos] = " " * (pos - start)
+                continue
+            match = token.search(raw, pos)
+            if not match:
+                break
+            start, end = match.span()
+            value = match.group()
+            if value.startswith("//"):
+                masked[start:] = " " * (len(raw) - start)
+                break
+            if value == "/*":
+                masked[start:end] = "  "
+                in_block_comment = True
+            elif value == '@"':
+                masked[start] = ' '
+                in_verbatim = True
+            else:
+                masked[start + 1:end] = " " * (end - start - 1)
+            pos = end
+        result.append("".join(masked))
+    return result
+
+
+def _hot_path_lines(lines: list[str]) -> list[bool]:
+    """Track the bodies of Unity update methods, excluding comments and strings."""
+    result = []
+    pending = False
+    depth = 0
+    for code in _mask_non_code(lines):
+        active = depth > 0
+        if not active and not pending and re.search(r"\bvoid\s+(?:Update|FixedUpdate|LateUpdate)\s*\(\s*\)", code):
+            pending = True
+        if pending:
+            if ";" in code and "{" not in code:
+                pending = False
+            elif "{" in code:
+                code = code[code.index("{"):]
+                depth = 0
+                pending = False
+                active = True
+        if active:
+            depth += code.count("{") - code.count("}")
+        result.append(active)
+        if depth <= 0:
+            depth = 0
+    return result
+
+
 def run_local_checkers(root: Path, files: list[str]) -> list[dict[str, Any]]:
     """Run deterministic, conservative checks on changed C# files."""
     findings = []
@@ -194,20 +242,22 @@ def run_local_checkers(root: Path, files: list[str]) -> list[dict[str, Any]]:
         if not path.is_file() or not rel.lower().endswith(".cs"):
             continue
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-        in_update = False
-        for no, raw in enumerate(lines, 1):
-            code = re.sub(r"//.*$", "", raw).strip()
+        hot_path = _hot_path_lines(lines)
+        masked = _mask_non_code(lines)
+        for no, (raw, masked_code) in enumerate(zip(lines, masked), 1):
+            code = masked_code.strip()
             if not code:
+                if re.search(r"//\s*(TODO|FIXME)\b|/\*.*\b(TODO|FIXME)\b", raw, re.I):
+                    findings.append({"source": "local-tool", "severity": "low", "file": rel, "line": no, "rule": "comment-hygiene", "message": "变更代码包含 TODO/FIXME 注释", "suggestion": "完成事项或补充可跟踪的问题链接。"})
                 continue
-            if re.search(r"\b(Update|FixedUpdate|LateUpdate)\s*\(", code):
-                in_update = True
+            in_update = hot_path[no - 1]
             if re.search(r"\bGetComponent(?:InChildren|InParent)?\s*<", code) and in_update:
                 findings.append({"source": "local-tool", "severity": "medium", "file": rel, "line": no, "rule": "unity-api-misuse", "message": "在 Unity 热路径中调用 GetComponent，可能产生重复查找开销", "suggestion": "在 Awake/Start 缓存组件引用。"})
             if re.search(r"GameObject\.Find\s*\(", code):
                 findings.append({"source": "local-tool", "severity": "medium", "file": rel, "line": no, "rule": "unity-api-misuse", "message": "Runtime 使用 GameObject.Find，可能造成运行时查找开销和脆弱依赖", "suggestion": "使用序列化引用、Binder 或现有 Manager。"})
             if re.search(r"\b\w+\.tag\s*==\s*\"", code):
                 findings.append({"source": "local-tool", "severity": "low", "file": rel, "line": no, "rule": "unity-api-misuse", "message": "使用 tag 字符串比较，建议使用 CompareTag", "suggestion": "改为 obj.CompareTag(\"Enemy\")。"})
-            if in_update and (re.search(r"\.(Select|Where|ToList|ToArray|OrderBy)\s*\(", code) or "+=" in code):
+            if in_update and (re.search(r"\.(Select|Where|ToList|ToArray|OrderBy)\s*\(", code) or re.search(r'\+=\s*(?:\$?@?"|@\$")', code)):
                 findings.append({"source": "local-tool", "severity": "medium", "file": rel, "line": no, "rule": "hot-path-performance", "message": "Unity 热路径中可能存在 LINQ 或字符串分配", "suggestion": "避免热路径分配，缓存结果或使用无分配实现。"})
             if re.search(r"//\s*(TODO|FIXME)\b|/\*.*\b(TODO|FIXME)\b", raw, re.I):
                 findings.append({"source": "local-tool", "severity": "low", "file": rel, "line": no, "rule": "comment-hygiene", "message": "变更代码包含 TODO/FIXME 注释", "suggestion": "完成事项或补充可跟踪的问题链接。"})

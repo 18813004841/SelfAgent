@@ -41,6 +41,7 @@ def execute(args: Mapping[str, Any], context: Any) -> dict[str, Any]:
             config.raw.setdefault("checks", {})["skill_paths"] = args["skill_paths"]
         config.raw.setdefault("checks", {})["allow_extra_rules"] = bool(args.get("allow_extra_rules"))
         config.raw.setdefault("checks", {})["failure_threshold"] = str(args.get("failure_threshold", "high"))
+        config.raw["checks"]["feishu_webhook"] = args.get("feishu_webhook", "")
         def cancelled() -> bool:
             check = args.get("cancel")
             return bool(check()) if callable(check) else False

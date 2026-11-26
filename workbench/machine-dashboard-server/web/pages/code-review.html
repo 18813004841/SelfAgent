@@ -8,6 +8,7 @@
       <div class="review-field"><label class="review-label" for="review-project-path">工程地址</label><div class="review-control"><input id="review-project-path" placeholder="未配置" /><button type="button" id="review-choose">选择目录</button></div></div>
       <div class="review-field"><label class="review-label" for="review-branch">Git 分支</label><input id="review-branch" placeholder="未配置" /></div>
       <div class="review-field"><label class="review-label" for="review-failure-threshold">失败级别</label><select id="review-failure-threshold"><option value="low">低</option><option value="medium">中</option><option value="high" selected>高</option></select></div>
+      <div class="review-field"><label class="review-label" for="review-feishu-webhook">飞书通知地址</label><input id="review-feishu-webhook" type="text" autocomplete="off" placeholder="输入机器人 Webhook" /><span id="review-feishu-status">正在读取配置</span><div class="review-control"><button type="button" id="review-feishu-save">保存地址</button><button type="button" id="review-feishu-clear">清除地址</button></div></div>
       <div class="review-field"><span class="review-label">Skill 路径</span><div id="review-skill-paths"></div><button type="button" id="review-skill-add">添加 Skill 路径</button></div>
       <label class="review-toggle"><input type="checkbox" id="review-extra-rules" />允许 Skill 以外的规则检查</label>
       <div class="review-config-actions"><button type="button" id="review-save">保存配置</button><button type="button" id="review-clear-history">清空历史</button></div><span id="review-config-msg" hidden></span>

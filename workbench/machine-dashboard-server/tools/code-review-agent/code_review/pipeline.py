@@ -13,6 +13,7 @@ from typing import Any, Callable
 from .checks import classify_skill_rules, model_skill_rules, run_compile, run_local_checkers, unity_runtime_findings
 from .config import ReviewConfig
 from .git import GitRepository
+from .feishu import notify
 from .model_service import LocalModelClient, ModelServiceError
 from .codex_runner import CodexRunner, CodexRunnerError
 from .models import CheckResult, Finding, format_elapsed_time
@@ -39,7 +40,7 @@ if not logger.handlers:
 
 
 MODEL_OUTPUT_CONTRACT = (
-    "只输出一个 JSON 对象，不要输出 Markdown、解释或代码块。"
+    "只报告相对基线新增或修改的代码行，旧代码仅作上下文；只输出一个 JSON 对象，不要输出 Markdown、解释或代码块。"
     "结构必须是 {\"findings\":[{\"severity\":\"critical|high|medium|low\",\"message\":\"具体问题，不能为空\",\"file\":\"仓库相对路径或 null\",\"line\":1,\"rule\":\"对应 Skill 条款或 null\",\"suggestion\":\"修改建议或 null\",\"confidence\":0.0}],\"open_questions\":[\"字符串\"],\"test_gaps\":[\"字符串\"]}。"
     "没有问题时 findings 使用空数组。每条问题必须使用 message 字段，不能改用 title、description 或其他字段名。"
 )
@@ -122,6 +123,35 @@ class ReviewPipeline:
             if match and ReviewPipeline.is_review_script(match.group(2)):
                 parts.append(part)
         return cs_files, skipped, "".join(parts)
+
+    @staticmethod
+    def changed_lines(diff: str) -> dict[str, set[int]]:
+        """Map each changed file to added lines in the current snapshot."""
+        changed: dict[str, set[int]] = {}
+        path = None
+        line = None
+        for text in diff.splitlines():
+            if text.startswith("diff --git "):
+                match = re.match(r"^diff --git a/(.+?) b/(.+)$", text)
+                path = match.group(2) if match else None
+                line = None
+            elif text.startswith("@@ "):
+                match = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", text)
+                line = int(match.group(1)) if match else None
+            elif line is not None and path is not None:
+                if text.startswith("+"):
+                    changed.setdefault(path, set()).add(line)
+                    line += 1
+                elif text.startswith(" "):
+                    line += 1
+        return changed
+
+    @staticmethod
+    def is_changed_finding(finding: Finding, changed: dict[str, set[int]]) -> bool:
+        path = str(finding.file or "").replace("\\", "/")
+        while path.startswith("./"):
+            path = path[2:]
+        return isinstance(finding.line, int) and not isinstance(finding.line, bool) and finding.line in changed.get(path, set())
 
     @staticmethod
     def filter_model_scope(files: list[str], diff: str, rules: list[dict[str, Any]]) -> tuple[list[str], str]:
@@ -361,6 +391,7 @@ class ReviewPipeline:
         self._done("读取 Diff 内容", files=len(files), diff_chars=len(diff), diff_path=str(diff_path))
         self._step("过滤非 C# 文件", files=len(files))
         files, skipped_files, diff = self.filter_review_files(files, diff)
+        changed_lines = self.changed_lines(diff)
         self._done("过滤非 C# 文件", kept=len(files), skipped=len(skipped_files), skipped_files=skipped_files)
         self._step("检查变更文件", files=len(files))
         validation_errors = self.validate_changed_files(files)
@@ -370,10 +401,10 @@ class ReviewPipeline:
         self._step("检查 Runtime 代码中的 Editor 引用")
         # This built-in boundary check is always enabled; the toggle only scopes
         # model findings outside the configured Skill rules.
-        result.findings.extend(Finding(**x) for x in unity_runtime_findings(self.root, files, self.config.checks.get("editor_markers", ["UnityEditor", "/Editor/", "\\Editor\\"])))
+        result.findings.extend(f for f in (Finding(**x) for x in unity_runtime_findings(self.root, files, self.config.checks.get("editor_markers", ["UnityEditor", "/Editor/", "\\Editor\\"]))) if self.is_changed_finding(f, changed_lines))
         self._done("检查 Runtime 代码中的 Editor 引用", findings=len(result.findings))
         self._step("执行本地检查器", files=len(files))
-        local_findings = run_local_checkers(self.root, files)
+        local_findings = [x for x in run_local_checkers(self.root, files) if self.is_changed_finding(Finding(**x), changed_lines)]
         result.findings.extend(Finding(**x) for x in local_findings)
         result.tool_results.append({"name": "local-checkers", "status": "passed", "findings": local_findings, "count": len(local_findings)})
         self._done("执行本地检查器", findings=len(local_findings), tools=["unity-api-misuse", "hot-path-performance", "comment-hygiene", "naming-conventions"])
@@ -384,7 +415,7 @@ class ReviewPipeline:
         coverage, plan_source = self.plan_tool_coverage(rules)
         self._done("生成工具匹配计划", source=plan_source, rules=len(coverage))
         self._step("匹配本地检查器")
-        local_rules = [item for item in coverage if item["mode"] == "local_tool"]
+        local_rules = [item for item in coverage if item["mode"] in {"local_tool", "local_and_model"}]
         model_rules = model_skill_rules(rules, coverage)
         self._done("匹配本地检查器", coverage=coverage, local_rules=len(local_rules), model_rules=len(model_rules))
         result.tool_results.append({"name": "skill-coverage", "rules": coverage})
@@ -458,19 +489,25 @@ class ReviewPipeline:
                 result.agent_status = "partial" if failed_chunks else "passed"
             if failed_chunks:
                 result.status = "error"
-            for item in findings: result.findings.append(Finding("agent", item.get("severity", "medium"), item.get("message", ""), item.get("file"), item.get("line"), item.get("rule"), item.get("suggestion"), item.get("confidence")))
+            for item in findings:
+                finding = Finding("agent", item.get("severity", "medium"), item.get("message", ""), item.get("file"), item.get("line"), item.get("rule"), item.get("suggestion"), item.get("confidence"))
+                if self.is_changed_finding(finding, changed_lines):
+                    result.findings.append(finding)
         except (ModelServiceError, CodexRunnerError, json.JSONDecodeError, OSError, ValueError) as exc:
             result.agent_status = "unavailable"
             result.warnings.append(f"模型服务不可用或返回格式无效: {exc}")
             result.status = "error"
-        # Blaming each finding one by one is prohibitively slow on large Unity
-        # repositories. Keep it opt-in; the review result is complete without
-        # blocking report persistence on hundreds of Git subprocesses.
-        if self.config.checks.get("enrich_attribution", False):
+        # Reuse attribution when multiple rules report the same source line.
+        if self.config.checks.get("enrich_attribution", True):
+            attributions = {}
             for finding in result.findings:
-                attribution = self.repo.blame_line(current, finding.file, finding.line)
+                key = (finding.file, finding.line)
+                if key not in attributions:
+                    attributions[key] = self.repo.blame_line(current, finding.file, finding.line)
+                attribution = attributions[key]
                 finding.author = attribution["author"] if attribution else None
                 finding.commit_sha = attribution["sha"] if attribution else None
+                finding.author_email = attribution.get("email") if attribution else None
                 if not attribution:
                     result.warnings.append(f"无法确定问题行归属：{finding.file}:{finding.line}，修改人和提交 SHA 标记为未知")
         if compile_result and compile_result["status"] == "failed": result.status = "failed"
@@ -479,13 +516,25 @@ class ReviewPipeline:
         if result.agent_status == "passed" and result.status != "error":
             result.status = "failed" if any(levels.get(f.severity, 2) >= levels.get(threshold, 3) for f in result.findings) else "passed"
         self._step("汇总并保存检查结果")
-        if result.status == "passed": self.save_successful_check(state_path, current, datetime.now().isoformat(timespec="seconds"))
         report_dir = storage_root / "reports"; report_dir.mkdir(parents=True, exist_ok=True)
-        elapsed = round(time.perf_counter() - started, 3)
-        result.elapsed_seconds = elapsed
         report = report_dir / f"{current}.json"
         result.report_path = str(report)
+        result.elapsed_seconds = round(time.perf_counter() - started, 3)
         report.write_text(json.dumps(result.as_display_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+        if result.status == "passed": self.save_successful_check(state_path, current, datetime.now().isoformat(timespec="seconds"))
+        try:
+            notification_warnings = notify(result.findings, threshold, self.config.checks.get("feishu_webhook"))
+        except Exception as exc:
+            logger.error("review.feishu.exception type=%s", type(exc).__name__)
+            notification_warnings = ["飞书通知发送失败：通知处理发生异常"]
+        result.warnings.extend(notification_warnings)
+        if notification_warnings:
+            logger.warning("review.feishu.failed warnings=%s", len(notification_warnings))
+        elapsed = round(time.perf_counter() - started, 3)
+        result.elapsed_seconds = elapsed
+        updated_report = report.with_name(f".{execution_id}.tmp")
+        updated_report.write_text(json.dumps(result.as_display_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+        updated_report.replace(report)
         current_info = self.repo.commit_summary(current)
         logger.info("review.summary sha=%s author=%s subject=%s status=%s findings=%d elapsed_seconds=%s", current_info.get("sha"), current_info.get("author"), current_info.get("subject"), result.status, len(result.findings), elapsed)
         summary = {

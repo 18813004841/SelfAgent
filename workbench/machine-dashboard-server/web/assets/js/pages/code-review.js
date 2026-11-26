@@ -76,6 +76,10 @@ async function initCodeReview() {
   const skillAdd = document.getElementById("review-skill-add");
   if (skillAdd) skillAdd.onclick = () => addSkill();
   function render(x) {
+    if (Object.prototype.hasOwnProperty.call(x, "feishu_webhook_configured"))
+      document.getElementById("review-feishu-status").textContent = x.feishu_webhook_configured ? "已配置" : "未配置";
+    if (Object.prototype.hasOwnProperty.call(x, "feishu_webhook"))
+      document.getElementById("review-feishu-webhook").value = x.feishu_webhook || "";
     const extra = document.getElementById("review-extra-rules");
     if (!extraLoaded && extra) {
       extra.checked = !!x.allow_extra_rules;
@@ -182,6 +186,29 @@ async function initCodeReview() {
     if (!d.ok || !d.task) throw Error(d.error || "配置读取失败");
     render(d.task);
   }
+  async function saveFeishu(clear = false) {
+    const input = document.getElementById("review-feishu-webhook");
+    const status = document.getElementById("review-feishu-status");
+    const save = document.getElementById("review-feishu-save");
+    const remove = document.getElementById("review-feishu-clear");
+    const webhook = clear ? "" : input.value.trim();
+    if (!clear && !webhook) { status.textContent = "请输入飞书通知地址"; return; }
+    save.disabled = remove.disabled = true;
+    status.textContent = "正在保存…";
+    try {
+      const response = await fetch("/api/scheduler-tasks/code-review/notification", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ webhook }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw Error(data.error || "保存失败");
+      input.value = webhook;
+      status.textContent = data.configured ? "已配置" : "未配置";
+    } catch (error) { status.textContent = "保存失败：" + error.message; }
+    finally { save.disabled = remove.disabled = false; }
+  }
+  document.getElementById("review-feishu-save").onclick = () => saveFeishu();
+  document.getElementById("review-feishu-clear").onclick = () => saveFeishu(true);
   document.getElementById("review-choose").onclick = async () => {
     msg.textContent = "正在打开目录选择窗口...";
     try {
