@@ -1,4 +1,4 @@
-"""Per-user, server-hosted 37 maintenance form settings."""
+"""Shared, server-hosted 37 maintenance form settings."""
 import json
 from contextlib import closing
 from core.storage import connect
@@ -9,7 +9,9 @@ SETTING_FIELDS = (*FIELDS, "unity_editor")
 
 def get_settings(user_id):
     with closing(connect()) as db:
-        row = db.execute("SELECT settings_json FROM project37_settings WHERE user_id=?", (user_id,)).fetchone()
+        row = db.execute("SELECT settings_json FROM project37_shared_settings WHERE id=1").fetchone()
+        if row is None:
+            row = db.execute("SELECT settings_json FROM project37_settings WHERE user_id=?", (user_id,)).fetchone()
     values = json.loads(row[0]) if row else {}
     return {key: values.get(key, "") for key in SETTING_FIELDS}
 
@@ -25,5 +27,5 @@ def save_settings(user_id, payload):
         values[key] = value.strip()
     with closing(connect()) as db:
         with db:
-            db.execute("INSERT INTO project37_settings(user_id, settings_json) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET settings_json=excluded.settings_json", (user_id, json.dumps(values, ensure_ascii=False)))
+            db.execute("INSERT INTO project37_shared_settings(id, settings_json) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET settings_json=excluded.settings_json", (json.dumps(values, ensure_ascii=False),))
     return values

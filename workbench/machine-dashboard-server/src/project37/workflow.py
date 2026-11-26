@@ -1,5 +1,5 @@
 """Project 37 version maintenance task execution."""
-import json, os, re, sqlite3, subprocess, threading, time, uuid
+import json, os, re, sqlite3, subprocess, sys, threading, time, uuid
 from contextlib import closing
 from pathlib import Path
 from core.storage import connect
@@ -126,8 +126,14 @@ def unity_executable(game, selected=""):
     if not version.is_file(): raise RuntimeError('找不到 Unity 项目版本文件')
     match=re.search(r'^m_EditorVersion:\s*([0-9A-Za-z.]+)',version.read_text(encoding='utf-8'),re.M)
     if not match: raise RuntimeError('无法识别 Unity 版本')
-    exe=Path(selected or os.environ.get('PROJECT37_UNITY_EDITOR') or (Path(os.environ.get('ProgramFiles',r'C:\Program Files'))/'Unity'/'Hub'/'Editor'/match.group(1)/'Editor'/'Unity.exe'))
-    if not exe.is_file(): raise RuntimeError('未找到 Unity Editor：'+match.group(1))
+    if sys.platform == 'darwin':
+        default = Path('/Applications/Unity/Hub/Editor')/match.group(1)/'Unity.app'
+    else:
+        default = Path(os.environ.get('ProgramFiles',r'C:\Program Files'))/'Unity'/'Hub'/'Editor'/match.group(1)/'Editor'/'Unity.exe'
+    exe=Path(selected or os.environ.get('PROJECT37_UNITY_EDITOR') or default)
+    if exe.suffix.lower() == '.app':
+        exe = exe/'Contents'/'MacOS'/'Unity'
+    if not exe.is_file(): raise RuntimeError('未找到 Unity Editor：'+str(exe))
     return exe
 
 def record_merge(task_id, project, conflicts):

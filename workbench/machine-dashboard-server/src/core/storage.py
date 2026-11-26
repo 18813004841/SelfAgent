@@ -141,6 +141,9 @@ def connect():
       user_id INTEGER PRIMARY KEY, settings_json TEXT NOT NULL,
       FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
+    CREATE TABLE IF NOT EXISTS project37_shared_settings (
+      id INTEGER PRIMARY KEY CHECK(id = 1), settings_json TEXT NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS package_error_analyses (
       id TEXT PRIMARY KEY, status TEXT NOT NULL, input_text TEXT NOT NULL,
       events_json TEXT NOT NULL DEFAULT '[]', result_json TEXT NOT NULL DEFAULT '{}',
