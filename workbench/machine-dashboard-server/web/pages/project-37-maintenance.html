@@ -1,0 +1,33 @@
+<div class="frontend-page project37-page">
+  <button class="inline-back" type="button" data-page="server-maintenance">← 返回服务器开发维护</button>
+  <div class="frontend-hero">
+    <div><div class="frontend-eyebrow">PROJECT 37</div><h1>37工程维护</h1><p>配置版本维护参数，查看执行日志。</p></div>
+    <div class="frontend-hero-mark">37</div>
+  </div>
+  <section class="card project37-card" aria-labelledby="project37-title">
+    <h2 id="project37-title">37版本维护</h2>
+    <form id="project37-form">
+      <div class="project37-fields">
+        <label>37工程地址<input name="project_path" required placeholder="执行机器上的本地 Git 仓库路径"></label>
+        <label>37data工程地址<input name="data_path" required placeholder="执行机器上的本地 Git 仓库路径"></label>
+        <label>37工程原分支<input name="source_branch" required placeholder="例如 develop"></label>
+        <label>37工程新分支<input name="new_branch" required placeholder="例如 release/37.4.0"></label>
+        <label>新版本内容tag<input name="tag" required placeholder="请输入已有的 Git tag"></label>
+        <label>37data分支<input name="data_branch" required placeholder="请输入 37data 分支"></label>
+        <label>Unity 编辑器路径<input name="unity_editor" placeholder="可选：服务端 Unity.exe 的完整路径"></label>
+      </div>
+      <p class="muted">执行将删除两个仓库的未提交修改和未跟踪文件，并丢弃本地未推送提交。任务成功后可手动推送到远端。</p>
+      <button type="button" id="project37-save">保存参数</button>
+      <button type="button" id="project37-preflight">预检</button>
+      <button class="primary" type="button" id="project37-execute">执行</button>
+    </form>
+  </section>
+  <section class="card project37-card" aria-labelledby="project37-log-title">
+    <h2 id="project37-log-title">输出日志</h2>
+    <p id="project37-status" role="status">暂无任务</p>
+    <button type="button" id="project37-continue" hidden>继续</button>
+    <button type="button" id="project37-push" hidden>推送到远端</button>
+    <pre class="project37-log">暂无任务</pre>
+    <section id="project37-conflicts" hidden><h3>冲突文件预览</h3><ul id="project37-conflict-list"></ul></section>
+  </section>
+</div>

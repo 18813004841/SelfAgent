@@ -1072,3 +1072,11 @@ body:has(#content > .central-page) #content { flex: 1; min-height: 0; display: f
 .flow-worker { left:75%; top:45.37%; } .flow-analysis { left:33.33%; top:67.59%; }
 .flow-failure { left:75%; top:67.59%; } .flow-save { left:33.33%; top:87.96%; }
 @media(max-width:600px) { .analysis-flow { min-width:480px; } .analysis-progress { overflow-x:auto!important; } }
+
+.project37-page > .inline-back { margin-bottom: 16px; }
+.project37-card { margin-bottom: 20px; }
+.project37-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 24px; }
+.project37-fields label { display: grid; gap: 8px; font-weight: 600; }
+.project37-fields input { width: 100%; box-sizing: border-box; }
+.project37-log { min-height: 140px; padding: 16px; overflow: auto; white-space: pre-wrap; background: #302b2b; color: #f0e9e4; border-radius: 12px; }
+@media (max-width: 700px) { .project37-fields { grid-template-columns: 1fr; } }

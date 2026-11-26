@@ -1,0 +1,4 @@
+.workbench-tips { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 10000; display: grid; gap: 8px; width: max-content; max-width: min(90vw, 560px); pointer-events: none; }
+.workbench-tip { padding: 11px 18px; border-radius: 10px; background: #303a36; color: #fff; box-shadow: 0 6px 24px #0003; overflow-wrap: anywhere; }
+.workbench-tip--success { background: #236749; }
+.workbench-tip--error { background: #a83f3f; }

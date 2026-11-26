@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json, os, re, threading, time
+import json, os, re, sys, threading, time
 from urllib.request import Request, urlopen
 from pathlib import Path
 from typing import Any, TypedDict
@@ -73,8 +73,8 @@ def parse_input(text: str) -> dict[str, Any]:
     url = re.search(r"https?://[^\s)]+", text)
     if url: result["jenkins_url"] = url.group(0).rstrip("\\)]},.;")
     for key in ("target_ip", "worktree_path"):
-        m = re.search(rf"{key}\s*:\s*([^\s\\]+)", text, re.I)
-        if m: result[key] = m.group(1).strip('"')
+        m = re.search(rf'{key}\s*[:=]\s*(?:"([^"\r\n]+)"|([^\s]+))', text, re.I)
+        if m: result[key] = m.group(1) or m.group(2)
     for key in ("version", "bundle", "Version", "BundleVersion"):
         m = re.search(rf"(?:{key})\s*[:=]\s*([\w.\-]+)", text, re.I)
         if m: result["bundle" if key.lower().startswith("bundle") else "version"] = m.group(1)
@@ -199,41 +199,60 @@ def _archive_node(state: AnalysisState) -> dict[str, Any]:
 
 
 def _worker_node(state: AnalysisState) -> dict[str, Any]:
+    from integrations.codex_cli import CodexCliClient
+
     task, info = state["task"], state["info"]
-    log_text = None
-    target = info.get("target_ip")
-    center = os.environ.get("MACHINE_CONTROL_CENTER")
-    token = os.environ.get("MACHINE_CONTROL_TOKEN", "")
-    if target and center:
-        try:
-            workers = _json_request(center.rstrip("/") + "/api/workers", token).get("workers", [])
-            matched = [w for w in workers if w.get("status") == "online" and target in w.get("meta", {}).get("local_ips", [])]
-            _event(task, f"Worker 查询完成：{'已匹配' if matched else '未匹配'}")
-            if matched and info.get("worktree_path"):
-                payload = {"worktree_path": info["worktree_path"], "relative_path": "Game/BuildFolder/BuildTemporary/Unity.log"}
-                created = _json_request(center.rstrip("/") + "/api/tasks", token, "POST", {"machine_id": matched[0].get("worker_id") or matched[0].get("machine_id"), "kind": "read_build_log", "payload": payload})
-                remote_task_id = created.get("task", {}).get("task_id")
-                if remote_task_id:
-                    deadline = time.time() + 120
-                    while time.time() < deadline:
-                        remote = _json_request(center.rstrip("/") + f"/api/tasks/{remote_task_id}", token).get("task", {})
-                        if remote.get("status") in {"succeeded", "failed", "cancelled"}:
-                            if remote.get("status") == "succeeded" and remote.get("result", {}).get("ok"):
-                                remote_text = remote["result"].get("text", "")
-                                if remote_text.strip(): log_text = remote_text
-                            break
-                        time.sleep(1)
-                _event(task, "Worker 日志读取完成" if log_text is not None else "Worker 日志读取失败或为空", "running" if log_text is not None else "warning")
-            elif matched:
-                _event(task, "缺少 worktree_path，无法读取 Worker 日志", "warning")
-        except Exception as exc:
-            _event(task, f"Worker 查询或日志读取失败：{exc}", "warning")
-    else:
-        _event(task, "缺少 target_ip 或机器控制中心配置，无法查询 Worker", "warning")
-    if log_text is None:
-        raise RuntimeError("分析失败：未能从网盘或打包机获得日志；请检查 bundle、target_ip 和 worktree_path")
-    _event(task, "使用在线 Worker 日志（请核对构建版本）")
-    return {"log_text": log_text}
+    target, worktree = info.get("target_ip"), info.get("worktree_path")
+    if not target or not worktree:
+        raise RuntimeError("缺少 target_ip 或 worktree_path，无法读取打包机日志")
+    control_root = Path(__file__).resolve().parents[4] / "Tools" / "machine-control"
+    mcp_python = control_root / ".venv" / ("Scripts" if os.name == "nt" else "bin") / ("python.exe" if os.name == "nt" else "python")
+    center = os.environ.get("MACHINE_CONTROL_SERVER_URL", f"http://127.0.0.1:{os.environ.get('MACHINE_CONTROL_PORT', '18765')}").rstrip("/")
+    token = os.environ.get("MACHINE_CONTROL_TOKEN", "dev-token")
+    quote = lambda value: json.dumps(str(value), ensure_ascii=False)
+    args = ["-m", "control_mcp.server", "--server", center, "--token", token]
+    config = {
+        "mcp_servers.machine_control.default_tools_approval_mode": quote("approve"),
+        "mcp_servers.machine_control.command": quote(mcp_python if mcp_python.is_file() else sys.executable),
+        "mcp_servers.machine_control.args": "[" + ", ".join(quote(x) for x in args) + "]",
+        "mcp_servers.machine_control.env.PYTHONPATH": quote(str(control_root / "server") + os.pathsep + str(control_root / "shared")),
+        "mcp_servers.machine_control.env.MACHINE_CONTROL_LOG_TARGET": quote(target),
+        "mcp_servers.machine_control.env.MACHINE_CONTROL_LOG_WORKTREE": quote(worktree),
+    }
+    _event(task, "开始通过 Codex 和中央服务器 MCP 提交日志读取任务")
+    try:
+        started_ms = int(time.time() * 1000)
+        reply = CodexCliClient(timeout=180).execute(
+            "通过已连接的 machine_control MCP 调用唯一提供的 submit_build_log 工具一次。"
+            "只输出 JSON 对象，包含工具返回的 ok、task_id 或 error。"
+            "不要调用其他工具、编造结果、修改文件或执行命令。",
+            cwd=control_root, config_overrides=config, ignore_user_config=True,
+        )
+        response = json.loads(reply.text.strip())
+        task_id = response.get("task_id") if response.get("ok") is True else None
+        if not isinstance(task_id, str) or not re.fullmatch(r"task_[A-Za-z0-9_-]+", task_id):
+            raise RuntimeError("Codex 未返回有效的中央服务器任务 ID")
+        _event(task, "MCP 读取任务已提交，等待中央服务器结果")
+        deadline = time.monotonic() + 120
+        while time.monotonic() < deadline:
+            remote = _json_request(center + f"/api/tasks/{task_id}", token).get("task", {})
+            payload = remote.get("payload") or {}
+            workers = _json_request(center + "/api/workers", token).get("workers", [])
+            matched = [w for w in workers if w.get("machine_id") == remote.get("machine_id") and target in (w.get("meta", {}).get("local_ips", []) or [])]
+            if int(remote.get("created_at") or 0) < started_ms - 1000 or remote.get("kind") != "read_build_log" or payload.get("worktree_path") != worktree or payload.get("relative_path") != "Game/BuildFolder/BuildTemporary/Unity.log" or len(matched) != 1:
+                raise RuntimeError("中央服务器任务与目标机器或日志路径不匹配")
+            if remote.get("status") in {"succeeded", "failed", "cancelled"}:
+                result = remote.get("result") or {}
+                text = result.get("text")
+                if remote.get("status") == "succeeded" and result.get("ok") and isinstance(text, str) and text.strip():
+                    _event(task, "Worker 日志读取完成，使用在线 Worker 日志（请核对构建版本）")
+                    return {"log_text": text}
+                raise RuntimeError("打包机日志读取失败或为空")
+            time.sleep(1)
+        raise RuntimeError("等待打包机日志超时；远程任务可能仍在执行")
+    except Exception as exc:
+        logger.warning("package_analysis.worker.failed task_id=%s error_type=%s", task["id"], type(exc).__name__)
+        raise RuntimeError("通过 Codex 和中央服务器 MCP 获取打包机日志失败，请检查服务与目标机器配置") from exc
 
 
 def _analysis_node(state: AnalysisState) -> dict[str, Any]:

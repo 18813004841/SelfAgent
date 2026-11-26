@@ -40,3 +40,12 @@ catalog with `.venv/Scripts/python.exe ../../scripts/validate_machine_control_mc
 (use `.venv/bin/python` on Unix). This optional regression requires MCP installed;
 it executes only isolated `echo` and an intentionally rejected command against
 temporary services, never production data.
+
+Build-log MCP mode: when both `MACHINE_CONTROL_LOG_TARGET` and
+`MACHINE_CONTROL_LOG_WORKTREE` are set on the MCP server process, its tool
+catalog exposes only `submit_build_log`. The tool matches one recently online
+Worker by IP, submits the fixed Unity log path once, and returns only the task
+ID. The caller checks the task and reads its result through the existing HTTP
+API. Missing/ambiguous workers or submission failures are returned as errors;
+without these variables the original general machine-management tools remain
+unchanged.

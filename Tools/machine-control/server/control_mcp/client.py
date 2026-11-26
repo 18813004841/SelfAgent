@@ -45,6 +45,13 @@ class ControlCenterClient:
             "payload": payload,
         })
 
+    def submit_build_log(self, machine_id: str, worktree_path: str) -> Dict[str, Any]:
+        return self.request("POST", "/api/tasks", {
+            "machine_id": machine_id,
+            "kind": "read_build_log",
+            "payload": {"worktree_path": worktree_path, "relative_path": "Game/BuildFolder/BuildTemporary/Unity.log"},
+        })
+
     def wait_task(self, task_id: str, timeout: int = 120, interval: float = 1.0) -> Dict[str, Any]:
         deadline = time.time() + timeout
         while time.time() < deadline:

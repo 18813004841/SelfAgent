@@ -236,7 +236,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/scheduler") or path.startswith("/api/schedules") or path.startswith("/api/scheduler-tasks") or path.startswith("/api/code-review"):
                 if not role_at_least(user, "advanced"):
                     self.send_json(403, {"ok": False, "code": "forbidden", "error": "需要高级用户及以上权限"}); return
-            if path.startswith("/api/central-") or path.startswith("/api/central-server") or path.startswith("/api/openai-agent") or path.startswith("/api/server-maintenance"):
+            if path.startswith("/api/central-") or path.startswith("/api/central-server") or path.startswith("/api/openai-agent"):
                 if not role_at_least(user, "developer"):
                     self.send_json(403, {"ok": False, "code": "forbidden", "error": "需要开发者及以上权限"}); return
             if path == "/api/users":

@@ -3,7 +3,8 @@ const pageTitles = {
   scheduler: "定时任务",
   "code-review": "代码检查",
   tasks: "任务",
-  "server-maintenance": "服务器开发维护（待开发）",
+  "server-maintenance": "服务器开发维护",
+  "project-37-maintenance": "37工程维护",
   frontend: "前端模块",
   "package-error-analysis": "打包报错分析",
   "package-error-analysis-task": "报错分析任务",
@@ -26,8 +27,8 @@ const pageModules = {
   scheduler: () => import("./pages/scheduler.js"),
   "code-review": () => import("./pages/code-review.js"),
   tasks: () => import("./pages/tasks.js"),
-  "server-maintenance": () => import("./pages/server-maintenance.js"),
   frontend: () => import("./pages/frontend.js"),
+  "project-37-maintenance": () => import("./pages/project-37-maintenance.js"),
   "package-error-analysis": () => import("./pages/package-error-analysis.js"),
   "package-error-analysis-task": () => import("./pages/package-error-analysis-task.js"),
   store: () => import("./pages/store.js"),
@@ -49,6 +50,7 @@ import { applySkin } from "./shared/skin.js";
 const levels = {user:1, advanced:2, developer:3, admin:4};
 function lacksModule(page) {
   if (!currentUser) return false;
+  if (page === "project-37-maintenance") page = "server-maintenance";
   if (page === "users") return !currentUser.is_admin;
   if (!["central-server", "openai-agent", "server-maintenance"].includes(page)) return false;
   if (Array.isArray(currentUser.modules)) return !currentUser.modules.includes(page);

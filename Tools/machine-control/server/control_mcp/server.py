@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from typing import Any, Dict
 
 from control_mcp.client import ControlCenterClient
@@ -24,11 +25,38 @@ else:
     MCP_IMPORT_ERROR = None
 
 
-def build_mcp(server_url: str, token: str):
+def build_mcp(server_url: str, token: str, *, log_target: str = "", log_worktree: str = ""):
     if FastMCP is None:
         raise RuntimeError(f"mcp package not available: {MCP_IMPORT_ERROR!r}")
     client = ControlCenterClient(server_url, token)
     mcp = FastMCP("machine-control")
+
+    if log_target or log_worktree:
+        if not log_target or not log_worktree:
+            raise ValueError("target and worktree are both required")
+        submitted = None
+
+        @mcp.tool()
+        def submit_build_log() -> Dict[str, Any]:
+            """Submit the single preconfigured build-log read and return its task ID."""
+            nonlocal submitted
+            if submitted is not None:
+                return submitted
+            workers = client.list_workers().get("workers", [])
+            now_ms = time.time() * 1000
+            matched = [w for w in workers if w.get("status") == "online"
+                       and log_target in (w.get("meta", {}).get("local_ips", []) or [])
+                       and 0 <= now_ms - float(w.get("last_seen_at", 0)) <= 60000]
+            if len(matched) != 1:
+                return {"ok": False, "error": "目标 IP 未匹配到唯一且最近在线的 Worker"}
+            response = client.submit_build_log(matched[0]["machine_id"], log_worktree)
+            task_id = response.get("task", {}).get("task_id")
+            if not task_id:
+                return {"ok": False, "error": "中央服务器未返回任务 ID"}
+            submitted = {"ok": True, "task_id": task_id}
+            return submitted
+
+        return mcp
 
     @mcp.tool()
     def health() -> Dict[str, Any]:
@@ -94,7 +122,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.fallback_cli:
         raise SystemExit(fallback_cli(args.server, args.token, args.args))
-    mcp = build_mcp(args.server, args.token)
+    mcp = build_mcp(args.server, args.token, log_target=os.environ.get("MACHINE_CONTROL_LOG_TARGET", ""),
+                    log_worktree=os.environ.get("MACHINE_CONTROL_LOG_WORKTREE", ""))
     mcp.run()
 
 

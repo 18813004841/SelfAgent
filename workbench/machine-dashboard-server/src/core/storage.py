@@ -130,10 +130,16 @@ def connect():
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE TABLE IF NOT EXISTS server_maintenance_session (
-      id INTEGER PRIMARY KEY CHECK (id=1), session_id TEXT,
-      messages_json TEXT NOT NULL DEFAULT '[]', status TEXT NOT NULL DEFAULT 'idle',
+    CREATE TABLE IF NOT EXISTS project37_tasks (
+      id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, status TEXT NOT NULL, owner_pid INTEGER NOT NULL DEFAULT 0,
+      parameters_json TEXT NOT NULL, events_json TEXT NOT NULL DEFAULT '[]',
+      error TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS project37_one_active ON project37_tasks((1)) WHERE status IN ('queued', 'running');
+    CREATE TABLE IF NOT EXISTS project37_settings (
+      user_id INTEGER PRIMARY KEY, settings_json TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS package_error_analyses (
       id TEXT PRIMARY KEY, status TEXT NOT NULL, input_text TEXT NOT NULL,
@@ -155,6 +161,12 @@ def connect():
         "ALTER TABLE schedules ADD COLUMN run_type INTEGER NOT NULL DEFAULT 1",
         "ALTER TABLE schedules ADD COLUMN run_time TEXT",
         "ALTER TABLE schedules ADD COLUMN param_json TEXT NOT NULL DEFAULT '{}'",
+        "ALTER TABLE project37_tasks ADD COLUMN owner_pid INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE project37_tasks ADD COLUMN conflicts_json TEXT NOT NULL DEFAULT '[]'",
+        "ALTER TABLE project37_tasks ADD COLUMN merge_head TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE project37_tasks ADD COLUMN base_head TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE project37_tasks ADD COLUMN completed_head TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE project37_tasks ADD COLUMN push_state TEXT NOT NULL DEFAULT ''",
         "ALTER TABLE local_codex_tasks ADD COLUMN session_id TEXT",
         "ALTER TABLE local_codex_tasks ADD COLUMN skill_paths_json TEXT NOT NULL DEFAULT '[]'",
         "ALTER TABLE local_codex_tasks ADD COLUMN allow_extra_rules INTEGER NOT NULL DEFAULT 0",

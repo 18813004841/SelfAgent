@@ -1,1 +1,18 @@
-<section class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h1>服务器开发维护（待开发）</h1><p class="muted">通过服务器 Codex 维护 machine-dashboard-server</p></div><button id="server-restart" type="button" class="primary">重启服务器</button></div><p id="server-status" class="muted" role="status"></p><div id="server-messages" style="max-height:55vh;overflow:auto;margin:16px 0"></div><textarea id="server-input" rows="5" style="width:100%" placeholder="描述要修改的服务器功能"></textarea><div style="margin-top:10px"><button id="server-send" type="button" class="primary">发送</button><button id="server-cancel" type="button" hidden>取消</button></div></section>
+<div class="frontend-page">
+  <div class="frontend-hero">
+    <div>
+      <div class="frontend-eyebrow">SERVER WORKSPACE</div>
+      <h1>服务器开发维护</h1>
+      <p>选择一个模块，开始服务器工程维护。</p>
+    </div>
+    <div class="frontend-hero-mark">⌘</div>
+  </div>
+  <section class="module-grid" aria-label="服务器开发维护模块">
+    <button class="module-tile error-module" type="button" data-page="project-37-maintenance">
+      <span class="module-icon">37</span>
+      <span class="module-copy"><strong>37工程维护</strong><small>进入37工程维护模块</small></span>
+      <span class="module-arrow">→</span>
+    </button>
+    <div class="module-tile module-placeholder"><span class="module-icon muted-icon">＋</span><span class="module-copy"><strong>更多模块</strong><small>后续功能持续接入</small></span></div>
+  </section>
+</div>
