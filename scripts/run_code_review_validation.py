@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""在临时 Git 仓库中验证代码检查的成功、失败和基线行为。"""
+"""在临时 Git 仓库中验证发现问题和执行异常时的基线行为。"""
 
 from __future__ import annotations
 
@@ -100,13 +100,24 @@ def main() -> int:
     notification_failure_saved = bool(report.get("问题内容")) and "飞书通知发送失败：通知处理发生异常" in report.get("警告", [])
     state_path = review_root / "validation-data" / f"{project.name}-main" / "state.json"
     state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.is_file() else {}
+    finding_advanced_baseline = state.get("last_successful_sha") == bad
+    (source / "Good.cs").write_text("public class Good { public int More; }\n", encoding="utf-8")
+    run(["git", "add", "."], project)
+    run(["git", "commit", "-m", "next increment"], project)
+    config["checks"]["skill_paths"] = [str(work / "missing-skill")]
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    third = subprocess.run([sys.executable, "-m", "code_review.cli", "check", "--config", str(config_path)], cwd=review_root, env=env, text=True, capture_output=True)
+    final_state = json.loads(state_path.read_text(encoding="utf-8"))
+    failure_preserved_baseline = final_state.get("last_successful_sha") == bad
     print(json.dumps({
         "workspace": str(work),
         "first_exit": first.returncode,
         "second_exit": second.returncode,
         "baseline_sha": state.get("last_successful_sha"),
         "passed_sha": good,
-        "baseline_unchanged": state.get("last_successful_sha") == good,
+        "finding_advanced_baseline": finding_advanced_baseline,
+        "third_exit": third.returncode,
+        "failure_preserved_baseline": failure_preserved_baseline,
         "notification_failure_report_saved": notification_failure_saved,
         "first_stdout": first.stdout[-1500:],
         "first_stderr": first.stderr[-1500:],
@@ -114,7 +125,7 @@ def main() -> int:
         "second_stderr": second.stderr[-1500:],
     }, ensure_ascii=False, indent=2))
     server.shutdown()
-    return 0 if first.returncode == 0 and second.returncode == 1 and state.get("last_successful_sha") == good and notification_failure_saved else 1
+    return 0 if first.returncode == 0 and second.returncode == 0 and third.returncode == 1 and finding_advanced_baseline and failure_preserved_baseline and notification_failure_saved else 1
 
 
 if __name__ == "__main__":

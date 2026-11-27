@@ -62,7 +62,7 @@ def notify(findings: list[Finding], threshold: str, webhook: str | None = None, 
             warnings.append("飞书兜底通知人未找到或查询失败：bo.feng@funplus.com")
     lines = ["代码规范检查报告：" + (f"\n任务名：{task_name.strip()}" if task_name and task_name.strip() else "")]
     if status:
-        labels = {"passed": "检查通过", "skipped": "没有新提交", "failed": "检查未通过", "error": "检查执行失败", "cancelled": "任务已取消"}
+        labels = {"passed": "检查完成", "skipped": "没有新提交", "failed": "检查未通过", "error": "检查执行失败", "cancelled": "任务已取消"}
         lines[0] += f"\n检查结果：{labels.get(status, status)}\n问题数量：{len(selected)}"
     for finding in selected:
         user = users.get((finding.author_email or "").strip())

@@ -526,18 +526,18 @@ class ReviewPipeline:
                 finding.author_email = attribution.get("email") if attribution else None
                 if not attribution:
                     result.warnings.append(f"无法确定问题行归属：{finding.file}:{finding.line}，修改人和提交 SHA 标记为未知")
-        if compile_result and compile_result["status"] == "failed": result.status = "failed"
+        if compile_result and compile_result["status"] == "failed":
+            result.status = "error"
+            result.warnings.append("编译检查执行失败，检查进度未更新")
         threshold = str(self.config.checks.get("failure_threshold", "high")).lower()
-        levels = {"low": 1, "medium": 2, "high": 3, "critical": 4}
-        if result.agent_status == "passed" and result.status != "error":
-            result.status = "failed" if any(levels.get(f.severity, 2) >= levels.get(threshold, 3) for f in result.findings) else "passed"
+        if result.status != "error":
+            result.status = "passed"
         self._step("汇总并保存检查结果")
         report_dir = storage_root / "reports"; report_dir.mkdir(parents=True, exist_ok=True)
         report = report_dir / f"{current}.json"
         result.report_path = str(report)
         result.elapsed_seconds = round(time.perf_counter() - started, 3)
         report.write_text(json.dumps(result.as_display_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
-        if result.status == "passed": self.save_successful_check(state_path, current, datetime.now().isoformat(timespec="seconds"))
         self._notify_result(result, threshold)
         elapsed = round(time.perf_counter() - started, 3)
         result.elapsed_seconds = elapsed
@@ -562,5 +562,6 @@ class ReviewPipeline:
         }
         self.log_callback(kind="result", message="检查结果", **summary)
         logger.info("review.end status=%s current_sha=%s findings=%d agent_status=%s", result.status, current, len(result.findings), result.agent_status)
+        if result.status == "passed": self.save_successful_check(state_path, current, datetime.now().isoformat(timespec="seconds"))
         return result
 
