@@ -8,6 +8,7 @@ const skins = [
   { id: "cosmos", name: "星际霓光", description: "深空蓝底色，点缀青紫霓虹光。", className: "skin-cosmos" },
   { id: "playful", name: "缤纷创意", description: "明亮蓝色与活泼彩色的创意工作台。", className: "skin-playful" },
   { id: "glass", name: "云彩琉璃", description: "淡紫蓝渐变与轻盈的磨砂玻璃质感。", className: "skin-glass" },
+  { id: "ice-ocean", name: "冰海雾光", description: "冰蓝海景与半透明毛玻璃，清透宁静。", className: "skin-ice-ocean" },
   { id: "gold", name: "曜石鎏金", description: "沉静黑色与暖金线条的商务风格。", className: "skin-gold" },
   { id: "ink", name: "水墨雅集", description: "宣纸、山水、竹影与印章红的东方工作台风格。", className: "skin-ink" },
 ];
