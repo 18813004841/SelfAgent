@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import logging
 from logging.handlers import RotatingFileHandler
@@ -43,6 +44,7 @@ MODEL_OUTPUT_CONTRACT = (
     "只报告相对基线新增或修改的代码行，旧代码仅作上下文；只输出一个 JSON 对象，不要输出 Markdown、解释或代码块。"
     "结构必须是 {\"findings\":[{\"severity\":\"critical|high|medium|low\",\"message\":\"具体问题，不能为空\",\"file\":\"仓库相对路径或 null\",\"line\":1,\"rule\":\"对应 Skill 条款或 null\",\"suggestion\":\"修改建议或 null\",\"confidence\":0.0}],\"open_questions\":[\"字符串\"],\"test_gaps\":[\"字符串\"]}。"
     "没有问题时 findings 使用空数组。每条问题必须使用 message 字段，不能改用 title、description 或其他字段名。"
+    "严重程度统一标准：low 是主要影响可读性或维护且无明确运行影响；medium 是特定条件下可能造成局部功能或性能问题；high 是有明确证据的严重功能故障或大范围影响；critical 是有明确证据的大范围数据丢失或重大安全后果。仅凭可能性不要夸大等级。"
 )
 
 
@@ -299,13 +301,23 @@ class ReviewPipeline:
         return "\n\n".join(sections)
 
     @staticmethod
-    def format_codex_prompt(old_sha: str, current_sha: str, files: list[str], rules: list[dict[str, Any]], allow_extra_rules: bool) -> str:
+    def format_codex_prompt(old_sha: str, current_sha: str, files: list[str], rules: list[dict[str, Any]], allow_extra_rules: bool, batch_diff: str = "") -> str:
         scope = "可以补充 Skill 以外但有代码依据的问题。" if allow_extra_rules else "只报告 Skill 原文覆盖的问题。"
         skills = "\n\n".join(f"### {item.get('path', 'Skill')}\n{item.get('content', '')}" for item in rules)
         return ("你正在服务器工程目录中执行一次增量代码审查。请自行使用 git 查看并理解变更，不要修改任何文件，不要执行破坏性命令。\n"
-                f"审查范围：{old_sha}..{current_sha}\n变更文件：{json.dumps(files, ensure_ascii=False)}\n"
+                f"审查范围：{old_sha}..{current_sha}\n本批必须逐个审查的变更文件：{json.dumps(files, ensure_ascii=False)}\n"
+                "请逐个审查本批文件的全部变更行，可以读取关联文件和调用方作为上下文，只报告本批文件的新增或修改行。"
+                "输出 JSON 须额外包含 reviewed_files 字符串数组，逐项列出本批已完成审查的文件；未完成审查不得列入。"
                 "请读取相关源码、调用方、生命周期和工程内 AGENTS.md/SKILL.md，必要时扩大搜索范围。" + scope + "\n"
-                + MODEL_OUTPUT_CONTRACT + "\n检查规则：\n" + skills)
+                + MODEL_OUTPUT_CONTRACT + "\n检查规则：\n" + skills
+                + "\n本批 Git diff（JSON 字符串，保留换行转义）：\n" + json.dumps(batch_diff, ensure_ascii=False))
+
+    @staticmethod
+    def codex_batches(files: list[str], batch_size: int) -> list[list[str]]:
+        if batch_size < 1 or batch_size > 50:
+            raise ValueError("codex_batch_files 必须在 1 到 50 之间")
+        ordered = sorted(set(files), key=lambda path: (str(Path(path).parent).casefold(), path.casefold()))
+        return [ordered[i:i + batch_size] for i in range(0, len(ordered), batch_size)]
 
     @staticmethod
     def finding_matches_skill(item: dict[str, Any], rules: list[dict[str, Any]]) -> bool:
@@ -453,11 +465,67 @@ class ReviewPipeline:
             allow_extra_rules = bool(self.config.checks.get("allow_extra_rules"))
             chunks = []
             if backend == "codex":
-                prompt = self.format_codex_prompt(old, current, files, model_rules, allow_extra_rules)
-                runner = CodexRunner(self.root, self.config.model_service.get("timeout_seconds", 900), self.config.model_service.get("executable"), self.config.model_service.get("model"), self.config.model_service.get("sandbox", "read-only"))
-                parsed = self.parse_model_json(runner.run(prompt, self.cancel_callback))
-                findings.extend(parsed.get("findings", []))
-                result.tool_results.append({"name": "codex-review", "status": "passed", "open_questions": parsed.get("open_questions", []), "test_gaps": parsed.get("test_gaps", [])})
+                model = str(self.config.model_service.get("model") or "").strip() or None
+                batch_size = int(self.config.model_service.get("codex_batch_files", 4))
+                batches = self.codex_batches(files, batch_size)
+                runner = CodexRunner(self.root, self.config.model_service.get("timeout_seconds", 900), self.config.model_service.get("executable"), model, self.config.model_service.get("sandbox", "read-only"))
+                diff_by_file = {}
+                for section in re.split(r"(?=^diff --git )", diff, flags=re.MULTILINE):
+                    match = re.match(r"^diff --git a/(.+?) b/(.+)$", section, re.MULTILINE)
+                    if match:
+                        diff_by_file[match.group(2)] = section
+                manifest = {"execution_id": execution_id, "old_sha": old, "current_sha": current, "backend": "codex", "model": model, "batch_size": batch_size, "concurrency": 1, "rules": [{"path": rule.get("path"), "clause": rule.get("clause"), "sha256": hashlib.sha256(str(rule.get("content") or "").encode("utf-8")).hexdigest()} for rule in model_rules], "batches": []}
+                manifest_path = diff_path.parent / "review-manifest.json"
+                manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+                for index, batch in enumerate(batches, 1):
+                    self._ensure_running()
+                    prompt = self.format_codex_prompt(old, current, batch, model_rules, allow_extra_rules, "".join(diff_by_file.get(path, "") for path in batch))
+                    prompt_path = diff_path.parent / f"codex-input-{index:03d}.md"
+                    output_path = diff_path.parent / f"codex-output-{index:03d}.txt"
+                    prompt_path.write_text(prompt, encoding="utf-8")
+                    record = {"batch": index, "files": batch, "input": prompt_path.name, "input_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(), "output": output_path.name, "status": "running"}
+                    manifest["batches"].append(record)
+                    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+                    self.progress_callback(current=self.step, total=self.step_total, step_name=self.step_name, message="执行 Codex 审查批次", batch=index, batches=len(batches), files=batch)
+                    fatal_model_error = False
+                    try:
+                        content = runner.run(prompt, self.cancel_callback)
+                        output_path.write_text(content, encoding="utf-8")
+                        parsed = self.parse_model_json(content)
+                        reviewed = parsed.get("reviewed_files")
+                        if not isinstance(reviewed, list) or any(not isinstance(item, str) for item in reviewed) or set(batch) - set(reviewed):
+                            raise ValueError("模型未确认审查本批全部文件")
+                        batch_findings = parsed.get("findings", [])
+                        for item in batch_findings:
+                            if item.get("file") not in batch:
+                                raise ValueError("模型返回的问题不属于本批文件")
+                        findings.extend(batch_findings)
+                        record["status"] = "passed"
+                        result.tool_results.append({"name": "codex-review", "batch": index, "status": "passed", "files": batch, "open_questions": parsed.get("open_questions", []), "test_gaps": parsed.get("test_gaps", [])})
+                    except (CodexRunnerError, json.JSONDecodeError, OSError, ValueError) as exc:
+                        if self.cancel_callback():
+                            raise RuntimeError("代码检查已终止") from exc
+                        record["status"] = "failed"
+                        record["error"] = str(exc)
+                        failed = {"chunk": index, "files": batch, "error": str(exc)}
+                        failed_chunks.append(failed)
+                        result.tool_results.append({"name": "codex-review", "status": "failed", **failed})
+                        result.warnings.append(f"Codex 审查批次 {index}/{len(batches)} 失败：{exc}")
+                        logger.warning("review.codex.batch_failed batch=%s error_type=%s", index, type(exc).__name__)
+                        if isinstance(exc, CodexRunnerError) and ("model_not_found" in str(exc) or "model_not_in_accessible_catalog" in str(exc)):
+                            fatal_model_error = True
+                    finally:
+                        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+                    if fatal_model_error:
+                        for remaining_index, remaining in enumerate(batches[index:], index + 1):
+                            reason = "模型不可用，批次未执行"
+                            manifest["batches"].append({"batch": remaining_index, "files": remaining, "status": "not_started", "error": reason})
+                            failed = {"chunk": remaining_index, "files": remaining, "error": reason}
+                            failed_chunks.append(failed)
+                            result.tool_results.append({"name": "codex-review", "status": "failed", **failed})
+                        result.warnings.append("Codex 模型不可用，已停止剩余批次；检查进度未更新")
+                        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+                        break
             else:
                 model_files, model_diff = self.filter_model_scope(files, diff, model_rules)
                 chunks = self.split_diff(model_diff, model_files) if model_rules else []
@@ -478,6 +546,7 @@ class ReviewPipeline:
                     self._ensure_running()
                     try:
                         content = client.complete(messages)
+                        (diff_path.parent / f"model-output-{index:03d}-attempt-{attempt:02d}.txt").write_text(content, encoding="utf-8")
                         parsed = self.parse_model_json(content)
                         if attempt > 1:
                             self.log_callback(kind="pipeline", message="模型切片重试成功", chunk=index, attempt=attempt)
@@ -500,7 +569,7 @@ class ReviewPipeline:
                 if not allow_extra_rules:
                     chunk_findings = [item for item in chunk_findings if self.finding_matches_skill(item, model_rules)]
                 findings.extend(chunk_findings); result.tool_results.append({"name":"model-review","chunk":index,"open_questions":parsed.get("open_questions",[]),"test_gaps":parsed.get("test_gaps",[])})
-            self._done("执行代码审查", backend=backend, chunks=len(chunks), findings=len(findings), failed_chunks=failed_chunks)
+            self._done("执行代码审查", backend=backend, chunks=len(batches) if backend == "codex" else len(chunks), findings=len(findings), failed_chunks=failed_chunks)
             if rules:
                 result.agent_status = "partial" if failed_chunks else "passed"
             if failed_chunks:
@@ -534,7 +603,7 @@ class ReviewPipeline:
             result.status = "passed"
         self._step("汇总并保存检查结果")
         report_dir = storage_root / "reports"; report_dir.mkdir(parents=True, exist_ok=True)
-        report = report_dir / f"{current}.json"
+        report = diff_path.parent / "result.json"
         result.report_path = str(report)
         result.elapsed_seconds = round(time.perf_counter() - started, 3)
         report.write_text(json.dumps(result.as_display_dict(), ensure_ascii=False, indent=2), encoding="utf-8")

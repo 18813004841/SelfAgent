@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import re
 import os
 import threading
 import time
+import zipfile
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -275,6 +277,47 @@ def clear_review_history(project_path: str | None, branch: str | None) -> dict[s
             removed.append(name)
     logger.info("代码检查历史已清理 project_path=%s branch=%s removed=%s", project_path, branch, removed)
     return {"project_path": project_path, "branch": branch, "removed": removed}
+
+
+def export_last_review(schedule_id: str) -> bytes:
+    """Package the latest completed run and its own stored review artifacts."""
+    repository = ScheduleRepository()
+    row, runs = repository.schedule_detail(schedule_id)
+    if not row or row["scheduler_type"] != "code_review_scheduler":
+        raise ValueError("代码检查任务不存在")
+    if row["last_status"] in {"running", "cancelling"}:
+        raise ValueError("任务正在执行，请结束后再导出")
+    if not runs:
+        raise ValueError("该任务还没有可导出的执行记录")
+    run = runs[0]
+    try:
+        result = json.loads(run["output"] or "{}")
+    except (ValueError, TypeError):
+        result = {"原始结果": run["output"] or ""}
+    if not isinstance(result, dict):
+        result = {"结果": result}
+    metadata = {"任务名": row["name"], "任务ID": schedule_id, "执行状态": run["status"], "开始时间戳": run["started_at"], "结束时间戳": run["finished_at"], "执行结果": result}
+    report_name = result.get("导出报告")
+    report_path = Path(report_name).resolve() if isinstance(report_name, str) and report_name else None
+    root = CODE_REVIEW_DATA_ROOT.resolve()
+    if report_path and (not report_path.is_relative_to(root) or report_path.suffix.lower() != ".json"):
+        raise ValueError("报告路径不属于代码检查存储目录")
+    archive_data = io.BytesIO()
+    with zipfile.ZipFile(archive_data, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("执行信息.json", json.dumps(metadata, ensure_ascii=False, indent=2))
+        archive.writestr("执行日志.json", json.dumps(read(schedule_id), ensure_ascii=False, indent=2))
+        if report_path and report_path.is_file():
+            if report_path.name == "result.json":
+                run_dir = report_path.parent
+                for item in sorted(run_dir.rglob("*")):
+                    if item.is_file() and not item.is_symlink() and item.resolve().is_relative_to(run_dir):
+                        archive.write(item, "审查记录/" + item.relative_to(run_dir).as_posix())
+            else:
+                archive.write(report_path, "审查记录/result.json")
+        else:
+            archive.writestr("审查记录缺失.txt", "本次执行未生成报告，或报告文件不存在，无法导出审查明细。\n")
+    logger.info("review.export.completed schedule_id=%s run_id=%s", schedule_id, run["id"])
+    return archive_data.getvalue()
 
 
 def update_task_config(project_path: str, branch: str, skill_paths: list[str] | str = ["skills"], allow_extra_rules: bool = False, failure_threshold: str = "high", schedule_id: str | None = None) -> dict[str, Any]:

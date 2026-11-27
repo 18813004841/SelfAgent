@@ -271,6 +271,42 @@ async function initCodeReview() {
         msg.textContent = "终止失败：" + e.message;
       }
     };
+  const exportButton = document.getElementById("review-export");
+  exportButton.onclick = async () => {
+    msg.hidden = false;
+    exportButton.disabled = true;
+    try {
+      let handle = null;
+      if (window.showSaveFilePicker) {
+        handle = await window.showSaveFilePicker({ suggestedName: "code-review-report.zip", startIn: "desktop", types: [{ description: "ZIP 压缩包", accept: { "application/zip": [".zip"] } }] });
+      }
+      msg.textContent = "正在生成执行报告…";
+      const response = await fetch("/api/scheduler-tasks/code-review/export", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ schedule_id: taskId }),
+      });
+      if (!response.ok) {
+        let error = "导出失败";
+        try { error = (await response.json()).error || error; } catch (_) {}
+        throw Error(error);
+      }
+      const blob = await response.blob();
+      if (handle) {
+        const file = await handle.createWritable();
+        await file.write(blob);
+        await file.close();
+        msg.textContent = "执行报告已保存";
+      } else {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url; link.download = "code-review-report.zip";
+        document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        msg.textContent = "已开始下载；可在浏览器下载设置中选择桌面";
+      }
+    } catch (error) {
+      msg.textContent = error.name === "AbortError" ? "已取消导出" : "导出失败：" + error.message;
+    } finally { exportButton.disabled = false; }
+  };
   const clearButton = document.getElementById("review-clear-history");
   if (clearButton)
     clearButton.onclick = async () => {

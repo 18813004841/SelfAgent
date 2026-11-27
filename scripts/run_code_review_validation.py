@@ -95,7 +95,7 @@ def main() -> int:
         module.write("\ndef notify(findings, threshold, webhook=None, task_name=None, status=None):\n    raise RuntimeError('simulated notification failure')\n")
     second = subprocess.run([sys.executable, "-m", "code_review.cli", "check", "--config", str(config_path)], cwd=review_root, env=env, text=True, capture_output=True)
     bad = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=project, text=True).strip()
-    report_path = review_root / "validation-data" / f"{project.name}-main" / "reports" / f"{bad}.json"
+    report_path = review_root / "validation-data" / f"{project.name}-main" / "reports" / f"{project.name}-main-0002" / "result.json"
     report = json.loads(report_path.read_text(encoding="utf-8")) if report_path.is_file() else {}
     notification_failure_saved = bool(report.get("问题内容")) and "飞书通知发送失败：通知处理发生异常" in report.get("警告", [])
     state_path = review_root / "validation-data" / f"{project.name}-main" / "state.json"
