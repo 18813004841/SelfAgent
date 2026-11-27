@@ -1,23 +1,17 @@
-# Codex KOA工作台插件
+# SelfAgent Codex 插件
 
-这是一个独立的本地 MCP 插件，提供登录、工作台机器概览、定时任务列表、服务器设置和版本检查。服务器地址默认为 `http://10.0.76.228:18888/`，保存在 `%LOCALAPPDATA%/LocalWorkbench/codex-plugin/settings.json`（其他系统使用 XDG 配置目录）。连接测试调用工作台 `/api/auth/session`。登录复用工作台 HTTP API，会话只保存在插件进程内；不保存密码或会话，重启插件或切换服务器后需要重新登录。HTTP 连接不加密，界面会提示。机器概览是工作台服务器所在机器的数据。任务页面当前无业务内容，管理入口跳转原工作台。
+独立的本地 MCP 插件，主界面显示当前版本并提供检查和安装更新。插件不连接工作台，也不需要登录。`server.js` 是 MCP 入口，`index.html` 是主界面，后续独立功能放在 `features/`，由入口显式注册。
 
-插件通过固定的 `selfagent-workbench` 本地插件源检查新版本；点击更新时调用 `codex plugin add codex-workbench@selfagent-workbench`，成功后需重启 Codex。如果插件缓存被占用，请退出 Codex 后在终端重试。打开工作台会请求系统默认浏览器，失败时显示可复制的地址。Node.js 和 Codex CLI 需在 PATH 中可用。
+## 安装和更新
 
-## 安装和使用
+在仓库根目录执行 `codex plugin marketplace add ./plugins/codex-workbench-marketplace`，重启 Codex，在 SelfAgent Plugins 中安装「SelfAgent 插件」。也可以调用 `open_workbench` 打开主界面；名称保留用于兼容已有调用。全局入口是否展示取决于宿主支持。
 
-在仓库根目录运行：
+插件启动时及点击按钮时读取已注册的 `selfagent-workbench` 本地插件源中的版本。请先将该源目录更新到期望版本；本地源不会自动拉取代码。发现较新版本后，点击安装将调用 `codex plugin add codex-workbench@selfagent-workbench --json`，完成后重启 Codex。需要 Node.js 和 Codex CLI 在 PATH 中可用。源未配置、CLI 不可用或安装失败时界面会显示错误；若缓存被占用，可退出 Codex 后在终端重试该命令。旧名称仅作为安装标识保留。
 
-```powershell
-codex plugin marketplace add ./plugins/codex-workbench-marketplace
-```
+运行 `node --test tests/integration.test.js` 验证版本比较、更新调用及 MCP 入口。测试使用临时插件源，不修改用户配置或安装插件。
 
-重启桌面应用，在插件目录选择 SelfAgent Plugins 并安装「KOA工作台」，然后开启新对话。也可尝试调用 `open_workbench`。修改后需更新或重新安装插件，重启桌面应用以加载缓存副本。
+主页的“重启 Codex”按钮仅支持 Windows 应用包安装：后台助手关闭 Codex 并通过 Windows 应用入口重新启动。重启会中断正在运行的任务；如果没有重新打开，请查看 `%LOCALAPPDATA%/SelfAgent/codex-plugin/restart.log` 并手动启动。启动助手成功不等于重启已完成。
 
-工具声明了 MCP App 全局入口。OpenAI 文档将该入口描述为 ChatGPT 侧边栏功能；Codex 桌面端是否显示入口取决于宿主版本及其支持，尚未确认。安装成功不代表侧边栏按钮已出现。若没有按钮，本插件无法强制添加宿主导航项。
+代码辅助分析可绑定工程并以只读模式启动独立 Codex 会话，支持发送消息和查看流式事件。监听执行和清理尚未接入；真实 Codex 会话与 Unity 联调尚未验证。
 
-卸载插件后可通过 `codex plugin marketplace remove selfagent-workbench` 移除源。
-
-## 验证
-
-运行 `node --test tests/integration.test.js`，验证登录、会话失效、机器概览、定时任务读取及服务器地址切换。测试使用临时目录和本地模拟服务，不修改用户配置。
+在代码辅助分析页面点击“绑定工程”可打开 Windows 文件夹选择窗口，取消选择不会更改绑定；也可手动输入路径后点击“使用输入的路径”。

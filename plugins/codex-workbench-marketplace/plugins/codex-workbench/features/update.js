@@ -1,0 +1,7 @@
+const fs=require('node:fs'), path=require('node:path'), cp=require('node:child_process');
+const SOURCE='selfagent-workbench', PLUGIN='codex-workbench';
+function command(args){return new Promise((resolve,reject)=>{const win=process.platform==='win32';cp.execFile(win?'powershell.exe':'codex',win?['-NoProfile','-NonInteractive','-Command',`& codex.cmd ${args.join(' ')}`]:args,{timeout:60000,windowsHide:true,maxBuffer:1024*1024,encoding:'utf8'},(err,out)=>err?reject(Error('无法运行 Codex CLI，请确认已安装且在 PATH 中')):resolve(out));});}
+function compare(a,b){if(!/^\d+\.\d+\.\d+$/.test(a)||!/^\d+\.\d+\.\d+$/.test(b))throw Error('版本号格式无效');const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++)if(x[i]!==y[i])return x[i]-y[i];return 0;}
+async function check(current,run=command){let data;try{data=JSON.parse(await run(['plugin','marketplace','list','--json']));}catch(e){throw Error(`无法读取插件源：${e.message}`);}const source=data.marketplaces?.find(x=>x.name===SOURCE);if(!source?.root)throw Error('未配置插件源 selfagent-workbench');let latest;try{latest=JSON.parse(fs.readFileSync(path.join(source.root,'plugins',PLUGIN,'.codex-plugin','plugin.json'),'utf8')).version;}catch{throw Error('无法读取插件源中的版本信息');}return {current,latest,available:compare(latest,current)>0};}
+async function install(current,run=command){const info=await check(current,run);if(!info.available)throw Error('没有可安装的新版本');await run(['plugin','add',`${PLUGIN}@${SOURCE}`,'--json']);return {version:info.latest,message:'更新安装完成，请重启 Codex 以加载新版本'};}
+module.exports={check,install,compare};
