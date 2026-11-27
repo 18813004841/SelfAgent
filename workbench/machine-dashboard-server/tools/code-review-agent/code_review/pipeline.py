@@ -523,7 +523,7 @@ class ReviewPipeline:
         report.write_text(json.dumps(result.as_display_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
         if result.status == "passed": self.save_successful_check(state_path, current, datetime.now().isoformat(timespec="seconds"))
         try:
-            notification_warnings = notify(result.findings, threshold, self.config.checks.get("feishu_webhook"))
+            notification_warnings = notify(result.findings, threshold, self.config.checks.get("feishu_webhook"), self.config.checks.get("task_name"))
         except Exception as exc:
             logger.error("review.feishu.exception type=%s", type(exc).__name__)
             notification_warnings = ["飞书通知发送失败：通知处理发生异常"]

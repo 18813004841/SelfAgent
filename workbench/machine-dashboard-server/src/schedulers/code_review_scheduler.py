@@ -71,7 +71,7 @@ class CodeReviewScheduler(SchedulerBase):
         except ValueError:
             logger.warning("review.feishu.config_unavailable")
             webhook = ""
-        return adapter.execute({"project_path": project_path, "branch": branch, "skill_paths": config["skill_paths"], "allow_extra_rules": config["allow_extra_rules"], "failure_threshold": config["failure_threshold"], "feishu_webhook": webhook, "cancel": context.metadata["cancel"]}, context)
+        return adapter.execute({"project_path": project_path, "branch": branch, "skill_paths": config["skill_paths"], "allow_extra_rules": config["allow_extra_rules"], "failure_threshold": config["failure_threshold"], "task_name": context.metadata.get("task_name", ""), "feishu_webhook": webhook, "cancel": context.metadata["cancel"]}, context)
 
     def run_scheduled(self, schedule_id: str | None = None) -> Any:
         from .execution_guard import claim, release
@@ -118,7 +118,13 @@ class CodeReviewScheduler(SchedulerBase):
         logger.debug("run_scheduled.params schedule_id=%s keys=%s", schedule_id, list(params))
         def cancelled():
             return repository.cancellation_requested(schedule_id)
-        context = ScheduleContext(run_id=schedule_id, report_progress=report_progress, finish=finish, metadata={"cancel": cancelled})
+        try:
+            row = repository.get_schedule(schedule_id)
+            task_name = str(row["name"] or "") if row else ""
+        except Exception:
+            logger.warning("review.task_name.unavailable schedule_id=%s", schedule_id)
+            task_name = ""
+        context = ScheduleContext(run_id=schedule_id, report_progress=report_progress, finish=finish, metadata={"cancel": cancelled, "task_name": task_name})
         try:
             result = self.execute(params, context)
             if not finished:

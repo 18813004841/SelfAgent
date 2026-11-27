@@ -37,7 +37,7 @@ def _lookup(email: str) -> tuple[str, str] | None:
         return None
 
 
-def notify(findings: list[Finding], threshold: str, webhook: str | None = None) -> list[str]:
+def notify(findings: list[Finding], threshold: str, webhook: str | None = None, task_name: str | None = None) -> list[str]:
     levels = {"low": 1, "medium": 2, "high": 3, "critical": 4}
     selected = [f for f in findings if levels.get(str(f.severity).lower(), 2) >= levels.get(threshold.lower(), 3)]
     if not selected:
@@ -62,7 +62,7 @@ def notify(findings: list[Finding], threshold: str, webhook: str | None = None) 
             users[fallback_email] = _lookup(fallback_email)
         if not users[fallback_email]:
             warnings.append("飞书兜底通知人未找到或查询失败：bo.feng@funplus.com")
-    lines = ["代码规范检查报告："]
+    lines = ["代码规范检查报告：" + (f"\n任务名：{task_name.strip()}" if task_name and task_name.strip() else "")]
     for finding in selected:
         user = users.get((finding.author_email or "").strip())
         recipient = user or users.get(fallback_email)
