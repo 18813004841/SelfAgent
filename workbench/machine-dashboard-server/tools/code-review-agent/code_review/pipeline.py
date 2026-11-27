@@ -47,13 +47,14 @@ MODEL_OUTPUT_CONTRACT = (
 
 
 class ReviewPipeline:
-    def __init__(self, config: ReviewConfig, progress: Callable[..., None] | None = None, log: Callable[..., None] | None = None, cancel: Callable[[], bool] | None = None) -> None:
+    def __init__(self, config: ReviewConfig, progress: Callable[..., None] | None = None, log: Callable[..., None] | None = None, cancel: Callable[[], bool] | None = None, notification_attempted: Callable[[], None] | None = None) -> None:
         self.config = config
         self.root = Path(config.project["path"]).resolve()
         self.repo = GitRepository(self.root, config.project.get("remote", "origin"), config.project.get("git_timeout_seconds"), config.project.get("clean_before_sync", True))
         self.progress_callback = progress or (lambda **_: None)
         self.log_callback = log or (lambda **_: None)
         self.cancel_callback = cancel or (lambda: False)
+        self.notification_attempted = notification_attempted or (lambda: None)
         self.step_total = 14
         self.step = 0
         self.step_name = ""
@@ -61,6 +62,17 @@ class ReviewPipeline:
     def _ensure_running(self) -> None:
         if self.cancel_callback():
             raise RuntimeError("代码检查已终止")
+
+    def _notify_result(self, result: CheckResult, threshold: str) -> None:
+        self.notification_attempted()
+        try:
+            warnings = notify(result.findings, threshold, self.config.checks.get("feishu_webhook"), self.config.checks.get("task_name"), result.status)
+        except Exception as exc:
+            logger.error("review.feishu.exception type=%s", type(exc).__name__)
+            warnings = ["飞书通知发送失败：通知处理发生异常"]
+        result.warnings.extend(warnings)
+        if warnings:
+            logger.warning("review.feishu.failed warnings=%s", len(warnings))
 
     def _step(self, message: str, **details: Any) -> None:
         self._ensure_running()
@@ -382,6 +394,10 @@ class ReviewPipeline:
             report.parent.mkdir(parents=True, exist_ok=True)
             result.report_path = str(report)
             report.write_text(json.dumps(result.as_display_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+            self._notify_result(result, str(self.config.checks.get("failure_threshold", "high")).lower())
+            updated_report = report.with_name(f".{execution_id}.tmp")
+            updated_report.write_text(json.dumps(result.as_display_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+            updated_report.replace(report)
             return result
         self._step("读取 Diff 内容")
         files, diff = self.collect_diff(old, current)
@@ -522,14 +538,7 @@ class ReviewPipeline:
         result.elapsed_seconds = round(time.perf_counter() - started, 3)
         report.write_text(json.dumps(result.as_display_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
         if result.status == "passed": self.save_successful_check(state_path, current, datetime.now().isoformat(timespec="seconds"))
-        try:
-            notification_warnings = notify(result.findings, threshold, self.config.checks.get("feishu_webhook"), self.config.checks.get("task_name"))
-        except Exception as exc:
-            logger.error("review.feishu.exception type=%s", type(exc).__name__)
-            notification_warnings = ["飞书通知发送失败：通知处理发生异常"]
-        result.warnings.extend(notification_warnings)
-        if notification_warnings:
-            logger.warning("review.feishu.failed warnings=%s", len(notification_warnings))
+        self._notify_result(result, threshold)
         elapsed = round(time.perf_counter() - started, 3)
         result.elapsed_seconds = elapsed
         updated_report = report.with_name(f".{execution_id}.tmp")

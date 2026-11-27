@@ -11,6 +11,12 @@ sys.path.insert(0, str(ROOT))
 
 from code_review.config import ReviewConfig
 from code_review.pipeline import ReviewPipeline
+from code_review.feishu import notify
+
+
+def notify_terminal(status: str, task_name: str, webhook: str) -> list[str]:
+    """Notify about a task that ended before the review pipeline could report."""
+    return notify([], "high", webhook, task_name, "cancelled" if status == "cancelled" else "error")
 
 
 class ReviewCancelled(RuntimeError):
@@ -51,6 +57,7 @@ def execute(args: Mapping[str, Any], context: Any) -> dict[str, Any]:
             config,
             progress=lambda **event: context.progress(event.get("current", 0), event.get("total", 10), event.get("message", ""), **{k: v for k, v in event.items() if k not in {"current", "total", "message"}}),
             cancel=cancelled,
+            notification_attempted=lambda: getattr(context, "metadata", {}).update(notification_attempted=True),
         ).run()
     except RuntimeError as exc:
         if "已终止" not in str(exc):

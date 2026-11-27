@@ -113,6 +113,15 @@ class CodeReviewScheduler(SchedulerBase):
             append("result", "执行完成", status=normalized, result=result, **info)
             logger.info("任务执行结束 schedule_id=%s status=%s", schedule_id, normalized)
             repository.mark_code_review_finished(schedule_id, started, normalized, result)
+            if not context.metadata.get("notification_attempted"):
+                context.metadata["notification_attempted"] = True
+                try:
+                    warnings = _load_tool_adapter().notify_terminal(normalized, context.metadata.get("task_name", ""), get_webhook())
+                    for warning in warnings:
+                        append("progress", warning)
+                except Exception as exc:
+                    logger.error("review.feishu.terminal_failed type=%s", type(exc).__name__)
+                    append("progress", "飞书通知发送失败：通知处理发生异常")
 
         params = self.deserialize_param(repository.params(schedule_id))
         logger.debug("run_scheduled.params schedule_id=%s keys=%s", schedule_id, list(params))

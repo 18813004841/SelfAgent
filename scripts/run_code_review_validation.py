@@ -92,7 +92,7 @@ def main() -> int:
     run(["git", "commit", "-m", "bad"], project)
     # Simulate an unexpected notification exception in the isolated tool copy.
     with (review_root / "code_review" / "feishu.py").open("a", encoding="utf-8") as module:
-        module.write("\ndef notify(findings, threshold, webhook=None, task_name=None):\n    raise RuntimeError('simulated notification failure')\n")
+        module.write("\ndef notify(findings, threshold, webhook=None, task_name=None, status=None):\n    raise RuntimeError('simulated notification failure')\n")
     second = subprocess.run([sys.executable, "-m", "code_review.cli", "check", "--config", str(config_path)], cwd=review_root, env=env, text=True, capture_output=True)
     bad = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=project, text=True).strip()
     report_path = review_root / "validation-data" / f"{project.name}-main" / "reports" / f"{bad}.json"
